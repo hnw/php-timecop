@@ -11,11 +11,13 @@ foreach($functions as $func) {
     echo $func."$br\n";
 }
 echo "$br\n";
-$function = 'confirm_' . $module . '_compiled';
+$function = 'timecop_time';
 if (extension_loaded($module)) {
-	$str = $function($module);
+    echo timecop_time()."$br\n";
+    $_SERVER['REQUEST_TIME'] = PHP_INT_MAX;
+    echo timecop_time()."$br\n";
 } else {
-	$str = "Module $module is not compiled into PHP";
+    echo "Module $module is not compiled into PHP";
 }
-echo "$str\n";
+
 ?>

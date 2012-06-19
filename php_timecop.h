@@ -42,7 +42,7 @@ PHP_RINIT_FUNCTION(timecop);
 PHP_RSHUTDOWN_FUNCTION(timecop);
 PHP_MINFO_FUNCTION(timecop);
 
-PHP_FUNCTION(confirm_timecop_compiled);	/* For testing, remove later. */
+PHP_FUNCTION(timecop_time);
 
 /* 
   	Declare any global variables you may need between the BEGIN
