@@ -28,17 +28,19 @@
 #include "php_timecop.h"
 #include <time.h>
 
-/* If you declare any globals in php_timecop.h uncomment this:
 ZEND_DECLARE_MODULE_GLOBALS(timecop)
-*/
 
 /* True global resources - no need for thread safety here */
 static int le_timecop;
 
-/* {{{ timecop_functions[]
- *
- * Every user visible function must have an entry in timecop_functions[].
- */
+/* {{{ timecop_overload_def mb_ovld[] */
+static const struct timecop_overload_def timecop_ovld[] = {
+        {"time", "timecop_time", "timecop_orig_time"},
+        {NULL, NULL, NULL}
+};
+/* }}} */
+
+/* {{{ timecop_functions[] */
 const zend_function_entry timecop_functions[] = {
 	PHP_FE(timecop_time, NULL)
 	PHP_FE_END	/* Must be the last line in timecop_functions[] */
@@ -55,8 +57,8 @@ zend_module_entry timecop_module_entry = {
 	timecop_functions,
 	PHP_MINIT(timecop),
 	PHP_MSHUTDOWN(timecop),
-	NULL,
-	NULL,
+	PHP_RINIT(timecop),
+	PHP_RSHUTDOWN(timecop),
 	PHP_MINFO(timecop),
 #if ZEND_MODULE_API_NO >= 20010901
 	"0.1",
@@ -71,32 +73,17 @@ ZEND_GET_MODULE(timecop)
 
 /* {{{ PHP_INI
  */
-/* Remove comments and fill if you need to have entries in php.ini
 PHP_INI_BEGIN()
-    STD_PHP_INI_ENTRY("timecop.global_value",      "42", PHP_INI_ALL, OnUpdateLong, global_value, zend_timecop_globals, timecop_globals)
-    STD_PHP_INI_ENTRY("timecop.global_string", "foobar", PHP_INI_ALL, OnUpdateString, global_string, zend_timecop_globals, timecop_globals)
+    STD_PHP_INI_ENTRY("timecop.func_overload", "0",
+    PHP_INI_SYSTEM, OnUpdateLong, func_overload, zend_timecop_globals, timecop_globals)
 PHP_INI_END()
-*/
-/* }}} */
-
-/* {{{ php_timecop_init_globals
- */
-/* Uncomment this function if you have INI entries
-static void php_timecop_init_globals(zend_timecop_globals *timecop_globals)
-{
-	timecop_globals->global_value = 0;
-	timecop_globals->global_string = NULL;
-}
-*/
 /* }}} */
 
 /* {{{ PHP_MINIT_FUNCTION
  */
 PHP_MINIT_FUNCTION(timecop)
 {
-	/* If you have INI entries, uncomment these lines 
 	REGISTER_INI_ENTRIES();
-	*/
 	return SUCCESS;
 }
 /* }}} */
@@ -105,12 +92,66 @@ PHP_MINIT_FUNCTION(timecop)
  */
 PHP_MSHUTDOWN_FUNCTION(timecop)
 {
-	/* uncomment this line if you have INI entries
 	UNREGISTER_INI_ENTRIES();
-	*/
 	return SUCCESS;
 }
 /* }}} */
+
+/* {{{ PHP_RINIT_FUNCTION(timecop) */
+PHP_RINIT_FUNCTION(timecop)
+{
+	zend_function *func, *orig;
+	const struct timecop_overload_def *p;
+	if (TIMECOP_G(func_overload)){
+		p = &(timecop_ovld[0]);
+		while (p->orig_func != NULL) {
+			if (zend_hash_find(EG(function_table), p->save_func,
+							   strlen(p->save_func)+1, (void **)&orig) != SUCCESS) {
+				zend_hash_find(EG(function_table), p->ovld_func, strlen(p->ovld_func)+1 ,
+							   (void **)&func);
+				if (zend_hash_find(EG(function_table), p->orig_func, strlen(p->orig_func)+
+								   1, (void **)&orig) != SUCCESS) {
+					php_error_docref("https://github.com/hnw/php-timecop" TSRMLS_CC, E_WARNING, "timecop couldn't find function %s.", p->orig_func);
+					return FAILURE;
+				} else {
+					zend_hash_add(EG(function_table), p->save_func, strlen(p->save_func)+1, orig, sizeof(zend_function), NULL);
+					if (zend_hash_update(EG(function_table), p->orig_func, strlen(p->orig_func)+1, func, sizeof(zend_function),
+										 NULL) == FAILURE) {
+						php_error_docref("https://github.com/hnw/php-timecop" TSRMLS_CC, E_WARNING, "timecop couldn't replace function %s.", p->orig_func);
+						return FAILURE;
+					}
+				}
+			}
+			p++;
+		}
+	}
+	return SUCCESS;
+}
+/* }}} */
+
+/* {{{ PHP_RSHUTDOWN_FUNCTION(timecop) */
+PHP_RSHUTDOWN_FUNCTION(timecop)
+{
+	zend_function *func, *orig;
+	const struct timecop_overload_def *p;
+
+	/*  clear overloaded function. */
+	if (TIMECOP_G(func_overload)){
+		p = &(timecop_ovld[0]);
+		while (p->orig_func != NULL) {
+			if (zend_hash_find(EG(function_table), p->save_func,
+							   strlen(p->save_func)+1, (void **)&orig) == SUCCESS) {
+				zend_hash_update(EG(function_table), p->orig_func, strlen(p->orig_func)+1,
+								 orig, sizeof(zend_function), NULL);
+				zend_hash_del(EG(function_table), p->save_func, strlen(p->save_func)+1);
+			}
+			p++;
+		}
+	}
+	return SUCCESS;
+}
+/* }}} */
+
 
 /* {{{ PHP_MINFO_FUNCTION
  */

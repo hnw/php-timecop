@@ -44,15 +44,15 @@ PHP_MINFO_FUNCTION(timecop);
 
 PHP_FUNCTION(timecop_time);
 
-/* 
-  	Declare any global variables you may need between the BEGIN
-	and END macros here:     
-
 ZEND_BEGIN_MODULE_GLOBALS(timecop)
-	long  global_value;
-	char *global_string;
+	long func_overload;
 ZEND_END_MODULE_GLOBALS(timecop)
-*/
+
+struct timecop_overload_def {
+        char *orig_func;
+        char *ovld_func;
+        char *save_func;
+};
 
 /* In every utility function you add that needs to use variables 
    in php_timecop_globals, call TSRMLS_FETCH(); after declaring other 
