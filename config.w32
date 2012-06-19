@@ -1,0 +1,13 @@
+// $Id$
+// vim:ft=javascript
+
+// If your extension references something external, use ARG_WITH
+// ARG_WITH("timecop", "for timecop support", "no");
+
+// Otherwise, use ARG_ENABLE
+// ARG_ENABLE("timecop", "enable timecop support", "no");
+
+if (PHP_TIMECOP != "no") {
+	EXTENSION("timecop", "timecop.c");
+}
+
