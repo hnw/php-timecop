@@ -37,6 +37,7 @@ static int le_timecop;
 static const struct timecop_overload_def timecop_ovld[] = {
         {"time", "timecop_time", "timecop_orig_time"},
         {"date", "timecop_date", "timecop_orig_date"},
+        {"strtotime", "timecop_strtotime", "timecop_orig_strtotime"},
         {NULL, NULL, NULL}
 };
 /* }}} */
@@ -45,6 +46,7 @@ static const struct timecop_overload_def timecop_ovld[] = {
 const zend_function_entry timecop_functions[] = {
 	PHP_FE(timecop_time, NULL)
 	PHP_FE(timecop_date, NULL)
+	PHP_FE(timecop_strtotime, NULL)
 	PHP_FE_END
 };
 /* }}} */
@@ -229,7 +231,7 @@ static void callfunc_with_optional_timestamp(INTERNAL_FUNCTION_PARAMETERS, zval*
 }
 
 /* {{{ proto int timecop_time(void)
-   Return timestamp for $_SERVER[request_time] */
+   Return virtual timestamp */
 PHP_FUNCTION(timecop_time)
 {
 	RETURN_LONG(_timecop_current_timestamp());
@@ -245,6 +247,20 @@ PHP_FUNCTION(timecop_date)
 		ZVAL_STRING(&callable, "timecop_orig_date", 1);
 	} else {
 		ZVAL_STRING(&callable, "date", 1);
+	}
+	callfunc_with_optional_timestamp(INTERNAL_FUNCTION_PARAM_PASSTHRU, &callable, 1);
+}
+/* }}} */
+
+/* {{{ proto int timecop_strtotime(string time [, int now ])
+   Convert string representation of date and time to a timestamp */
+PHP_FUNCTION(timecop_strtotime)
+{
+	zval callable;
+	if (TIMECOP_G(func_overload)){
+		ZVAL_STRING(&callable, "timecop_orig_strtotime", 1);
+	} else {
+		ZVAL_STRING(&callable, "strtotime", 1);
 	}
 	callfunc_with_optional_timestamp(INTERNAL_FUNCTION_PARAM_PASSTHRU, &callable, 1);
 }
