@@ -189,7 +189,7 @@ static long _timecop_current_timestamp()
 	return current_timestamp;
 }
 
-static void callfunc_with_optional_timestamp(INTERNAL_FUNCTION_PARAMETERS, zval* callable, int num_required_func_args)
+static void call_callable_with_optional_timestamp(INTERNAL_FUNCTION_PARAMETERS, zval* callable, int num_required_func_args)
 {
 	zval *retval_ptr = NULL;
 	zend_fcall_info fci;
@@ -230,6 +230,17 @@ static void callfunc_with_optional_timestamp(INTERNAL_FUNCTION_PARAMETERS, zval*
 	}
 }
 
+static void _timecop_call_function(INTERNAL_FUNCTION_PARAMETERS, char* orig_func_name, char* saved_func_name, int num_required_func_args)
+{
+	zval callable;
+	if (TIMECOP_G(func_overload)){
+		ZVAL_STRING(&callable, saved_func_name, 1);
+	} else {
+		ZVAL_STRING(&callable, orig_func_name, 1);
+	}
+	call_callable_with_optional_timestamp(INTERNAL_FUNCTION_PARAM_PASSTHRU, &callable, num_required_func_args);
+}
+
 /* {{{ proto int timecop_time(void)
    Return virtual timestamp */
 PHP_FUNCTION(timecop_time)
@@ -242,13 +253,7 @@ PHP_FUNCTION(timecop_time)
    Format a local date/time */
 PHP_FUNCTION(timecop_date)
 {
-	zval callable;
-	if (TIMECOP_G(func_overload)){
-		ZVAL_STRING(&callable, "timecop_orig_date", 1);
-	} else {
-		ZVAL_STRING(&callable, "date", 1);
-	}
-	callfunc_with_optional_timestamp(INTERNAL_FUNCTION_PARAM_PASSTHRU, &callable, 1);
+	_timecop_call_function(INTERNAL_FUNCTION_PARAM_PASSTHRU, "date", "timecop_orig_date", 1);
 }
 /* }}} */
 
@@ -256,13 +261,7 @@ PHP_FUNCTION(timecop_date)
    Convert string representation of date and time to a timestamp */
 PHP_FUNCTION(timecop_strtotime)
 {
-	zval callable;
-	if (TIMECOP_G(func_overload)){
-		ZVAL_STRING(&callable, "timecop_orig_strtotime", 1);
-	} else {
-		ZVAL_STRING(&callable, "strtotime", 1);
-	}
-	callfunc_with_optional_timestamp(INTERNAL_FUNCTION_PARAM_PASSTHRU, &callable, 1);
+	_timecop_call_function(INTERNAL_FUNCTION_PARAM_PASSTHRU, "strtotime", "timecop_orig_strtotime", 1);
 }
 /* }}} */
 
