@@ -46,6 +46,8 @@ PHP_FUNCTION(timecop_time);
 PHP_FUNCTION(timecop_date);
 PHP_FUNCTION(timecop_gmdate);
 PHP_FUNCTION(timecop_strtotime);
+PHP_FUNCTION(timecop_strftime);
+PHP_FUNCTION(timecop_gmstrftime);
 
 ZEND_BEGIN_MODULE_GLOBALS(timecop)
 	long func_overload;

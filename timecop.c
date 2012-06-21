@@ -39,6 +39,8 @@ static const struct timecop_overload_def timecop_ovld[] = {
         {"date", "timecop_date", "timecop_orig_date"},
         {"gmdate", "timecop_gmdate", "timecop_orig_gmdate"},
         {"strtotime", "timecop_strtotime", "timecop_orig_strtotime"},
+        {"strftime", "timecop_strftime", "timecop_orig_strftime"},
+        {"gmstrftime", "timecop_gmstrftime", "timecop_orig_gmstrftime"},
         {NULL, NULL, NULL}
 };
 /* }}} */
@@ -49,6 +51,8 @@ const zend_function_entry timecop_functions[] = {
 	PHP_FE(timecop_date, NULL)
 	PHP_FE(timecop_gmdate, NULL)
 	PHP_FE(timecop_strtotime, NULL)
+	PHP_FE(timecop_strftime, NULL)
+	PHP_FE(timecop_gmstrftime, NULL)
 	PHP_FE_END
 };
 /* }}} */
@@ -272,6 +276,22 @@ PHP_FUNCTION(timecop_gmdate)
 PHP_FUNCTION(timecop_strtotime)
 {
 	_timecop_call_function(INTERNAL_FUNCTION_PARAM_PASSTHRU, "strtotime", "timecop_orig_strtotime", 1);
+}
+/* }}} */
+
+/* {{{ proto string timecop_strftime(string format [, int timestamp])
+   Format a local time/date according to locale settings */
+PHP_FUNCTION(timecop_strftime)
+{
+	_timecop_call_function(INTERNAL_FUNCTION_PARAM_PASSTHRU, "strftime", "timecop_orig_strftime", 1);
+}
+/* }}} */
+
+/* {{{ proto string timecop_gmstrftime(string format [, int timestamp])
+   Format a GMT/UCT time/date according to locale settings */
+PHP_FUNCTION(timecop_gmstrftime)
+{
+	_timecop_call_function(INTERNAL_FUNCTION_PARAM_PASSTHRU, "gmstrftime", "timecop_orig_gmstrftime", 1);
 }
 /* }}} */
 
