@@ -37,6 +37,7 @@ static int le_timecop;
 static const struct timecop_overload_def timecop_ovld[] = {
         {"time", "timecop_time", "timecop_orig_time"},
         {"date", "timecop_date", "timecop_orig_date"},
+        {"gmdate", "timecop_gmdate", "timecop_orig_gmdate"},
         {"strtotime", "timecop_strtotime", "timecop_orig_strtotime"},
         {NULL, NULL, NULL}
 };
@@ -46,6 +47,7 @@ static const struct timecop_overload_def timecop_ovld[] = {
 const zend_function_entry timecop_functions[] = {
 	PHP_FE(timecop_time, NULL)
 	PHP_FE(timecop_date, NULL)
+	PHP_FE(timecop_gmdate, NULL)
 	PHP_FE(timecop_strtotime, NULL)
 	PHP_FE_END
 };
@@ -254,6 +256,14 @@ PHP_FUNCTION(timecop_time)
 PHP_FUNCTION(timecop_date)
 {
 	_timecop_call_function(INTERNAL_FUNCTION_PARAM_PASSTHRU, "date", "timecop_orig_date", 1);
+}
+/* }}} */
+
+/* {{{ proto string gmdate(string format [, long timestamp])
+   Format a GMT date/time */
+PHP_FUNCTION(timecop_gmdate)
+{
+	_timecop_call_function(INTERNAL_FUNCTION_PARAM_PASSTHRU, "gmdate", "timecop_orig_gmdate", 1);
 }
 /* }}} */
 
