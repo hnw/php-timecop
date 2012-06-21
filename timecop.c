@@ -36,6 +36,7 @@ static int le_timecop;
 /* {{{ timecop_overload_def mb_ovld[] */
 static const struct timecop_overload_def timecop_ovld[] = {
         {"time", "timecop_time", "timecop_orig_time"},
+        {"date", "timecop_date", "timecop_orig_date"},
         {NULL, NULL, NULL}
 };
 /* }}} */
@@ -43,7 +44,8 @@ static const struct timecop_overload_def timecop_ovld[] = {
 /* {{{ timecop_functions[] */
 const zend_function_entry timecop_functions[] = {
 	PHP_FE(timecop_time, NULL)
-	PHP_FE_END	/* Must be the last line in timecop_functions[] */
+	PHP_FE(timecop_date, NULL)
+	PHP_FE_END
 };
 /* }}} */
 
@@ -136,7 +138,7 @@ PHP_RSHUTDOWN_FUNCTION(timecop)
 	const struct timecop_overload_def *p;
 
 	/*  clear overloaded function. */
-	if (TIMECOP_G(func_overload)){
+	if (TIMECOP_G(func_overload)) {
 		p = &(timecop_ovld[0]);
 		while (p->orig_func != NULL) {
 			if (zend_hash_find(EG(function_table), p->save_func,
@@ -167,31 +169,86 @@ PHP_MINFO_FUNCTION(timecop)
 }
 /* }}} */
 
-
-/* {{{ proto int timecop_time(void)
-   Return timestamp for $_SERVER[request_time] */
-PHP_FUNCTION(timecop_time)
+static long _timecop_current_timestamp()
 {
 	zval **array, **request_time_long;
-	long ret;
+	long current_timestamp;
+
 	if (zend_hash_find(&EG(symbol_table), "_SERVER", sizeof("_SERVER"), (void **) &array) == SUCCESS &&
 		Z_TYPE_PP(array) == IS_ARRAY &&
 		zend_hash_find(Z_ARRVAL_PP(array), "REQUEST_TIME", sizeof("REQUEST_TIME"), (void **) &request_time_long)
 		== SUCCESS
 		) {
-		ret = Z_LVAL_PP(request_time_long);
+		current_timestamp = Z_LVAL_PP(request_time_long);
 	} else {
-		ret = time(NULL);
+		current_timestamp = time(NULL);
 	}
-	RETURN_LONG(ret);
+
+	return current_timestamp;
+}
+
+static void callfunc_with_optional_timestamp(INTERNAL_FUNCTION_PARAMETERS, zval* callable, int num_required_func_args)
+{
+	zval *retval_ptr = NULL;
+	zend_fcall_info fci;
+	zend_fcall_info_cache fci_cache;
+	char *is_callable_error = NULL;
+
+	/* fci_cache = empty_fcall_info_cache; */
+	zend_fcall_info_init(callable, 0, &fci, &fci_cache, NULL, &is_callable_error TSRMLS_CC);
+	fci.retval_ptr_ptr = &retval_ptr;
+	fci.no_separation = 0;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "*", &fci.params, &fci.param_count) == FAILURE) {
+		return;
+	}
+
+	if (ZEND_NUM_ARGS() == num_required_func_args) {
+		/* append optional timestamp argument */
+		zval *tmp;
+		zval ***old_params;
+		int i;
+		ALLOC_INIT_ZVAL(tmp);
+		ZVAL_LONG(tmp, _timecop_current_timestamp());
+		old_params = fci.params;
+		fci.param_count = num_required_func_args + 1;
+		fci.params = (zval ***)safe_emalloc(fci.param_count, sizeof(zval **), 0);
+		for (i = 0; i < fci.param_count - 1; i++) {
+			fci.params[i] = old_params[i];
+		}
+		fci.params[fci.param_count - 1] = (zval**)emalloc(sizeof(zval*));
+		*fci.params[fci.param_count - 1] = tmp;
+	}
+
+	if (zend_call_function(&fci, &fci_cache TSRMLS_CC) == SUCCESS && fci.retval_ptr_ptr && *fci.retval_ptr_ptr) {
+		COPY_PZVAL_TO_ZVAL(*return_value, *fci.retval_ptr_ptr);
+	}
+	if (fci.params) {
+		efree(fci.params);
+	}
+}
+
+/* {{{ proto int timecop_time(void)
+   Return timestamp for $_SERVER[request_time] */
+PHP_FUNCTION(timecop_time)
+{
+	RETURN_LONG(_timecop_current_timestamp());
 }
 /* }}} */
-/* The previous line is meant for vim and emacs, so it can correctly fold and 
-   unfold functions in source code. See the corresponding marks just before 
-   function definition, where the functions purpose is also documented. Please 
-   follow this convention for the convenience of others editing your code.
-*/
 
+/* {{{ proto string date(string format [, long timestamp])
+   Format a local date/time */
+PHP_FUNCTION(timecop_date)
+{
+	zval callable;
+	if (TIMECOP_G(func_overload)){
+		ZVAL_STRING(&callable, "timecop_orig_date", 1);
+	} else {
+		ZVAL_STRING(&callable, "date", 1);
+	}
+	callfunc_with_optional_timestamp(INTERNAL_FUNCTION_PARAM_PASSTHRU, &callable, 1);
+}
+/* }}} */
 
 /*
  * Local variables:

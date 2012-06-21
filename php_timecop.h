@@ -43,9 +43,11 @@ PHP_RSHUTDOWN_FUNCTION(timecop);
 PHP_MINFO_FUNCTION(timecop);
 
 PHP_FUNCTION(timecop_time);
+PHP_FUNCTION(timecop_date);
 
 ZEND_BEGIN_MODULE_GLOBALS(timecop)
 	long func_overload;
+
 ZEND_END_MODULE_GLOBALS(timecop)
 
 struct timecop_overload_def {
