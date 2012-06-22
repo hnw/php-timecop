@@ -161,6 +161,9 @@ PHP_RSHUTDOWN_FUNCTION(timecop)
 			p++;
 		}
 	}
+
+	TIMECOP_G(timecap_mode) = TIMECAP_MODE_NORMAL;
+
 	return SUCCESS;
 }
 /* }}} */
