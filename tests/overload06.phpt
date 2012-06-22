@@ -1,12 +1,14 @@
 --TEST--
-Function overloading test 6
+Function overloading test for gmstrftime
 --SKIPIF--
 <?php 
 	extension_loaded('timecop') or die('skip timecop not available');
-	if (!function_exists("time")) {
-		die('skip time() function is not available.');
+	$required_func = array("timecop_strtotime", "timecop_freeze", "gmstrftime", "timecop_orig_gmstrftime");
+	foreach ($required_func as $func_name) {
+		if (!function_exists($func_name)) {
+			die("skip $func_name() function is not available.");
+		}
 	}
-?>
 --INI--
 timecop.func_overload=1
 --FILE--
