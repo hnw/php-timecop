@@ -47,6 +47,9 @@ static const struct timecop_overload_def timecop_ovld[] = {
 
 /* {{{ timecop_functions[] */
 const zend_function_entry timecop_functions[] = {
+	PHP_FE(timecop_freeze, NULL)
+	PHP_FE(timecop_travel, NULL)
+	PHP_FE(timecop_return, NULL)
 	PHP_FE(timecop_time, NULL)
 	PHP_FE(timecop_date, NULL)
 	PHP_FE(timecop_gmdate, NULL)
@@ -182,14 +185,16 @@ static long _timecop_current_timestamp()
 	zval **array, **request_time_long;
 	long current_timestamp;
 
-	if (zend_hash_find(&EG(symbol_table), "_SERVER", sizeof("_SERVER"), (void **) &array) == SUCCESS &&
-		Z_TYPE_PP(array) == IS_ARRAY &&
-		zend_hash_find(Z_ARRVAL_PP(array), "REQUEST_TIME", sizeof("REQUEST_TIME"), (void **) &request_time_long)
-		== SUCCESS
-		) {
-		current_timestamp = Z_LVAL_PP(request_time_long);
-	} else {
+	switch (TIMECOP_G(timecap_mode)) {
+	case TIMECAP_MODE_FREEZE:
+		current_timestamp = TIMECOP_G(freezed_timestamp);
+		break;
+	case TIMECAP_MODE_TRAVEL:
+		current_timestamp = time(NULL) + TIMECOP_G(travel_offset);
+		break;
+	default:
 		current_timestamp = time(NULL);
+		break;
 	}
 
 	return current_timestamp;
@@ -246,6 +251,43 @@ static void _timecop_call_function(INTERNAL_FUNCTION_PARAMETERS, char* orig_func
 	}
 	call_callable_with_optional_timestamp(INTERNAL_FUNCTION_PARAM_PASSTHRU, &callable, num_required_func_args);
 }
+
+/* {{{ proto int timecop_freeze(long timestamp)
+   Time travel to specified timestamp and freeze */
+PHP_FUNCTION(timecop_freeze)
+{
+	long timestamp;
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &timestamp) == FAILURE) {
+		RETURN_FALSE;
+	}
+	TIMECOP_G(timecap_mode) = TIMECAP_MODE_FREEZE;
+	TIMECOP_G(freezed_timestamp) = timestamp;
+	RETURN_TRUE;
+}
+/* }}} */
+
+/* {{{ proto int timecop_travel(long timestamp)
+   Time travel to specified timestamp */
+PHP_FUNCTION(timecop_travel)
+{
+	long timestamp;
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &timestamp) == FAILURE) {
+		RETURN_FALSE;
+	}
+	TIMECOP_G(timecap_mode) = TIMECAP_MODE_TRAVEL;
+	TIMECOP_G(travel_offset) = timestamp - time(NULL);
+	RETURN_TRUE;
+}
+/* }}} */
+
+/* {{{ proto int timecop_return(void)
+   Return to Time travel to specified timestamp */
+PHP_FUNCTION(timecop_return)
+{
+	TIMECOP_G(timecap_mode) = TIMECAP_MODE_NORMAL;
+	RETURN_TRUE;
+}
+/* }}} */
 
 /* {{{ proto int timecop_time(void)
    Return virtual timestamp */

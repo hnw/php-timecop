@@ -42,6 +42,9 @@ PHP_RINIT_FUNCTION(timecop);
 PHP_RSHUTDOWN_FUNCTION(timecop);
 PHP_MINFO_FUNCTION(timecop);
 
+PHP_FUNCTION(timecop_freeze);
+PHP_FUNCTION(timecop_travel);
+PHP_FUNCTION(timecop_return);
 PHP_FUNCTION(timecop_time);
 PHP_FUNCTION(timecop_date);
 PHP_FUNCTION(timecop_gmdate);
@@ -49,15 +52,23 @@ PHP_FUNCTION(timecop_strtotime);
 PHP_FUNCTION(timecop_strftime);
 PHP_FUNCTION(timecop_gmstrftime);
 
+typedef enum timecap_mode_t {
+	TIMECAP_MODE_NORMAL,
+	TIMECAP_MODE_FREEZE,
+	TIMECAP_MODE_TRAVEL
+} timecap_mode_t;
+
 ZEND_BEGIN_MODULE_GLOBALS(timecop)
 	long func_overload;
-
+	timecap_mode_t timecap_mode;
+	long freezed_timestamp;
+	long travel_offset;
 ZEND_END_MODULE_GLOBALS(timecop)
 
 struct timecop_overload_def {
-        char *orig_func;
-        char *ovld_func;
-        char *save_func;
+	char *orig_func;
+	char *ovld_func;
+	char *save_func;
 };
 
 /* In every utility function you add that needs to use variables 

@@ -13,7 +13,7 @@ Function overloading test for time
 timecop.func_overload=1
 --FILE--
 <?php
-$_SERVER['REQUEST_TIME']=0;
+timecop_freeze(0);
 var_dump(time());
 --EXPECT--
 int(0)

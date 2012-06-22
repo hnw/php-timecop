@@ -13,7 +13,7 @@ Function overloading test for strftime
 timecop.func_overload=1
 --FILE--
 <?php
-$_SERVER['REQUEST_TIME']=timecop_strtotime("2012-02-29 01:23:45");
+timecop_freeze(timecop_strtotime("2012-02-29 01:23:45"));
 var_dump(strftime("%Y-%m-%d %H:%M:%S"));
 --EXPECT--
 string(19) "2012-02-29 01:23:45"
