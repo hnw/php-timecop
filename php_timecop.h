@@ -36,6 +36,9 @@ extern zend_module_entry timecop_module_entry;
 #include "TSRM.h"
 #endif
 
+#include <time.h>
+#include "Zend/zend_interfaces.h"
+
 PHP_MINIT_FUNCTION(timecop);
 PHP_MSHUTDOWN_FUNCTION(timecop);
 PHP_RINIT_FUNCTION(timecop);
@@ -52,6 +55,8 @@ PHP_FUNCTION(timecop_strtotime);
 PHP_FUNCTION(timecop_strftime);
 PHP_FUNCTION(timecop_gmstrftime);
 
+PHP_METHOD(TimecopDateTime, __construct);
+
 typedef enum timecap_mode_t {
 	TIMECAP_MODE_NORMAL,
 	TIMECAP_MODE_FREEZE,
@@ -63,12 +68,14 @@ ZEND_BEGIN_MODULE_GLOBALS(timecop)
 	timecap_mode_t timecap_mode;
 	long freezed_timestamp;
 	long travel_offset;
+	zend_class_entry *ce_DateTime;
+	zend_class_entry *ce_TimecopDateTime;
 ZEND_END_MODULE_GLOBALS(timecop)
 
 struct timecop_overload_def {
-	char *orig_func;
-	char *ovld_func;
-	char *save_func;
+	char *orig_name;
+	char *ovld_name;
+	char *save_name;
 };
 
 /* In every utility function you add that needs to use variables 
