@@ -41,20 +41,20 @@ static zend_class_entry *timecop_datetime_ce;
 
 /* {{{ timecop_overload_def mb_ovld_func[] */
 static const struct timecop_overload_def timecop_ovld_func[] = {
-        {"time", "timecop_time", "timecop_orig_time"},
-        {"date", "timecop_date", "timecop_orig_date"},
-        {"gmdate", "timecop_gmdate", "timecop_orig_gmdate"},
-        {"strtotime", "timecop_strtotime", "timecop_orig_strtotime"},
-        {"strftime", "timecop_strftime", "timecop_orig_strftime"},
-        {"gmstrftime", "timecop_gmstrftime", "timecop_orig_gmstrftime"},
-        {NULL, NULL, NULL}
+	{"time", "timecop_time", "timecop_orig_time"},
+	{"date", "timecop_date", "timecop_orig_date"},
+	{"gmdate", "timecop_gmdate", "timecop_orig_gmdate"},
+	{"strtotime", "timecop_strtotime", "timecop_orig_strtotime"},
+	{"strftime", "timecop_strftime", "timecop_orig_strftime"},
+	{"gmstrftime", "timecop_gmstrftime", "timecop_orig_gmstrftime"},
+	{NULL, NULL, NULL}
 };
 /* }}} */
 
 /* {{{ timecop_overload_def mb_ovld_class[] */
 static const struct timecop_overload_def timecop_ovld_class[] = {
-        {"datetime", "timecopdatetime", "timecoporigdatetime"},
-        {NULL, NULL, NULL}
+	{"datetime", "timecopdatetime", "timecoporigdatetime"},
+	{NULL, NULL, NULL}
 };
 /* }}} */
 
@@ -223,23 +223,24 @@ static int timecop_func_overload()
 	while (p->orig_name != NULL) {
 		if (zend_hash_find(EG(function_table), p->save_name, strlen(p->save_name)+1,
 						   (void **)&orig) == SUCCESS) {
-			continue;
-		}
-		if (zend_hash_find(EG(function_table), p->ovld_name, strlen(p->ovld_name)+1 ,
-						   (void **)&func) != SUCCESS) {
-			php_error_docref("https://github.com/hnw/php-timecop" TSRMLS_CC, E_WARNING, "timecop couldn't find function %s.", p->ovld_name);
-		}
-		if (zend_hash_find(EG(function_table), p->orig_name, strlen(p->orig_name)+1,
-						   (void **)&orig) != SUCCESS) {
-			php_error_docref("https://github.com/hnw/php-timecop" TSRMLS_CC, E_WARNING, "timecop couldn't find function %s.", p->orig_name);
+			php_error_docref("https://github.com/hnw/php-timecop" TSRMLS_CC, E_WARNING,
+							 "timecop couldn't create function %s because already exists.", p->save_name);
+		} else if(zend_hash_find(EG(function_table), p->ovld_name, strlen(p->ovld_name)+1,
+								 (void **)&func) != SUCCESS) {
+			php_error_docref("https://github.com/hnw/php-timecop" TSRMLS_CC, E_WARNING,
+							 "timecop couldn't find function %s.", p->ovld_name);
+		} else if(zend_hash_find(EG(function_table), p->orig_name, strlen(p->orig_name)+1,
+								 (void **)&orig) != SUCCESS) {
+			php_error_docref("https://github.com/hnw/php-timecop" TSRMLS_CC, E_WARNING,
+							 "timecop couldn't find function %s.", p->orig_name);
+		} else {
+			zend_hash_add(EG(function_table), p->save_name, strlen(p->save_name)+1,
+						  orig, sizeof(zend_function), NULL);
+			if (zend_hash_update(EG(function_table), p->orig_name, strlen(p->orig_name)+1,
+								 func, sizeof(zend_function), NULL) == FAILURE) {
+				php_error_docref("https://github.com/hnw/php-timecop" TSRMLS_CC, E_WARNING, "timecop couldn't replace function %s.", p->orig_name);
 				return FAILURE;
-		}
-		zend_hash_add(EG(function_table), p->save_name, strlen(p->save_name)+1,
-					  orig, sizeof(zend_function), NULL);
-		if (zend_hash_update(EG(function_table), p->orig_name, strlen(p->orig_name)+1,
-							 func, sizeof(zend_function), NULL) == FAILURE) {
-			php_error_docref("https://github.com/hnw/php-timecop" TSRMLS_CC, E_WARNING, "timecop couldn't replace function %s.", p->orig_name);
-			return FAILURE;
+			}
 		}
 		p++;
 	}
@@ -255,32 +256,28 @@ static int timecop_class_overload()
 	while (p->orig_name != NULL) {
 		if (zend_hash_find(EG(class_table), p->save_name, strlen(p->save_name)+1,
 						   (void **)&pce_orig) == SUCCESS) {
-			continue;
-		}
-		if (zend_hash_find(EG(class_table), p->ovld_name, strlen(p->ovld_name)+1 ,
-						   (void **)&pce_ovld) != SUCCESS) {
-			php_error_docref("https://github.com/hnw/php-timecop" TSRMLS_CC, E_WARNING, "timecop couldn't find function %s.", p->ovld_name);
-		}
-		if (zend_hash_find(EG(class_table), p->orig_name, strlen(p->orig_name)+1,
-						   (void **)&pce_orig) != SUCCESS) {
-			php_error_docref("https://github.com/hnw/php-timecop" TSRMLS_CC, E_WARNING, "timecop couldn't find function %s.", p->orig_name);
+			php_error_docref("https://github.com/hnw/php-timecop" TSRMLS_CC, E_WARNING,
+							 "timecop couldn't create class %s because already exists.", p->save_name);
+		} else if (zend_hash_find(EG(class_table), p->ovld_name, strlen(p->ovld_name)+1 ,
+								  (void **)&pce_ovld) != SUCCESS) {
+			php_error_docref("https://github.com/hnw/php-timecop" TSRMLS_CC, E_WARNING,
+							 "timecop couldn't find class %s.", p->ovld_name);
+		} else if (zend_hash_find(EG(class_table), p->orig_name, strlen(p->orig_name)+1,
+								  (void **)&pce_orig) != SUCCESS) {
+			php_error_docref("https://github.com/hnw/php-timecop" TSRMLS_CC, E_WARNING,
+							 "timecop couldn't find function %s.", p->orig_name);
+		} else {
+			ce_ovld = *pce_ovld;
+			ce_orig = *pce_orig;
+			ce_orig->refcount++;
+			zend_hash_add(EG(class_table), p->save_name, strlen(p->save_name)+1,
+						  &ce_orig, sizeof(zend_class_entry *), NULL);
+			ce_ovld->refcount++;
+			if (zend_hash_update(EG(class_table), p->orig_name, strlen(p->orig_name)+1,
+								 &ce_ovld, sizeof(zend_class_entry *), NULL) == FAILURE) {
+				ce_ovld->refcount--;
 				return FAILURE;
-		}
-		ce_ovld = *pce_ovld;
-		ce_orig = *pce_orig;
-
-		ce_orig->refcount++;
-		zend_hash_add(EG(class_table), p->save_name, strlen(p->save_name)+1,
-					  &ce_orig, sizeof(zend_class_entry *), NULL);
-
-
-		ce_ovld->refcount++;
-		if (zend_hash_update(EG(class_table), p->orig_name, strlen(p->orig_name)+1,
-							 &ce_ovld, sizeof(zend_class_entry *), NULL) == FAILURE) {
-			php_error_docref("https://github.com/hnw/php-timecop" TSRMLS_CC, E_WARNING, "timecop couldn't replace function %s.", p->orig_name);
-
-			ce_ovld->refcount--;
-			return FAILURE;
+			}
 		}
 		p++;
 	}
@@ -314,9 +311,10 @@ static int timecop_class_overload_clear()
 
 	p = &(timecop_ovld_class[0]);
 	while (p->orig_name != NULL) {
-		if (zend_hash_find(EG(class_table), p->save_name,
-						   strlen(p->save_name)+1, (void **)&pce_orig) == SUCCESS) {
+		if (zend_hash_find(EG(class_table), p->save_name, strlen(p->save_name)+1,
+						   (void **)&pce_orig) == SUCCESS) {
 			ce_orig = *pce_orig;
+			ce_orig->refcount++;
 			zend_hash_update(EG(class_table), p->orig_name, strlen(p->orig_name)+1,
 							 &ce_orig, sizeof(zend_class_entry *), NULL);
 			zend_hash_del(EG(class_table), p->save_name, strlen(p->save_name)+1);
