@@ -44,6 +44,9 @@ static const struct timecop_overload_def timecop_ovld_func[] = {
 	{"time", "timecop_time", "timecop_orig_time"},
 	{"date", "timecop_date", "timecop_orig_date"},
 	{"gmdate", "timecop_gmdate", "timecop_orig_gmdate"},
+	{"idate", "timecop_idate", "timecop_orig_idate"},
+	{"getdate", "timecop_getdate", "timecop_orig_getdate"},
+	{"localtime", "timecop_localtime", "timecop_orig_localtime"},
 	{"strtotime", "timecop_strtotime", "timecop_orig_strtotime"},
 	{"strftime", "timecop_strftime", "timecop_orig_strftime"},
 	{"gmstrftime", "timecop_gmstrftime", "timecop_orig_gmstrftime"},
@@ -66,6 +69,9 @@ const zend_function_entry timecop_functions[] = {
 	PHP_FE(timecop_time, NULL)
 	PHP_FE(timecop_date, NULL)
 	PHP_FE(timecop_gmdate, NULL)
+	PHP_FE(timecop_idate, NULL)
+	PHP_FE(timecop_getdate, NULL)
+	PHP_FE(timecop_localtime, NULL)
 	PHP_FE(timecop_strtotime, NULL)
 	PHP_FE(timecop_strftime, NULL)
 	PHP_FE(timecop_gmstrftime, NULL)
@@ -464,7 +470,7 @@ PHP_FUNCTION(timecop_time)
 }
 /* }}} */
 
-/* {{{ proto string date(string format [, long timestamp])
+/* {{{ proto string timecop_date(string format [, long timestamp])
    Format a local date/time */
 PHP_FUNCTION(timecop_date)
 {
@@ -472,11 +478,36 @@ PHP_FUNCTION(timecop_date)
 }
 /* }}} */
 
-/* {{{ proto string gmdate(string format [, long timestamp])
+/* {{{ proto string timecop_gmdate(string format [, long timestamp])
    Format a GMT date/time */
 PHP_FUNCTION(timecop_gmdate)
 {
 	_timecop_call_function(INTERNAL_FUNCTION_PARAM_PASSTHRU, "gmdate", "timecop_orig_gmdate", 1);
+}
+/* }}} */
+
+/* {{{ proto int timecop_idate(string format [, int timestamp])
+   Format a local time/date as integer */
+PHP_FUNCTION(timecop_idate)
+{
+	_timecop_call_function(INTERNAL_FUNCTION_PARAM_PASSTHRU, "idate", "timecop_orig_idate", 1);
+}
+/* }}} */
+
+/* {{{ proto array timecop_getdate([int timestamp])
+   Get date/time information */
+PHP_FUNCTION(timecop_getdate)
+{
+	_timecop_call_function(INTERNAL_FUNCTION_PARAM_PASSTHRU, "getdate", "timecop_orig_getdate", 0);
+}
+/* }}} */
+
+/* {{{ proto array timecop_localtime([int timestamp [, bool associative_array]])
+   Returns the results of the C system call localtime as an associative array if
+ the associative_array argument is set to 1 other wise it is a regular array */
+PHP_FUNCTION(timecop_localtime)
+{
+	_timecop_call_function(INTERNAL_FUNCTION_PARAM_PASSTHRU, "localtime", "timecop_orig_localtime", 0);
 }
 /* }}} */
 
