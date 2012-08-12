@@ -50,6 +50,7 @@ static const struct timecop_overload_def timecop_ovld_func[] = {
 	{"strtotime", "timecop_strtotime", "timecop_orig_strtotime"},
 	{"strftime", "timecop_strftime", "timecop_orig_strftime"},
 	{"gmstrftime", "timecop_gmstrftime", "timecop_orig_gmstrftime"},
+	{"unixtojd", "timecop_unixtojd", "timecop_orig_unixtojd"},
 	{NULL, NULL, NULL}
 };
 /* }}} */
@@ -75,6 +76,7 @@ const zend_function_entry timecop_functions[] = {
 	PHP_FE(timecop_strtotime, NULL)
 	PHP_FE(timecop_strftime, NULL)
 	PHP_FE(timecop_gmstrftime, NULL)
+	PHP_FE(timecop_unixtojd, NULL)
 	PHP_FE_END
 };
 /* }}} */
@@ -532,6 +534,14 @@ PHP_FUNCTION(timecop_strftime)
 PHP_FUNCTION(timecop_gmstrftime)
 {
 	_timecop_call_function(INTERNAL_FUNCTION_PARAM_PASSTHRU, "gmstrftime", "timecop_orig_gmstrftime", 1);
+}
+/* }}} */
+
+/* {{{ proto int timecop_unixtojd([int timestamp])
+   Convert UNIX timestamp to Julian Day */
+PHP_FUNCTION(timecop_unixtojd)
+{
+	_timecop_call_function(INTERNAL_FUNCTION_PARAM_PASSTHRU, "unixtojd", "timecop_orig_unixtojd", 0);
 }
 /* }}} */
 
