@@ -382,26 +382,27 @@ static void call_callable_with_optional_timestamp(INTERNAL_FUNCTION_PARAMETERS, 
 
 	if (ZEND_NUM_ARGS() == num_required_func_args) {
 		/* append optional timestamp argument */
-		zval *tmp;
-		zval ***old_params;
-		int i;
-		ALLOC_INIT_ZVAL(tmp);
-		ZVAL_LONG(tmp, _timecop_current_timestamp());
-		old_params = fci.params;
+		zval ***orig_params;
+
+		orig_params = fci.params;
 		fci.param_count = num_required_func_args + 1;
-		fci.params = (zval ***)safe_emalloc(fci.param_count, sizeof(zval **), 0);
-		for (i = 0; i < fci.param_count - 1; i++) {
-			fci.params[i] = old_params[i];
+		fci.params = alloc_fcall_params(fci.param_count);
+		copy_fcall_params(orig_params, fci.params, num_required_func_args);
+		if (orig_params) {
+			efree(orig_params);
 		}
-		fci.params[fci.param_count - 1] = (zval**)emalloc(sizeof(zval*));
-		*fci.params[fci.param_count - 1] = tmp;
+		ZVAL_LONG(*fci.params[fci.param_count - 1], _timecop_current_timestamp());
 	}
 
 	if (zend_call_function(&fci, &fci_cache TSRMLS_CC) == SUCCESS && fci.retval_ptr_ptr && *fci.retval_ptr_ptr) {
 		COPY_PZVAL_TO_ZVAL(*return_value, *fci.retval_ptr_ptr);
 	}
 	if (fci.params) {
-		efree(fci.params);
+		if (ZEND_NUM_ARGS() == num_required_func_args) {
+			dtor_fcall_params(fci.params, fci.param_count);
+		} else {
+			efree(fci.params);
+		}
 	}
 }
 
@@ -435,7 +436,9 @@ static void _timecop_call_constructor(INTERNAL_FUNCTION_PARAMETERS, zval **objec
 	} else {
 		zend_error(E_ERROR, "INTERNAL ERROR: too many parameters for method call.");
 	}
-
+	if (params) {
+		efree(params);
+	}
 }
 
 
@@ -750,9 +753,10 @@ PHP_METHOD(TimecopDateTime, __construct)
 	_timecop_call_constructor(INTERNAL_FUNCTION_PARAM_PASSTHRU, &obj, parent_ce);
 
 	/* call DateTime::setTimestamp() */
-	ALLOC_INIT_ZVAL(tmp);
+	MAKE_STD_ZVAL(tmp);
 	ZVAL_LONG(tmp, _timecop_current_timestamp());
 	zend_call_method_with_1_params(&obj, parent_ce, NULL, "settimestamp", NULL, tmp);
+	zval_ptr_dtor(&tmp);
 }
 /* }}} */
 
