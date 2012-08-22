@@ -49,6 +49,8 @@ PHP_FUNCTION(timecop_freeze);
 PHP_FUNCTION(timecop_travel);
 PHP_FUNCTION(timecop_return);
 PHP_FUNCTION(timecop_time);
+PHP_FUNCTION(timecop_mktime);
+PHP_FUNCTION(timecop_gmmktime);
 PHP_FUNCTION(timecop_date);
 PHP_FUNCTION(timecop_gmdate);
 PHP_FUNCTION(timecop_idate);
