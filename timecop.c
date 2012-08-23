@@ -104,6 +104,7 @@ static int timecop_class_overload();
 static int timecop_func_overload_clear();
 static int timecop_class_overload_clear();
 
+static int timecop_zend_fcall_info_init(zval *callable, zend_fcall_info *fci, zend_fcall_info_cache *fcc TSRMLS_DC);
 static int init_fcall_info(zval *callable, zend_fcall_info * fci, zend_fcall_info_cache * fcc, int num_args TSRMLS_DC);
 static int init_timecop_date_fcall_info(zval *callable, zend_fcall_info * fci, zend_fcall_info_cache * fcc TSRMLS_DC);
 static zval *timecop_date_fcall(const char *format, zend_fcall_info * fci, zend_fcall_info_cache * fcc TSRMLS_DC);
@@ -251,8 +252,7 @@ static int timecop_func_overload()
 							 "timecop couldn't find function %s.", p->ovld_name);
 		} else if(zend_hash_find(EG(function_table), p->orig_name, strlen(p->orig_name)+1,
 								 (void **)&orig) != SUCCESS) {
-			php_error_docref("https://github.com/hnw/php-timecop" TSRMLS_CC, E_WARNING,
-							 "timecop couldn't find function %s.", p->orig_name);
+			// Do nothing. Because some functions are introduced by optional extensions.
 		} else {
 			zend_hash_add(EG(function_table), p->save_name, strlen(p->save_name)+1,
 						  orig, sizeof(zend_function), NULL);
@@ -364,15 +364,36 @@ static long _timecop_current_timestamp()
 	return current_timestamp;
 }
 
+static int timecop_zend_fcall_info_init(zval *callable, zend_fcall_info *fci, zend_fcall_info_cache *fcc TSRMLS_DC)
+{
+	int init_result;
+	char *is_callable_error = NULL;
+
+#if !defined(PHP_VERSION_ID) || PHP_VERSION_ID < 50300
+	init_result = zend_fcall_info_init(callable, fci, fcc TSRMLS_CC);
+#else
+	init_result = zend_fcall_info_init(callable, 0, fci, fcc, NULL, &is_callable_error TSRMLS_CC);
+#endif
+	if (init_result == FAILURE) {
+		if (is_callable_error) {
+			zend_error(E_ERROR, "INTERNAL ERROR: to be a valid callback, %s", is_callable_error);
+		}
+	}
+	if (is_callable_error) {
+		efree(is_callable_error);
+	}
+	return init_result;
+}
+
 static void call_callable_with_optional_timestamp(INTERNAL_FUNCTION_PARAMETERS, zval* callable, int num_required_func_args)
 {
 	zval *retval_ptr = NULL;
 	zend_fcall_info fci;
 	zend_fcall_info_cache fci_cache;
-	char *is_callable_error = NULL;
 
-	/* fci_cache = empty_fcall_info_cache; */
-	zend_fcall_info_init(callable, 0, &fci, &fci_cache, NULL, &is_callable_error TSRMLS_CC);
+	if (timecop_zend_fcall_info_init(callable, &fci, &fci_cache TSRMLS_CC) == FAILURE) {
+		return;
+	}
 	fci.retval_ptr_ptr = &retval_ptr;
 	fci.no_separation = 0;
 
@@ -489,17 +510,11 @@ PHP_FUNCTION(timecop_time)
 
 static int init_fcall_info(zval *callable, zend_fcall_info * fci, zend_fcall_info_cache * fcc, int num_args TSRMLS_DC)
 {
-	char *is_callable_error = NULL;
 	zval **args;
 	int i;
-	if (zend_fcall_info_init(callable, 0, fci, fcc, NULL, &is_callable_error TSRMLS_CC) == FAILURE) {
-		if (is_callable_error) {
-			efree(is_callable_error);
-		}
+
+	if (timecop_zend_fcall_info_init(callable, fci, fcc TSRMLS_CC) == FAILURE) {
 		return 0;
-	}
-	if (is_callable_error) {
-		efree(is_callable_error);
 	}
 	fci->param_count = num_args;
 	fci->params = safe_emalloc(num_args, sizeof(zval**), 0);
@@ -591,13 +606,12 @@ PHPAPI void php_timecop_mktime(INTERNAL_FUNCTION_PARAMETERS, zval *mktime_callab
 	zval *retval_ptr = NULL;
 	zend_fcall_info fci;
 	zend_fcall_info_cache fci_cache;
-	char *is_callable_error = NULL;
-	int old_param_count;
-	int i;
 	int argc = 0;
 	zval ***args = NULL;
 
-	zend_fcall_info_init(mktime_callable, 0, &fci, &fci_cache, NULL, &is_callable_error TSRMLS_CC);
+	if (timecop_zend_fcall_info_init(mktime_callable, &fci, &fci_cache TSRMLS_CC) == FAILURE) {
+		return;
+	}
 	fci.retval_ptr_ptr = &retval_ptr;
 	fci.no_separation = 0;
 
