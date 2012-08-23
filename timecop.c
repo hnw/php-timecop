@@ -81,7 +81,7 @@ const zend_function_entry timecop_functions[] = {
 	PHP_FE(timecop_strftime, NULL)
 	PHP_FE(timecop_gmstrftime, NULL)
 	PHP_FE(timecop_unixtojd, NULL)
-	PHP_FE_END
+	{NULL, NULL, NULL}
 };
 /* }}} */
 
