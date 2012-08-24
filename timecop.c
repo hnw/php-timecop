@@ -397,11 +397,14 @@ static void call_callable_with_optional_timestamp(INTERNAL_FUNCTION_PARAMETERS, 
 	fci.retval_ptr_ptr = &retval_ptr;
 	fci.no_separation = 0;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "*", &fci.params, &fci.param_count) == FAILURE) {
+	fci.param_count = ZEND_NUM_ARGS();
+	fci.params = (zval ***) safe_emalloc(fci.param_count, sizeof(zval **), 0);
+	if (zend_get_parameters_array_ex(fci.param_count, fci.params) == FAILURE) {
+		efree(fci.params);
 		return;
 	}
 
-	if (ZEND_NUM_ARGS() == num_required_func_args) {
+	if (fci.param_count == num_required_func_args) {
 		/* append optional timestamp argument */
 		zval ***orig_params;
 
@@ -419,7 +422,7 @@ static void call_callable_with_optional_timestamp(INTERNAL_FUNCTION_PARAMETERS, 
 		COPY_PZVAL_TO_ZVAL(*return_value, *fci.retval_ptr_ptr);
 	}
 	if (fci.params) {
-		if (ZEND_NUM_ARGS() == num_required_func_args) {
+		if (fci.param_count == num_required_func_args) {
 			dtor_fcall_params(fci.params, fci.param_count);
 		} else {
 			efree(fci.params);
@@ -442,17 +445,19 @@ static void _timecop_call_constructor(INTERNAL_FUNCTION_PARAMETERS, zval **objec
 {
 	zend_function **fn_proxy = &obj_ce->constructor;
 	char* method_name = "__constructor";
-	zend_uint param_count;
+	zend_uint param_count = ZEND_NUM_ARGS();
 	zval ***params;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "*", &params, &param_count) == FAILURE) {
+	params = (zval ***) safe_emalloc(param_count, sizeof(zval **), 0);
+	if (zend_get_parameters_array_ex(param_count, params) == FAILURE) {
+		efree(params);
 		return;
 	}
-	if (ZEND_NUM_ARGS() == 0) {
+	if (param_count == 0) {
 		zend_call_method_with_0_params(object_pp, obj_ce, &obj_ce->constructor, method_name, NULL);
-	} else if (ZEND_NUM_ARGS() == 1) {
+	} else if (param_count == 1) {
 		zend_call_method_with_1_params(object_pp, obj_ce, &obj_ce->constructor, method_name, NULL, *params[0]);
-	} else if (ZEND_NUM_ARGS() == 2) {
+	} else if (param_count == 2) {
 		zend_call_method_with_2_params(object_pp, obj_ce, &obj_ce->constructor, method_name, NULL, *params[0], *params[1]);
 	} else {
 		zend_error(E_ERROR, "INTERNAL ERROR: too many parameters for method call.");
@@ -606,7 +611,7 @@ PHPAPI void php_timecop_mktime(INTERNAL_FUNCTION_PARAMETERS, zval *mktime_callab
 	zval *retval_ptr = NULL;
 	zend_fcall_info fci;
 	zend_fcall_info_cache fci_cache;
-	int argc = 0;
+	int argc = ZEND_NUM_ARGS();
 	zval ***args = NULL;
 
 	if (timecop_zend_fcall_info_init(mktime_callable, &fci, &fci_cache TSRMLS_CC) == FAILURE) {
@@ -615,7 +620,9 @@ PHPAPI void php_timecop_mktime(INTERNAL_FUNCTION_PARAMETERS, zval *mktime_callab
 	fci.retval_ptr_ptr = &retval_ptr;
 	fci.no_separation = 0;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "*", &args, &argc) == FAILURE) {
+	args = (zval ***) safe_emalloc(argc, sizeof(zval **), 0);
+	if (zend_get_parameters_array_ex(argc, args) == FAILURE) {
+		efree(args);
 		return;
 	}
 
