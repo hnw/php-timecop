@@ -11,9 +11,13 @@ Function overloading test for unixtojd
 	}
 --INI--
 timecop.func_overload=1
+date.timezone=America/Los_Angeles
 --FILE--
 <?php
-timecop_freeze(timecop_strtotime("2012-02-29 01:23:45"));
+timecop_freeze(timecop_strtotime("2012-02-29 14:59:59 GMT"));
+var_dump(unixtojd());
+timecop_freeze(timecop_strtotime("2012-02-29 15:00:00 GMT"));
 var_dump(unixtojd());
 --EXPECT--
 int(2455987)
+int(2455988)
