@@ -11,6 +11,7 @@ Function overloading test for gmstrftime
 	}
 --INI--
 timecop.func_overload=1
+date.timezone=America/Los_Angeles
 --FILE--
 <?php
 timecop_freeze(timecop_strtotime("2012-02-29 01:23:45 GMT"));
