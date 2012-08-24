@@ -64,32 +64,96 @@ static const struct timecop_overload_def timecop_ovld_class[] = {
 };
 /* }}} */
 
+ZEND_BEGIN_ARG_INFO(arginfo_timecop_time, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_timecop_mktime, 0, 0, 0)
+        ZEND_ARG_INFO(0, hour)
+        ZEND_ARG_INFO(0, min)
+        ZEND_ARG_INFO(0, sec)
+        ZEND_ARG_INFO(0, mon)
+        ZEND_ARG_INFO(0, day)
+        ZEND_ARG_INFO(0, year)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_timecop_gmmktime, 0, 0, 0)
+        ZEND_ARG_INFO(0, hour)
+        ZEND_ARG_INFO(0, min)
+        ZEND_ARG_INFO(0, sec)
+        ZEND_ARG_INFO(0, mon)
+        ZEND_ARG_INFO(0, day)
+        ZEND_ARG_INFO(0, year)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_timecop_date, 0, 0, 1)
+        ZEND_ARG_INFO(0, format)
+        ZEND_ARG_INFO(0, timestamp)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_timecop_gmdate, 0, 0, 1)
+        ZEND_ARG_INFO(0, format)
+        ZEND_ARG_INFO(0, timestamp)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_timecop_idate, 0, 0, 1)
+        ZEND_ARG_INFO(0, format)
+        ZEND_ARG_INFO(0, timestamp)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_timecop_getdate, 0, 0, 0)
+        ZEND_ARG_INFO(0, timestamp)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_timecop_localtime, 0, 0, 0)
+        ZEND_ARG_INFO(0, timestamp)
+        ZEND_ARG_INFO(0, associative_array)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_timecop_strtotime, 0, 0, 1)
+        ZEND_ARG_INFO(0, time)
+        ZEND_ARG_INFO(0, now)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_timecop_strftime, 0, 0, 1)
+        ZEND_ARG_INFO(0, format)
+        ZEND_ARG_INFO(0, timestamp)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_timecop_gmstrftime, 0, 0, 1)
+        ZEND_ARG_INFO(0, format)
+        ZEND_ARG_INFO(0, timestamp)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_timecop_unixtojd, 0, 0, 0)
+        ZEND_ARG_INFO(0, timestamp)
+ZEND_END_ARG_INFO()
+
 /* {{{ timecop_functions[] */
 const zend_function_entry timecop_functions[] = {
 	PHP_FE(timecop_freeze, NULL)
 	PHP_FE(timecop_travel, NULL)
 	PHP_FE(timecop_return, NULL)
-	PHP_FE(timecop_time, NULL)
-	PHP_FE(timecop_mktime, NULL)
-	PHP_FE(timecop_gmmktime, NULL)
-	PHP_FE(timecop_date, NULL)
-	PHP_FE(timecop_gmdate, NULL)
-	PHP_FE(timecop_idate, NULL)
-	PHP_FE(timecop_getdate, NULL)
-	PHP_FE(timecop_localtime, NULL)
-	PHP_FE(timecop_strtotime, NULL)
-	PHP_FE(timecop_strftime, NULL)
-	PHP_FE(timecop_gmstrftime, NULL)
-	PHP_FE(timecop_unixtojd, NULL)
+	PHP_FE(timecop_time, arginfo_timecop_time)
+	PHP_FE(timecop_mktime, arginfo_timecop_mktime)
+	PHP_FE(timecop_gmmktime, arginfo_timecop_gmmktime)
+	PHP_FE(timecop_date, arginfo_timecop_date)
+	PHP_FE(timecop_gmdate, arginfo_timecop_gmdate)
+	PHP_FE(timecop_idate, arginfo_timecop_idate)
+	PHP_FE(timecop_getdate, arginfo_timecop_getdate)
+	PHP_FE(timecop_localtime, arginfo_timecop_localtime)
+	PHP_FE(timecop_strtotime, arginfo_timecop_strtotime)
+	PHP_FE(timecop_strftime, arginfo_timecop_strftime)
+	PHP_FE(timecop_gmstrftime, arginfo_timecop_gmstrftime)
+	PHP_FE(timecop_unixtojd, arginfo_timecop_unixtojd)
 	{NULL, NULL, NULL}
 };
 /* }}} */
 
 /* declare method parameters, */
-static ZEND_BEGIN_ARG_INFO(arginfo_timecop_datetime_create, 0)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_timecop_datetime_create, 0, 0, 0)
 	ZEND_ARG_INFO(0, time)
 	ZEND_ARG_INFO(0, object)
-ZEND_END_ARG_INFO();
+ZEND_END_ARG_INFO()
 
 /* each method can have its own parameters and visibility */
 static zend_function_entry timecop_datetime_class_functions[] = {
