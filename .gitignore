@@ -1,3 +1,4 @@
+# Ignore automatically created files in building PHP extensions
 .deps
 .libs
 Makefile
@@ -24,3 +25,27 @@ missing
 mkinstalldirs
 modules
 run-tests.php
+
+# Ignore test-related temporary files
+tmp-php.ini
+tests/*.diff
+tests/*.exp
+tests/*.log
+tests/*.php
+tests/*.sh
+tests/*.out
+
+# Ignore C-related temporary files
+*.o
+*.lo
+*.la
+
+# Ignore other temporary files
+#*#
+.*.rej
+*.rej
+.*~
+*~
+.#*
+.DS_Store
+Thumbs.db
