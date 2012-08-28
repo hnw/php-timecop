@@ -1,14 +1,16 @@
 language: php
 
 php:
+  - 5.2
   - 5.3
   - 5.4
+
++env:
+  - REPORT_EXIT_STATUS=1
+  - NO_INTERACTION=1
 
 before_script:
   - phpize && ./configure && make
 
 script:
-  - make test
-
-after_script:
-  - make clean
+  - make test | tee test-output.txt && grep 'TEST SUMMARY$' test-output.txt > /dev/null ; test $? '!=' 0
