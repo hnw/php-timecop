@@ -5,8 +5,9 @@ php:
   - 5.3
   - 5.4
 
-+env:
-  - REPORT_EXIT_STATUS=1 NO_INTERACTION=1
+env:
+  - REPORT_EXIT_STATUS=1
+  - NO_INTERACTION=1
 
 before_script:
   - phpize && ./configure && make
