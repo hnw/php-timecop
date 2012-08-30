@@ -1,18 +1,18 @@
 --TEST--
-Function overloading test for gmmktime
+Check for timecop_orig_time presence when timecop.func_overload=0
 --SKIPIF--
-<?php
+<?php 
 	extension_loaded('timecop') or die('skip timecop not available');
-	$required_func = array("timecop_freeze", "gmmktime", "timecop_orig_gmmktime");
+	$required_func = array("timecop_time");
 	foreach ($required_func as $func_name) {
 		if (!function_exists($func_name)) {
 			die("skip $func_name() function is not available.");
 		}
 	}
 --INI--
+timecop.func_overload=0
 --FILE--
 <?php
-timecop_freeze(0);
-var_dump(gmmktime(0));
+var_dump(function_exists("timecop_orig_time"));
 --EXPECT--
-int(0)
+bool(false)

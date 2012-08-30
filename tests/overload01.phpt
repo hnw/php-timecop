@@ -10,7 +10,6 @@ Function overloading test for time
 		}
 	}
 --INI--
-timecop.func_overload=1
 --FILE--
 <?php
 timecop_freeze(0);

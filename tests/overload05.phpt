@@ -10,7 +10,6 @@ Function overloading test for strftime
 		}
 	}
 --INI--
-timecop.func_overload=1
 date.timezone=America/Los_Angeles
 --FILE--
 <?php

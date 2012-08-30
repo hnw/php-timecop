@@ -16,7 +16,6 @@ Class overloading test for datetime
 		}
 	}
 --INI--
-timecop.func_overload=1
 date.timezone=America/Los_Angeles
 --FILE--
 <?php

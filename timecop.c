@@ -224,7 +224,7 @@ ZEND_GET_MODULE(timecop)
 /* {{{ PHP_INI
  */
 PHP_INI_BEGIN()
-    STD_PHP_INI_ENTRY("timecop.func_overload", "0",
+    STD_PHP_INI_ENTRY("timecop.func_overload", "1",
     PHP_INI_SYSTEM, OnUpdateLong, func_overload, zend_timecop_globals, timecop_globals)
 PHP_INI_END()
 /* }}} */
