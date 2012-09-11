@@ -9,14 +9,14 @@ Function overrideing test for unixtojd
 			die("skip $func_name() function is not available.");
 		}
 	}
---INI--
-date.timezone=America/Los_Angeles
+--ENV--
+TZ=UTC
 --FILE--
 <?php
-timecop_freeze(timecop_strtotime("2012-02-29 14:59:59 GMT"));
+timecop_freeze(timecop_strtotime("1995-10-08 23:59:59 GMT"));
 var_dump(unixtojd());
-timecop_freeze(timecop_strtotime("2012-02-29 15:00:00 GMT"));
+timecop_freeze(timecop_strtotime("1995-10-09 00:00:00 GMT"));
 var_dump(unixtojd());
 --EXPECT--
-int(2455987)
-int(2455988)
+int(2449999)
+int(2450000)
