@@ -1,5 +1,5 @@
 --TEST--
-Check for timecop_orig_time presence when timecop.func_overload=0
+Check for timecop_orig_time presence when timecop.func_override=0
 --SKIPIF--
 <?php 
 	extension_loaded('timecop') or die('skip timecop not available');
@@ -10,7 +10,7 @@ Check for timecop_orig_time presence when timecop.func_overload=0
 		}
 	}
 --INI--
-timecop.func_overload=0
+timecop.func_override=0
 --FILE--
 <?php
 var_dump(function_exists("timecop_orig_time"));

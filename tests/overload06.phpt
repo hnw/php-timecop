@@ -1,5 +1,5 @@
 --TEST--
-Function overloading test for gmstrftime
+Function overrideing test for gmstrftime
 --SKIPIF--
 <?php 
 	extension_loaded('timecop') or die('skip timecop not available');

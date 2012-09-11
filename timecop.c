@@ -35,7 +35,7 @@ ZEND_DECLARE_MODULE_GLOBALS(timecop)
 
 static void timecop_globals_ctor(zend_timecop_globals *globals TSRMLS_DC) {
 	/* Initialize your global struct */
-	globals->func_overload = 1;
+	globals->func_override = 1;
 	globals->timecop_mode = TIMECOP_MODE_NORMAL;
 	globals->freezed_timestamp = 0;
 	globals->travel_offset = 0;
@@ -53,8 +53,8 @@ static zend_object_handlers timecop_datetime_object_handlers;
 static zend_class_entry *timecop_datetime_ce;
 */
 
-/* {{{ timecop_overload_def mb_ovld_func[] */
-static const struct timecop_overload_def timecop_ovld_func[] = {
+/* {{{ timecop_override_def mb_ovld_func[] */
+static const struct timecop_override_def timecop_ovld_func[] = {
 	{"time", "timecop_time", "timecop_orig_time"},
 	{"mktime", "timecop_mktime", "timecop_orig_mktime"},
 	{"gmmktime", "timecop_gmmktime", "timecop_orig_gmmktime"},
@@ -71,8 +71,8 @@ static const struct timecop_overload_def timecop_ovld_func[] = {
 };
 /* }}} */
 
-/* {{{ timecop_overload_def mb_ovld_class[] */
-static const struct timecop_overload_def timecop_ovld_class[] = {
+/* {{{ timecop_override_def mb_ovld_class[] */
+static const struct timecop_override_def timecop_ovld_class[] = {
 	{"datetime", "timecopdatetime", "timecoporigdatetime"},
 	{NULL, NULL, NULL}
 };
@@ -190,10 +190,10 @@ static zend_function_entry timecop_datetime_class_functions[] = {
 static void timecop_globals_ctor(zend_timecop_globals *globals TSRMLS_DC);
 
 static int init_timecop_datetime(TSRMLS_D);
-static int timecop_func_overload(TSRMLS_D);
-static int timecop_class_overload(TSRMLS_D);
-static int timecop_func_overload_clear(TSRMLS_D);
-static int timecop_class_overload_clear(TSRMLS_D);
+static int timecop_func_override(TSRMLS_D);
+static int timecop_class_override(TSRMLS_D);
+static int timecop_func_override_clear(TSRMLS_D);
+static int timecop_class_override_clear(TSRMLS_D);
 
 static int timecop_zend_fcall_info_init(zval *callable, zend_fcall_info *fci, zend_fcall_info_cache *fcc TSRMLS_DC);
 static int init_fcall_info(zval *callable, zend_fcall_info * fci, zend_fcall_info_cache * fcc, int num_args TSRMLS_DC);
@@ -240,8 +240,8 @@ ZEND_GET_MODULE(timecop)
 /* {{{ PHP_INI
  */
 PHP_INI_BEGIN()
-    STD_PHP_INI_ENTRY("timecop.func_overload", "1",
-    PHP_INI_SYSTEM, OnUpdateLong, func_overload, zend_timecop_globals, timecop_globals)
+    STD_PHP_INI_ENTRY("timecop.func_override", "1",
+    PHP_INI_SYSTEM, OnUpdateLong, func_override, zend_timecop_globals, timecop_globals)
 PHP_INI_END()
 /* }}} */
 
@@ -272,9 +272,9 @@ PHP_RINIT_FUNCTION(timecop)
 
 	init_timecop_datetime(TSRMLS_C);
 
-	if (TIMECOP_G(func_overload)) {
-		if (SUCCESS != timecop_func_overload(TSRMLS_C) ||
-			SUCCESS != timecop_class_overload(TSRMLS_C)) {
+	if (TIMECOP_G(func_override)) {
+		if (SUCCESS != timecop_func_override(TSRMLS_C) ||
+			SUCCESS != timecop_class_override(TSRMLS_C)) {
 			return FAILURE;
 		}
 	}
@@ -286,9 +286,9 @@ PHP_RINIT_FUNCTION(timecop)
 /* {{{ PHP_RSHUTDOWN_FUNCTION(timecop) */
 PHP_RSHUTDOWN_FUNCTION(timecop)
 {
-	if (TIMECOP_G(func_overload)) {
-		timecop_func_overload_clear(TSRMLS_C);
-		timecop_class_overload_clear(TSRMLS_C);
+	if (TIMECOP_G(func_override)) {
+		timecop_func_override_clear(TSRMLS_C);
+		timecop_class_override_clear(TSRMLS_C);
 	}
 
 	TIMECOP_G(timecop_mode) = TIMECOP_MODE_NORMAL;
@@ -331,10 +331,10 @@ static int init_timecop_datetime(TSRMLS_D)
 	return SUCCESS;
 }
 
-static int timecop_func_overload(TSRMLS_D)
+static int timecop_func_override(TSRMLS_D)
 {
 	zend_function *func, *orig;
-	const struct timecop_overload_def *p;
+	const struct timecop_override_def *p;
 
 	p = &(timecop_ovld_func[0]);
 	while (p->orig_name != NULL) {
@@ -363,10 +363,10 @@ static int timecop_func_overload(TSRMLS_D)
 	return SUCCESS;
 }
 
-static int timecop_class_overload(TSRMLS_D)
+static int timecop_class_override(TSRMLS_D)
 {
 	zend_class_entry **pce_ovld, **pce_orig, *ce_ovld, *ce_orig;
-	const struct timecop_overload_def *p;
+	const struct timecop_override_def *p;
 
 	p = &(timecop_ovld_class[0]);
 	while (p->orig_name != NULL) {
@@ -400,10 +400,10 @@ static int timecop_class_overload(TSRMLS_D)
 	return SUCCESS;
 }
 
-/*  clear overloaded function. */
-static int timecop_func_overload_clear(TSRMLS_D)
+/*  clear overrideed function. */
+static int timecop_func_override_clear(TSRMLS_D)
 {
-	const struct timecop_overload_def *p;
+	const struct timecop_override_def *p;
 	zend_function *func, *orig;
 
 	p = &(timecop_ovld_func[0]);
@@ -419,9 +419,9 @@ static int timecop_func_overload_clear(TSRMLS_D)
 	return SUCCESS;
 }
 
-static int timecop_class_overload_clear(TSRMLS_D)
+static int timecop_class_override_clear(TSRMLS_D)
 {
-	const struct timecop_overload_def *p;
+	const struct timecop_override_def *p;
 	zend_class_entry **pce_ovld, **pce_orig, *ce_ovld, *ce_orig;
 	zend_function *func, *orig;
 
@@ -509,7 +509,7 @@ static void call_callable_with_optional_timestamp(INTERNAL_FUNCTION_PARAMETERS, 
 static void _timecop_call_function(INTERNAL_FUNCTION_PARAMETERS, char* orig_func_name, char* saved_func_name, int num_required_func_args)
 {
 	zval callable;
-	if (TIMECOP_G(func_overload)){
+	if (TIMECOP_G(func_override)){
 		ZVAL_STRING(&callable, saved_func_name, 1);
 	} else {
 		ZVAL_STRING(&callable, orig_func_name, 1);
@@ -696,7 +696,7 @@ static zval *timecop_current_date(char *format TSRMLS_DC)
 	zend_fcall_info_cache date_fci_cache;
 	zval date_callable;
 
-	if (TIMECOP_G(func_overload)){
+	if (TIMECOP_G(func_override)){
 		ZVAL_STRING(&date_callable, "timecop_orig_date", 1);
 	} else {
 		ZVAL_STRING(&date_callable, "date", 1);
@@ -764,7 +764,7 @@ PHPAPI void php_timecop_mktime(INTERNAL_FUNCTION_PARAMETERS, zval *mktime_callab
 PHP_FUNCTION(timecop_mktime)
 {
 	zval mktime_callable, date_callable;
-	if (TIMECOP_G(func_overload)){
+	if (TIMECOP_G(func_override)){
 		ZVAL_STRING(&mktime_callable, "timecop_orig_mktime", 1);
 		ZVAL_STRING(&date_callable, "timecop_orig_date", 1);
 	} else {
@@ -780,7 +780,7 @@ PHP_FUNCTION(timecop_mktime)
 PHP_FUNCTION(timecop_gmmktime)
 {
 	zval mktime_callable, date_callable;
-	if (TIMECOP_G(func_overload)){
+	if (TIMECOP_G(func_override)){
 		ZVAL_STRING(&mktime_callable, "timecop_orig_gmmktime", 1);
 		ZVAL_STRING(&date_callable, "timecop_orig_gmdate", 1);
 	} else {

@@ -1,5 +1,5 @@
 --TEST--
-Function overloading test for date
+Function overrideing test for date
 --SKIPIF--
 <?php 
 	extension_loaded('timecop') or die('skip timecop not available');

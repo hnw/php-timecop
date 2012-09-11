@@ -1,5 +1,5 @@
 --TEST--
-Function overloading test for idate
+Function overrideing test for idate
 --SKIPIF--
 <?php 
 	extension_loaded('timecop') or die('skip timecop not available');

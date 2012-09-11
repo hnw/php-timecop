@@ -1,5 +1,5 @@
 --TEST--
-Class overloading test for datetime
+Class overrideing test for datetime
 --SKIPIF--
 <?php 
 	extension_loaded('timecop') or die('skip timecop not available');

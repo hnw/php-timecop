@@ -1,5 +1,5 @@
 --TEST--
-Function overloading test for localtime
+Function overrideing test for localtime
 --SKIPIF--
 <?php 
 	extension_loaded('timecop') or die('skip timecop not available');

@@ -1,5 +1,5 @@
 --TEST--
-Function overloading test for unixtojd
+Function overrideing test for unixtojd
 --SKIPIF--
 <?php 
 	extension_loaded('timecop') or die('skip timecop not available');

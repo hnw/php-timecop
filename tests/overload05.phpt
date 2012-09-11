@@ -1,5 +1,5 @@
 --TEST--
-Function overloading test for strftime
+Function overrideing test for strftime
 --SKIPIF--
 <?php 
 	extension_loaded('timecop') or die('skip timecop not available');

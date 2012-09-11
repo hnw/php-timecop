@@ -70,7 +70,7 @@ typedef enum timecop_mode_t {
 } timecop_mode_t;
 
 ZEND_BEGIN_MODULE_GLOBALS(timecop)
-	long func_overload;
+	long func_override;
 	timecop_mode_t timecop_mode;
 	long freezed_timestamp;
 	long travel_offset;
@@ -78,7 +78,7 @@ ZEND_BEGIN_MODULE_GLOBALS(timecop)
 	zend_class_entry *ce_TimecopDateTime;
 ZEND_END_MODULE_GLOBALS(timecop)
 
-struct timecop_overload_def {
+struct timecop_override_def {
 	char *orig_name;
 	char *ovld_name;
 	char *save_name;

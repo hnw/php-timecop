@@ -1,5 +1,5 @@
 --TEST--
-Function overloading test for gmdate
+Function overrideing test for gmdate
 --SKIPIF--
 <?php 
 	extension_loaded('timecop') or die('skip timecop not available');
