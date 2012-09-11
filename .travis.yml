@@ -6,7 +6,7 @@ php:
   - 5.4
 
 env:
-  - REPORT_EXIT_STATUS=1 NO_INTERACTION=1
+  - REPORT_EXIT_STATUS=1 NO_INTERACTION=1 TESTS="--show-all"
 
 before_script:
   - phpize && ./configure && make
