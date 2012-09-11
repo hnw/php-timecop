@@ -63,15 +63,15 @@ PHP_FUNCTION(timecop_unixtojd);
 
 PHP_METHOD(TimecopDateTime, __construct);
 
-typedef enum timecap_mode_t {
-	TIMECAP_MODE_NORMAL,
-	TIMECAP_MODE_FREEZE,
-	TIMECAP_MODE_TRAVEL
-} timecap_mode_t;
+typedef enum timecop_mode_t {
+	TIMECOP_MODE_NORMAL,
+	TIMECOP_MODE_FREEZE,
+	TIMECOP_MODE_TRAVEL
+} timecop_mode_t;
 
 ZEND_BEGIN_MODULE_GLOBALS(timecop)
 	long func_overload;
-	timecap_mode_t timecap_mode;
+	timecop_mode_t timecop_mode;
 	long freezed_timestamp;
 	long travel_offset;
 	zend_class_entry *ce_DateTime;

@@ -27,7 +27,21 @@
 #include "ext/standard/info.h"
 #include "php_timecop.h"
 
+#ifdef ZFS
+#include "TSRM.h"
+#endif
+
 ZEND_DECLARE_MODULE_GLOBALS(timecop)
+
+static void timecop_globals_ctor(zend_timecop_globals *globals TSRMLS_DC) {
+	/* Initialize your global struct */
+	globals->func_overload = 1;
+	globals->timecop_mode = TIMECOP_MODE_NORMAL;
+	globals->freezed_timestamp = 0;
+	globals->travel_offset = 0;
+	globals->ce_DateTime = NULL;
+	globals->ce_TimecopDateTime = NULL;
+}
 
 /* declare the class handlers */
 /*
@@ -173,11 +187,13 @@ static zend_function_entry timecop_datetime_class_functions[] = {
 	{NULL, NULL, NULL}
 };
 
-static int init_timecop_datetime();
-static int timecop_func_overload();
-static int timecop_class_overload();
-static int timecop_func_overload_clear();
-static int timecop_class_overload_clear();
+static void timecop_globals_ctor(zend_timecop_globals *globals TSRMLS_DC);
+
+static int init_timecop_datetime(TSRMLS_D);
+static int timecop_func_overload(TSRMLS_D);
+static int timecop_class_overload(TSRMLS_D);
+static int timecop_func_overload_clear(TSRMLS_D);
+static int timecop_class_overload_clear(TSRMLS_D);
 
 static int timecop_zend_fcall_info_init(zval *callable, zend_fcall_info *fci, zend_fcall_info_cache *fcc TSRMLS_DC);
 static int init_fcall_info(zval *callable, zend_fcall_info * fci, zend_fcall_info_cache * fcc, int num_args TSRMLS_DC);
@@ -186,15 +202,15 @@ static zval *timecop_date_fcall(const char *format, zend_fcall_info * fci, zend_
 static zval ***alloc_fcall_params(int num_args);
 static void dtor_fcall_params(zval ***params, int num_args);
 static void copy_fcall_params(zval ***src, zval ***dst, int num_args);
-static int fill_mktime_params(zval ***params, zval *date_callable, int from);
+static int fill_mktime_params(zval ***params, zval *date_callable, int from TSRMLS_DC);
 
-static long timecop_current_timestamp();
-static zval *timecop_current_date(char *format);
+static long timecop_current_timestamp(TSRMLS_D);
+static zval *timecop_current_date(char *format TSRMLS_DC);
 PHPAPI void php_timecop_mktime(INTERNAL_FUNCTION_PARAMETERS, zval *mktime_callable, zval *date_callable);
 
 static void call_callable_with_optional_timestamp(INTERNAL_FUNCTION_PARAMETERS, zval* callable, int num_required_func_args);
 static void _timecop_call_function(INTERNAL_FUNCTION_PARAMETERS, char* orig_func_name, char* saved_func_name, int num_required_func_args);
-static void call_constructor(zval **object_pp, zend_class_entry *ce, zval ***params, int param_count);
+static void call_constructor(zval **object_pp, zend_class_entry *ce, zval ***params, int param_count TSRMLS_DC);
 
 
 /* {{{ timecop_module_entry
@@ -233,6 +249,7 @@ PHP_INI_END()
  */
 PHP_MINIT_FUNCTION(timecop)
 {
+	ZEND_INIT_MODULE_GLOBALS(timecop, timecop_globals_ctor, NULL);
 	REGISTER_INI_ENTRIES();
 	return SUCCESS;
 }
@@ -253,11 +270,11 @@ PHP_RINIT_FUNCTION(timecop)
 	int ret;
 	zend_class_entry *parent_ce;
 
-	init_timecop_datetime();
+	init_timecop_datetime(TSRMLS_C);
 
 	if (TIMECOP_G(func_overload)) {
-		if (SUCCESS != timecop_func_overload() ||
-			SUCCESS != timecop_class_overload()) {
+		if (SUCCESS != timecop_func_overload(TSRMLS_C) ||
+			SUCCESS != timecop_class_overload(TSRMLS_C)) {
 			return FAILURE;
 		}
 	}
@@ -270,11 +287,11 @@ PHP_RINIT_FUNCTION(timecop)
 PHP_RSHUTDOWN_FUNCTION(timecop)
 {
 	if (TIMECOP_G(func_overload)) {
-		timecop_func_overload_clear();
-		timecop_class_overload_clear();
+		timecop_func_overload_clear(TSRMLS_C);
+		timecop_class_overload_clear(TSRMLS_C);
 	}
 
-	TIMECOP_G(timecap_mode) = TIMECAP_MODE_NORMAL;
+	TIMECOP_G(timecop_mode) = TIMECOP_MODE_NORMAL;
 
 	return SUCCESS;
 }
@@ -293,7 +310,7 @@ PHP_MINFO_FUNCTION(timecop)
 }
 /* }}} */
 
-static int init_timecop_datetime()
+static int init_timecop_datetime(TSRMLS_D)
 {
 	zend_class_entry **pce;
 	zend_class_entry ce;
@@ -314,7 +331,7 @@ static int init_timecop_datetime()
 	return SUCCESS;
 }
 
-static int timecop_func_overload()
+static int timecop_func_overload(TSRMLS_D)
 {
 	zend_function *func, *orig;
 	const struct timecop_overload_def *p;
@@ -346,7 +363,7 @@ static int timecop_func_overload()
 	return SUCCESS;
 }
 
-static int timecop_class_overload()
+static int timecop_class_overload(TSRMLS_D)
 {
 	zend_class_entry **pce_ovld, **pce_orig, *ce_ovld, *ce_orig;
 	const struct timecop_overload_def *p;
@@ -384,7 +401,7 @@ static int timecop_class_overload()
 }
 
 /*  clear overloaded function. */
-static int timecop_func_overload_clear()
+static int timecop_func_overload_clear(TSRMLS_D)
 {
 	const struct timecop_overload_def *p;
 	zend_function *func, *orig;
@@ -402,7 +419,7 @@ static int timecop_func_overload_clear()
 	return SUCCESS;
 }
 
-static int timecop_class_overload_clear()
+static int timecop_class_overload_clear(TSRMLS_D)
 {
 	const struct timecop_overload_def *p;
 	zend_class_entry **pce_ovld, **pce_orig, *ce_ovld, *ce_orig;
@@ -474,7 +491,7 @@ static void call_callable_with_optional_timestamp(INTERNAL_FUNCTION_PARAMETERS, 
 		if (orig_params) {
 			efree(orig_params);
 		}
-		ZVAL_LONG(*fci.params[fci.param_count - 1], timecop_current_timestamp());
+		ZVAL_LONG(*fci.params[fci.param_count - 1], timecop_current_timestamp(TSRMLS_C));
 	}
 
 	if (zend_call_function(&fci, &fci_cache TSRMLS_CC) == SUCCESS && fci.retval_ptr_ptr && *fci.retval_ptr_ptr) {
@@ -500,7 +517,7 @@ static void _timecop_call_function(INTERNAL_FUNCTION_PARAMETERS, char* orig_func
 	call_callable_with_optional_timestamp(INTERNAL_FUNCTION_PARAM_PASSTHRU, &callable, num_required_func_args);
 }
 
-static void call_constructor(zval **object_pp, zend_class_entry *ce, zval ***params, int param_count)
+static void call_constructor(zval **object_pp, zend_class_entry *ce, zval ***params, int param_count TSRMLS_DC)
 {
 	char* method_name = "__constructor";
 
@@ -523,7 +540,7 @@ PHP_FUNCTION(timecop_freeze)
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &timestamp) == FAILURE) {
 		RETURN_FALSE;
 	}
-	TIMECOP_G(timecap_mode) = TIMECAP_MODE_FREEZE;
+	TIMECOP_G(timecop_mode) = TIMECOP_MODE_FREEZE;
 	TIMECOP_G(freezed_timestamp) = timestamp;
 	RETURN_TRUE;
 }
@@ -537,7 +554,7 @@ PHP_FUNCTION(timecop_travel)
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &timestamp) == FAILURE) {
 		RETURN_FALSE;
 	}
-	TIMECOP_G(timecap_mode) = TIMECAP_MODE_TRAVEL;
+	TIMECOP_G(timecop_mode) = TIMECOP_MODE_TRAVEL;
 	TIMECOP_G(travel_offset) = timestamp - time(NULL);
 	RETURN_TRUE;
 }
@@ -547,7 +564,7 @@ PHP_FUNCTION(timecop_travel)
    Return to Time travel to specified timestamp */
 PHP_FUNCTION(timecop_return)
 {
-	TIMECOP_G(timecap_mode) = TIMECAP_MODE_NORMAL;
+	TIMECOP_G(timecop_mode) = TIMECOP_MODE_NORMAL;
 	RETURN_TRUE;
 }
 /* }}} */
@@ -556,7 +573,7 @@ PHP_FUNCTION(timecop_return)
    Return virtual timestamp */
 PHP_FUNCTION(timecop_time)
 {
-	RETURN_LONG(timecop_current_timestamp());
+	RETURN_LONG(timecop_current_timestamp(TSRMLS_C));
 }
 /* }}} */
 
@@ -582,9 +599,9 @@ static int init_fcall_info(zval *callable, zend_fcall_info * fci, zend_fcall_inf
 static int init_timecop_date_fcall_info(zval *callable, zend_fcall_info * fci, zend_fcall_info_cache * fcc TSRMLS_DC)
 {
 	int ret;
-	ret = init_fcall_info(callable, fci, fcc, 2);
+	ret = init_fcall_info(callable, fci, fcc, 2 TSRMLS_CC);
 	if (ret) {
-		ZVAL_LONG(*fci->params[1], timecop_current_timestamp());
+		ZVAL_LONG(*fci->params[1], timecop_current_timestamp(TSRMLS_C));
 	}
 	return ret;
 }
@@ -632,7 +649,7 @@ static void copy_fcall_params(zval ***src, zval ***dst, int num_args)
 	}
 }
 
-static int fill_mktime_params(zval ***params, zval *date_callable, int from)
+static int fill_mktime_params(zval ***params, zval *date_callable, int from TSRMLS_DC)
 {
 	zval *zp, *date_retval_ptr = NULL;
 	zend_fcall_info date_fci;
@@ -640,7 +657,7 @@ static int fill_mktime_params(zval ***params, zval *date_callable, int from)
 	char *formats[] = {"H", "i", "s", "n", "j", "Y"};
 	int i, max_params = 6;
 
-	if (!init_timecop_date_fcall_info(date_callable, &date_fci, &date_fci_cache)) {
+	if (!init_timecop_date_fcall_info(date_callable, &date_fci, &date_fci_cache TSRMLS_CC)) {
 		return from;
 	}
 	date_fci.retval_ptr_ptr = &date_retval_ptr;
@@ -652,16 +669,16 @@ static int fill_mktime_params(zval ***params, zval *date_callable, int from)
 	return max_params;
 }
 
-static long timecop_current_timestamp()
+static long timecop_current_timestamp(TSRMLS_D)
 {
 	zval **array, **request_time_long;
 	long current_timestamp;
 
-	switch (TIMECOP_G(timecap_mode)) {
-	case TIMECAP_MODE_FREEZE:
+	switch (TIMECOP_G(timecop_mode)) {
+	case TIMECOP_MODE_FREEZE:
 		current_timestamp = TIMECOP_G(freezed_timestamp);
 		break;
-	case TIMECAP_MODE_TRAVEL:
+	case TIMECOP_MODE_TRAVEL:
 		current_timestamp = time(NULL) + TIMECOP_G(travel_offset);
 		break;
 	default:
@@ -672,7 +689,7 @@ static long timecop_current_timestamp()
 	return current_timestamp;
 }
 
-static zval *timecop_current_date(char *format)
+static zval *timecop_current_date(char *format TSRMLS_DC)
 {
 	zval *zp, *date_retval_ptr = NULL;
 	zend_fcall_info date_fci;
@@ -684,7 +701,7 @@ static zval *timecop_current_date(char *format)
 	} else {
 		ZVAL_STRING(&date_callable, "date", 1);
 	}
-	if (!init_timecop_date_fcall_info(&date_callable, &date_fci, &date_fci_cache)) {
+	if (!init_timecop_date_fcall_info(&date_callable, &date_fci, &date_fci_cache TSRMLS_CC)) {
 		return NULL;
 	}
 	date_fci.retval_ptr_ptr = &date_retval_ptr;
@@ -722,7 +739,7 @@ PHPAPI void php_timecop_mktime(INTERNAL_FUNCTION_PARAMETERS, zval *mktime_callab
 		if (args) {
 			efree(args);
 		}
-		fci.param_count = fill_mktime_params(fci.params, date_callable, argc);
+		fci.param_count = fill_mktime_params(fci.params, date_callable, argc TSRMLS_CC);
 	}
 
 	if (ZEND_NUM_ARGS() == 0) {
@@ -882,12 +899,12 @@ PHP_METHOD(TimecopDateTime, __construct)
 			MAKE_STD_ZVAL(zpp[i]);
 			params[i] = &zpp[i];
 		}
-		zp = timecop_current_date("Y-m-d H:i:s");
+		zp = timecop_current_date("Y-m-d H:i:s" TSRMLS_CC);
 		ZVAL_ZVAL(*params[0], zp, 1, 1);
 	}
 
 	/* call DateTime::__constuctor() */
-	call_constructor(&obj, datetime_ce, params, param_count);
+	call_constructor(&obj, datetime_ce, params, param_count TSRMLS_CC);
 
 	if (orig_param_count == 0) {
 		int i;
