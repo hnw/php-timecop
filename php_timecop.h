@@ -71,6 +71,8 @@ typedef enum timecop_mode_t {
 
 ZEND_BEGIN_MODULE_GLOBALS(timecop)
 	long func_override;
+	long sync_request_time;
+	zval *orig_request_time;
 	timecop_mode_t timecop_mode;
 	long freezed_timestamp;
 	long travel_offset;

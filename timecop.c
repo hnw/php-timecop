@@ -36,6 +36,8 @@ ZEND_DECLARE_MODULE_GLOBALS(timecop)
 static void timecop_globals_ctor(zend_timecop_globals *globals TSRMLS_DC) {
 	/* Initialize your global struct */
 	globals->func_override = 1;
+	globals->sync_request_time = 1;
+	globals->orig_request_time = NULL;
 	globals->timecop_mode = TIMECOP_MODE_NORMAL;
 	globals->freezed_timestamp = 0;
 	globals->travel_offset = 0;
@@ -195,6 +197,9 @@ static int timecop_class_override(TSRMLS_D);
 static int timecop_func_override_clear(TSRMLS_D);
 static int timecop_class_override_clear(TSRMLS_D);
 
+static int update_request_time(long unixtime TSRMLS_DC);
+static int restore_request_time(TSRMLS_D);
+
 static int timecop_zend_fcall_info_init(zval *callable, zend_fcall_info *fci, zend_fcall_info_cache *fcc TSRMLS_DC);
 static int init_fcall_info(zval *callable, zend_fcall_info * fci, zend_fcall_info_cache * fcc, int num_args TSRMLS_DC);
 static int init_timecop_date_fcall_info(zval *callable, zend_fcall_info * fci, zend_fcall_info_cache * fcc TSRMLS_DC);
@@ -242,6 +247,8 @@ ZEND_GET_MODULE(timecop)
 PHP_INI_BEGIN()
     STD_PHP_INI_ENTRY("timecop.func_override", "1",
     PHP_INI_SYSTEM, OnUpdateLong, func_override, zend_timecop_globals, timecop_globals)
+    STD_PHP_INI_ENTRY("timecop.sync_request_time", "1",
+    PHP_INI_SYSTEM, OnUpdateLong, sync_request_time, zend_timecop_globals, timecop_globals)
 PHP_INI_END()
 /* }}} */
 
@@ -278,6 +285,9 @@ PHP_RINIT_FUNCTION(timecop)
 			return FAILURE;
 		}
 	}
+
+
+
 
 	return SUCCESS;
 }
@@ -440,6 +450,42 @@ static int timecop_class_override_clear(TSRMLS_D)
 	return SUCCESS;
 }
 
+static int update_request_time(long unixtime TSRMLS_DC)
+{
+	zval **server_vars;
+	zval **request_time;
+
+	if (zend_hash_find(&EG(symbol_table), "_SERVER", sizeof("_SERVER"), (void **) &server_vars) == SUCCESS &&
+		Z_TYPE_PP(server_vars) == IS_ARRAY &&
+		zend_hash_find(Z_ARRVAL_PP(server_vars), "REQUEST_TIME", sizeof("REQUEST_TIME"), (void **) &request_time) == SUCCESS) {
+		if (TIMECOP_G(orig_request_time) == NULL) {
+			TIMECOP_G(orig_request_time) = *request_time;
+		} else {
+			Z_DELREF(**request_time);
+		}
+		MAKE_STD_ZVAL(*request_time);
+		ZVAL_LONG(*request_time, unixtime);
+	}
+
+	return SUCCESS;
+}
+
+static int restore_request_time(TSRMLS_D)
+{
+	zval **server_vars;
+	zval **request_time;
+
+	if (TIMECOP_G(orig_request_time) &&
+		zend_hash_find(&EG(symbol_table), "_SERVER", sizeof("_SERVER"), (void **) &server_vars) == SUCCESS &&
+		Z_TYPE_PP(server_vars) == IS_ARRAY &&
+		zend_hash_find(Z_ARRVAL_PP(server_vars), "REQUEST_TIME", sizeof("REQUEST_TIME"), (void **) &request_time) == SUCCESS) {
+		Z_DELREF(**request_time);
+		*request_time = TIMECOP_G(orig_request_time);
+		TIMECOP_G(orig_request_time) = NULL;
+	}
+	return SUCCESS;
+}
+
 static int timecop_zend_fcall_info_init(zval *callable, zend_fcall_info *fci, zend_fcall_info_cache *fcc TSRMLS_DC)
 {
 	int init_result;
@@ -542,6 +588,11 @@ PHP_FUNCTION(timecop_freeze)
 	}
 	TIMECOP_G(timecop_mode) = TIMECOP_MODE_FREEZE;
 	TIMECOP_G(freezed_timestamp) = timestamp;
+
+	if (TIMECOP_G(sync_request_time)){
+		update_request_time(timestamp);
+	}
+
 	RETURN_TRUE;
 }
 /* }}} */
@@ -556,6 +607,11 @@ PHP_FUNCTION(timecop_travel)
 	}
 	TIMECOP_G(timecop_mode) = TIMECOP_MODE_TRAVEL;
 	TIMECOP_G(travel_offset) = timestamp - time(NULL);
+
+	if (TIMECOP_G(sync_request_time)){
+		update_request_time(timestamp);
+	}
+
 	RETURN_TRUE;
 }
 /* }}} */
@@ -565,6 +621,11 @@ PHP_FUNCTION(timecop_travel)
 PHP_FUNCTION(timecop_return)
 {
 	TIMECOP_G(timecop_mode) = TIMECOP_MODE_NORMAL;
+
+	if (TIMECOP_G(sync_request_time)){
+		restore_request_time();
+	}
+
 	RETURN_TRUE;
 }
 /* }}} */
