@@ -461,7 +461,7 @@ static int update_request_time(long unixtime TSRMLS_DC)
 		if (TIMECOP_G(orig_request_time) == NULL) {
 			TIMECOP_G(orig_request_time) = *request_time;
 		} else {
-			Z_DELREF(**request_time);
+			Z_DELREF_PP(request_time);
 		}
 		MAKE_STD_ZVAL(*request_time);
 		ZVAL_LONG(*request_time, unixtime);
@@ -479,7 +479,7 @@ static int restore_request_time(TSRMLS_D)
 		zend_hash_find(&EG(symbol_table), "_SERVER", sizeof("_SERVER"), (void **) &server_vars) == SUCCESS &&
 		Z_TYPE_PP(server_vars) == IS_ARRAY &&
 		zend_hash_find(Z_ARRVAL_PP(server_vars), "REQUEST_TIME", sizeof("REQUEST_TIME"), (void **) &request_time) == SUCCESS) {
-		Z_DELREF(**request_time);
+		Z_DELREF_PP(request_time);
 		*request_time = TIMECOP_G(orig_request_time);
 		TIMECOP_G(orig_request_time) = NULL;
 	}
@@ -590,7 +590,7 @@ PHP_FUNCTION(timecop_freeze)
 	TIMECOP_G(freezed_timestamp) = timestamp;
 
 	if (TIMECOP_G(sync_request_time)){
-		update_request_time(timestamp);
+		update_request_time(timestamp TSRMLS_CC);
 	}
 
 	RETURN_TRUE;
@@ -609,7 +609,7 @@ PHP_FUNCTION(timecop_travel)
 	TIMECOP_G(travel_offset) = timestamp - time(NULL);
 
 	if (TIMECOP_G(sync_request_time)){
-		update_request_time(timestamp);
+		update_request_time(timestamp TSRMLS_CC);
 	}
 
 	RETURN_TRUE;
@@ -623,7 +623,7 @@ PHP_FUNCTION(timecop_return)
 	TIMECOP_G(timecop_mode) = TIMECOP_MODE_NORMAL;
 
 	if (TIMECOP_G(sync_request_time)){
-		restore_request_time();
+		restore_request_time(TSRMLS_C);
 	}
 
 	RETURN_TRUE;

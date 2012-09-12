@@ -39,6 +39,16 @@ extern zend_module_entry timecop_module_entry;
 #include <time.h>
 #include "Zend/zend_interfaces.h"
 
+#ifndef Z_ADDREF_P
+/* PHP 5.2, old GC */
+#define Z_ADDREF_P(pz)                          (++(pz)->refcount)
+#define Z_DELREF_P(pz)                          (--(pz)->refcount)
+#define Z_REFCOUNT_P(pz)                        ((pz)->refcount)
+#define Z_SET_REFCOUNT_P(pz, rc)        ((pz)->refcount = rc)
+#define Z_REFCOUNT_PP(ppz)                      Z_REFCOUNT_P(*(ppz))
+#define Z_DELREF_PP(ppz)                        Z_DELREF_P(*(ppz))
+#endif
+
 PHP_MINIT_FUNCTION(timecop);
 PHP_MSHUTDOWN_FUNCTION(timecop);
 PHP_RINIT_FUNCTION(timecop);
