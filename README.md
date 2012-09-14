@@ -23,6 +23,14 @@ After install, add these lines to your php.ini
 extension=timecop.so
 ```
 
+## SYSTEM REQUIREMENTS
+
+- PHP 5.2.x, 5.3.x, 5.4.x
+  - Tested only on 5.2.17, 5.3.16, and 5.4.6
+- Apache SAPI, CLI SAPI
+  - Other SAPIs are not tested.
+- non-ZTS(recommended), ZTS
+
 ## FEATURES
 
 - Freeze time to a specific point.
@@ -41,6 +49,9 @@ extension=timecop.so
   - gmstrftime()
   - unixtojd()
   - DateTime
+- Rewrite value of the following global variables when the time has been moved.
+  - $_SERVER['REQUEST_TIME']
+
 
 ## USAGE
 
