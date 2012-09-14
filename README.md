@@ -25,10 +25,11 @@ extension=timecop.so
 
 ## SYSTEM REQUIREMENTS
 
-- PHP 5.2.x, 5.3.x, 5.4.x
+- OS: Linux, FreeBSD, MacOSX
+- PHP: 5.2.x, 5.3.x, 5.4.x
   - Tested only on 5.2.17, 5.3.16, and 5.4.6
-- Apache SAPI, CLI SAPI
-  - Other SAPIs are not tested.
+- SAPI: Apache, CLI
+  - Other SAPIs are not tested, but there is no SAPI-dependent code.
 - non-ZTS(recommended), ZTS
 
 ## FEATURES
