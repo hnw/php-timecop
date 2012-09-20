@@ -203,6 +203,7 @@ static int restore_request_time(TSRMLS_D);
 static int timecop_zend_fcall_info_init(zval *callable, zend_fcall_info *fci, zend_fcall_info_cache *fcc TSRMLS_DC);
 static int init_fcall_info(zval *callable, zend_fcall_info * fci, zend_fcall_info_cache * fcc, int num_args TSRMLS_DC);
 static int init_timecop_date_fcall_info(zval *callable, zend_fcall_info * fci, zend_fcall_info_cache * fcc TSRMLS_DC);
+static void dtor_datefunc_info(zend_fcall_info *fci);
 static zval *timecop_date_fcall(const char *format, zend_fcall_info * fci, zend_fcall_info_cache * fcc TSRMLS_DC);
 static zval ***alloc_fcall_params(int num_args);
 static void dtor_fcall_params(zval ***params, int num_args);
@@ -299,6 +300,10 @@ PHP_RSHUTDOWN_FUNCTION(timecop)
 	if (TIMECOP_G(func_override)) {
 		timecop_func_override_clear(TSRMLS_C);
 		timecop_class_override_clear(TSRMLS_C);
+	}
+
+	if (TIMECOP_G(orig_request_time)) {
+		restore_request_time(TSRMLS_C);
 	}
 
 	TIMECOP_G(timecop_mode) = TIMECOP_MODE_NORMAL;
@@ -454,17 +459,19 @@ static int update_request_time(long unixtime TSRMLS_DC)
 {
 	zval **server_vars;
 	zval **request_time;
+	zval *tmp;
 
 	if (zend_hash_find(&EG(symbol_table), "_SERVER", sizeof("_SERVER"), (void **) &server_vars) == SUCCESS &&
 		Z_TYPE_PP(server_vars) == IS_ARRAY &&
 		zend_hash_find(Z_ARRVAL_PP(server_vars), "REQUEST_TIME", sizeof("REQUEST_TIME"), (void **) &request_time) == SUCCESS) {
 		if (TIMECOP_G(orig_request_time) == NULL) {
-			TIMECOP_G(orig_request_time) = *request_time;
-		} else {
-			Z_DELREF_PP(request_time);
+			MAKE_STD_ZVAL(TIMECOP_G(orig_request_time));
+			ZVAL_ZVAL(TIMECOP_G(orig_request_time), *request_time, 1, 0);
 		}
-		MAKE_STD_ZVAL(*request_time);
-		ZVAL_LONG(*request_time, unixtime);
+		MAKE_STD_ZVAL(tmp);
+		ZVAL_LONG(tmp, unixtime);
+		add_assoc_zval(*server_vars, "REQUEST_TIME", tmp);
+		zval_dtor(tmp);
 	}
 
 	return SUCCESS;
@@ -474,13 +481,15 @@ static int restore_request_time(TSRMLS_D)
 {
 	zval **server_vars;
 	zval **request_time;
+	zval *orig_request_time;
+	orig_request_time = TIMECOP_G(orig_request_time);
 
-	if (TIMECOP_G(orig_request_time) &&
+	if (orig_request_time &&
 		zend_hash_find(&EG(symbol_table), "_SERVER", sizeof("_SERVER"), (void **) &server_vars) == SUCCESS &&
 		Z_TYPE_PP(server_vars) == IS_ARRAY &&
 		zend_hash_find(Z_ARRVAL_PP(server_vars), "REQUEST_TIME", sizeof("REQUEST_TIME"), (void **) &request_time) == SUCCESS) {
-		Z_DELREF_PP(request_time);
-		*request_time = TIMECOP_G(orig_request_time);
+		add_assoc_zval(*server_vars, "REQUEST_TIME", orig_request_time);
+		zval_dtor(orig_request_time);
 		TIMECOP_G(orig_request_time) = NULL;
 	}
 	return SUCCESS;
@@ -512,6 +521,7 @@ static void call_callable_with_optional_timestamp(INTERNAL_FUNCTION_PARAMETERS, 
 	zval *retval_ptr = NULL;
 	zend_fcall_info fci;
 	zend_fcall_info_cache fci_cache;
+	int fill_timestamp = 0;
 
 	if (timecop_zend_fcall_info_init(callable, &fci, &fci_cache TSRMLS_CC) == FAILURE) {
 		return;
@@ -526,7 +536,9 @@ static void call_callable_with_optional_timestamp(INTERNAL_FUNCTION_PARAMETERS, 
 		return;
 	}
 
-	if (fci.param_count == num_required_func_args) {
+	fill_timestamp = (fci.param_count == num_required_func_args) ? 1 : 0;
+
+	if (fill_timestamp) {
 		/* append optional timestamp argument */
 		zval ***orig_params;
 
@@ -543,8 +555,9 @@ static void call_callable_with_optional_timestamp(INTERNAL_FUNCTION_PARAMETERS, 
 	if (zend_call_function(&fci, &fci_cache TSRMLS_CC) == SUCCESS && fci.retval_ptr_ptr && *fci.retval_ptr_ptr) {
 		COPY_PZVAL_TO_ZVAL(*return_value, *fci.retval_ptr_ptr);
 	}
+
 	if (fci.params) {
-		if (fci.param_count == num_required_func_args) {
+		if (fill_timestamp) {
 			dtor_fcall_params(fci.params, fci.param_count);
 		} else {
 			efree(fci.params);
@@ -561,6 +574,7 @@ static void _timecop_call_function(INTERNAL_FUNCTION_PARAMETERS, char* orig_func
 		ZVAL_STRING(&callable, orig_func_name, 1);
 	}
 	call_callable_with_optional_timestamp(INTERNAL_FUNCTION_PARAM_PASSTHRU, &callable, num_required_func_args);
+	zval_dtor(&callable);
 }
 
 static void call_constructor(zval **object_pp, zend_class_entry *ce, zval ***params, int param_count TSRMLS_DC)
@@ -667,15 +681,28 @@ static int init_timecop_date_fcall_info(zval *callable, zend_fcall_info * fci, z
 	return ret;
 }
 
+static void dtor_datefunc_info(zend_fcall_info *fci)
+{
+	if (fci->params) {
+		int i;
+		for (i = 0; i < fci->param_count; i++) {
+			zval_ptr_dtor(fci->params[i]);
+		}
+		efree(*fci->params);
+		efree(fci->params);
+	}
+}
+
 static zval *timecop_date_fcall(const char *format, zend_fcall_info * fci, zend_fcall_info_cache * fcc TSRMLS_DC)
 {
 	zval *zvalue;
 	MAKE_STD_ZVAL(zvalue);
-	ZVAL_STRING(*fci->params[0], format, 1);
+	ZVAL_STRING(*(fci->params[0]), format, 0);
 	if (zend_call_function(fci, fcc TSRMLS_CC) == SUCCESS &&
 		fci->retval_ptr_ptr && *fci->retval_ptr_ptr) {
 		COPY_PZVAL_TO_ZVAL(*zvalue, *fci->retval_ptr_ptr);
 	}
+	ZVAL_NULL(*(fci->params[0]));
 	return zvalue;
 }
 
@@ -727,6 +754,8 @@ static int fill_mktime_params(zval ***params, zval *date_callable, int from TSRM
 		zp = timecop_date_fcall(formats[i], &date_fci, &date_fci_cache TSRMLS_CC);
 		ZVAL_ZVAL(*params[i], zp, 1, 1);
 	}
+	dtor_datefunc_info(&date_fci);
+
 	return max_params;
 }
 
@@ -767,6 +796,10 @@ static zval *timecop_current_date(char *format TSRMLS_DC)
 	}
 	date_fci.retval_ptr_ptr = &date_retval_ptr;
 	zp = timecop_date_fcall(format, &date_fci, &date_fci_cache TSRMLS_CC);
+
+	dtor_datefunc_info(&date_fci);
+
+	zval_dtor(&date_callable);
 	return zp;
 }
 
@@ -833,6 +866,9 @@ PHP_FUNCTION(timecop_mktime)
 		ZVAL_STRING(&date_callable, "date", 1);
 	}
 	php_timecop_mktime(INTERNAL_FUNCTION_PARAM_PASSTHRU, &mktime_callable, &date_callable);
+
+	zval_dtor(&mktime_callable);
+	zval_dtor(&date_callable);
 }
 /* }}} */
 
@@ -849,6 +885,9 @@ PHP_FUNCTION(timecop_gmmktime)
 		ZVAL_STRING(&date_callable, "gmdate", 1);
 	}
 	php_timecop_mktime(INTERNAL_FUNCTION_PARAM_PASSTHRU, &mktime_callable, &date_callable);
+
+	zval_dtor(&mktime_callable);
+	zval_dtor(&date_callable);
 }
 /* }}} */
 
