@@ -191,7 +191,7 @@ static zend_function_entry timecop_datetime_class_functions[] = {
 
 static void timecop_globals_ctor(zend_timecop_globals *globals TSRMLS_DC);
 
-static int init_timecop_datetime(TSRMLS_D);
+static int register_timecop_classes(TSRMLS_D);
 static int timecop_func_override(TSRMLS_D);
 static int timecop_class_override(TSRMLS_D);
 static int timecop_func_override_clear(TSRMLS_D);
@@ -259,6 +259,7 @@ PHP_MINIT_FUNCTION(timecop)
 {
 	ZEND_INIT_MODULE_GLOBALS(timecop, timecop_globals_ctor, NULL);
 	REGISTER_INI_ENTRIES();
+	register_timecop_classes(TSRMLS_C);
 	return SUCCESS;
 }
 /* }}} */
@@ -278,17 +279,12 @@ PHP_RINIT_FUNCTION(timecop)
 	int ret;
 	zend_class_entry *parent_ce;
 
-	init_timecop_datetime(TSRMLS_C);
-
 	if (TIMECOP_G(func_override)) {
 		if (SUCCESS != timecop_func_override(TSRMLS_C) ||
 			SUCCESS != timecop_class_override(TSRMLS_C)) {
 			return FAILURE;
 		}
 	}
-
-
-
 
 	return SUCCESS;
 }
@@ -319,13 +315,14 @@ PHP_MINFO_FUNCTION(timecop)
 {
 	php_info_print_table_start();
 	php_info_print_table_header(2, "timecop", "enabled");
+	php_info_print_table_row(2, "Version", PHP_TIMECOP_VERSION);
 	php_info_print_table_end();
 
 	DISPLAY_INI_ENTRIES();
 }
 /* }}} */
 
-static int init_timecop_datetime(TSRMLS_D)
+static int register_timecop_classes(TSRMLS_D)
 {
 	zend_class_entry **pce;
 	zend_class_entry ce;
