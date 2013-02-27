@@ -576,7 +576,7 @@ static void _timecop_call_function(INTERNAL_FUNCTION_PARAMETERS, char* orig_func
 
 static void call_constructor(zval **object_pp, zend_class_entry *ce, zval ***params, int param_count TSRMLS_DC)
 {
-	char* method_name = "__constructor";
+	char* method_name = "__construct";
 
 	if (param_count == 0) {
 		zend_call_method_with_0_params(object_pp, ce, &ce->constructor, method_name, NULL);

@@ -21,6 +21,13 @@ date.timezone=America/Los_Angeles
 <?php
 timecop_freeze(timecop_orig_strtotime("2012-02-29 01:23:45"));
 $dt = new DateTime();
-var_dump($dt->format("Y-m-d H:i:s"));
+var_dump($dt->format("c"));
+$dt2 = new DateTime();
+$dt2->modify("+3days");
+var_dump($dt2->format("c"));
+$dt2->modify("-1hours -11mins -11secs");
+var_dump($dt2->format("c"));
 --EXPECT--
-string(19) "2012-02-29 01:23:45"
+string(25) "2012-02-29T01:23:45-08:00"
+string(25) "2012-03-03T01:23:45-08:00"
+string(25) "2012-03-03T00:12:34-08:00"

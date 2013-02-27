@@ -11,6 +11,8 @@ Function overrideing test for unixtojd
 	}
 --ENV--
 TZ=UTC
+--INI--
+date.timezone=America/Los_Angeles
 --FILE--
 <?php
 timecop_freeze(timecop_strtotime("1995-10-08 23:59:59 GMT"));
