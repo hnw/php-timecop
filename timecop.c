@@ -277,7 +277,6 @@ PHP_MSHUTDOWN_FUNCTION(timecop)
 PHP_RINIT_FUNCTION(timecop)
 {
 	int ret;
-	zend_class_entry *parent_ce;
 
 	if (TIMECOP_G(func_override)) {
 		if (SUCCESS != timecop_func_override(TSRMLS_C) ||
