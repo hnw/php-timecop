@@ -189,6 +189,9 @@ static zend_function_entry timecop_datetime_class_functions[] = {
 	{NULL, NULL, NULL}
 };
 
+#define ORIG_FUNC_NAME(funcname) \
+	TIMECOP_G(func_override) ? "timecop_orig_" funcname : funcname
+
 static void timecop_globals_ctor(zend_timecop_globals *globals TSRMLS_DC);
 
 static int register_timecop_classes(TSRMLS_D);
@@ -215,7 +218,7 @@ static zval *timecop_current_date(char *format TSRMLS_DC);
 PHPAPI void php_timecop_mktime(INTERNAL_FUNCTION_PARAMETERS, zval *mktime_callable, zval *date_callable);
 
 static void call_callable_with_optional_timestamp(INTERNAL_FUNCTION_PARAMETERS, zval* callable, int num_required_func_args);
-static void _timecop_call_function(INTERNAL_FUNCTION_PARAMETERS, char* orig_func_name, char* saved_func_name, int num_required_func_args);
+static void _timecop_call_function(INTERNAL_FUNCTION_PARAMETERS, char* func_name, int num_required_func_args);
 static void call_constructor(zval **object_pp, zend_class_entry *ce, zval ***params, int param_count TSRMLS_DC);
 
 
@@ -561,14 +564,11 @@ static void call_callable_with_optional_timestamp(INTERNAL_FUNCTION_PARAMETERS, 
 	}
 }
 
-static void _timecop_call_function(INTERNAL_FUNCTION_PARAMETERS, char* orig_func_name, char* saved_func_name, int num_required_func_args)
+static void _timecop_call_function(INTERNAL_FUNCTION_PARAMETERS, char* func_name, int num_required_func_args)
 {
 	zval callable;
-	if (TIMECOP_G(func_override)){
-		ZVAL_STRING(&callable, saved_func_name, 1);
-	} else {
-		ZVAL_STRING(&callable, orig_func_name, 1);
-	}
+
+	ZVAL_STRING(&callable, func_name, 1);
 	call_callable_with_optional_timestamp(INTERNAL_FUNCTION_PARAM_PASSTHRU, &callable, num_required_func_args);
 	zval_dtor(&callable);
 }
@@ -782,11 +782,8 @@ static zval *timecop_current_date(char *format TSRMLS_DC)
 	zend_fcall_info_cache date_fci_cache;
 	zval date_callable;
 
-	if (TIMECOP_G(func_override)){
-		ZVAL_STRING(&date_callable, "timecop_orig_date", 1);
-	} else {
-		ZVAL_STRING(&date_callable, "date", 1);
-	}
+	ZVAL_STRING(&date_callable, ORIG_FUNC_NAME("date"), 1);
+
 	if (!init_timecop_date_fcall_info(&date_callable, &date_fci, &date_fci_cache TSRMLS_CC)) {
 		return NULL;
 	}
@@ -854,13 +851,10 @@ PHPAPI void php_timecop_mktime(INTERNAL_FUNCTION_PARAMETERS, zval *mktime_callab
 PHP_FUNCTION(timecop_mktime)
 {
 	zval mktime_callable, date_callable;
-	if (TIMECOP_G(func_override)){
-		ZVAL_STRING(&mktime_callable, "timecop_orig_mktime", 1);
-		ZVAL_STRING(&date_callable, "timecop_orig_date", 1);
-	} else {
-		ZVAL_STRING(&mktime_callable, "mktime", 1);
-		ZVAL_STRING(&date_callable, "date", 1);
-	}
+
+	ZVAL_STRING(&mktime_callable, ORIG_FUNC_NAME("mktime"), 1);
+	ZVAL_STRING(&date_callable, ORIG_FUNC_NAME("date"), 1);
+
 	php_timecop_mktime(INTERNAL_FUNCTION_PARAM_PASSTHRU, &mktime_callable, &date_callable);
 
 	zval_dtor(&mktime_callable);
@@ -873,13 +867,10 @@ PHP_FUNCTION(timecop_mktime)
 PHP_FUNCTION(timecop_gmmktime)
 {
 	zval mktime_callable, date_callable;
-	if (TIMECOP_G(func_override)){
-		ZVAL_STRING(&mktime_callable, "timecop_orig_gmmktime", 1);
-		ZVAL_STRING(&date_callable, "timecop_orig_gmdate", 1);
-	} else {
-		ZVAL_STRING(&mktime_callable, "gmmktime", 1);
-		ZVAL_STRING(&date_callable, "gmdate", 1);
-	}
+
+	ZVAL_STRING(&mktime_callable, ORIG_FUNC_NAME("gmmktime"), 1);
+	ZVAL_STRING(&date_callable, ORIG_FUNC_NAME("gmdate"), 1);
+
 	php_timecop_mktime(INTERNAL_FUNCTION_PARAM_PASSTHRU, &mktime_callable, &date_callable);
 
 	zval_dtor(&mktime_callable);
@@ -891,7 +882,7 @@ PHP_FUNCTION(timecop_gmmktime)
    Format a local date/time */
 PHP_FUNCTION(timecop_date)
 {
-	_timecop_call_function(INTERNAL_FUNCTION_PARAM_PASSTHRU, "date", "timecop_orig_date", 1);
+	_timecop_call_function(INTERNAL_FUNCTION_PARAM_PASSTHRU, ORIG_FUNC_NAME("date"), 1);
 }
 /* }}} */
 
@@ -899,7 +890,7 @@ PHP_FUNCTION(timecop_date)
    Format a GMT date/time */
 PHP_FUNCTION(timecop_gmdate)
 {
-	_timecop_call_function(INTERNAL_FUNCTION_PARAM_PASSTHRU, "gmdate", "timecop_orig_gmdate", 1);
+	_timecop_call_function(INTERNAL_FUNCTION_PARAM_PASSTHRU, ORIG_FUNC_NAME("gmdate"), 1);
 }
 /* }}} */
 
@@ -907,7 +898,7 @@ PHP_FUNCTION(timecop_gmdate)
    Format a local time/date as integer */
 PHP_FUNCTION(timecop_idate)
 {
-	_timecop_call_function(INTERNAL_FUNCTION_PARAM_PASSTHRU, "idate", "timecop_orig_idate", 1);
+	_timecop_call_function(INTERNAL_FUNCTION_PARAM_PASSTHRU, ORIG_FUNC_NAME("idate"), 1);
 }
 /* }}} */
 
@@ -915,7 +906,7 @@ PHP_FUNCTION(timecop_idate)
    Get date/time information */
 PHP_FUNCTION(timecop_getdate)
 {
-	_timecop_call_function(INTERNAL_FUNCTION_PARAM_PASSTHRU, "getdate", "timecop_orig_getdate", 0);
+	_timecop_call_function(INTERNAL_FUNCTION_PARAM_PASSTHRU, ORIG_FUNC_NAME("getdate"), 0);
 }
 /* }}} */
 
@@ -924,7 +915,7 @@ PHP_FUNCTION(timecop_getdate)
  the associative_array argument is set to 1 other wise it is a regular array */
 PHP_FUNCTION(timecop_localtime)
 {
-	_timecop_call_function(INTERNAL_FUNCTION_PARAM_PASSTHRU, "localtime", "timecop_orig_localtime", 0);
+	_timecop_call_function(INTERNAL_FUNCTION_PARAM_PASSTHRU, ORIG_FUNC_NAME("localtime"), 0);
 }
 /* }}} */
 
@@ -932,7 +923,7 @@ PHP_FUNCTION(timecop_localtime)
    Convert string representation of date and time to a timestamp */
 PHP_FUNCTION(timecop_strtotime)
 {
-	_timecop_call_function(INTERNAL_FUNCTION_PARAM_PASSTHRU, "strtotime", "timecop_orig_strtotime", 1);
+	_timecop_call_function(INTERNAL_FUNCTION_PARAM_PASSTHRU, ORIG_FUNC_NAME("strtotime"), 1);
 }
 /* }}} */
 
@@ -940,7 +931,7 @@ PHP_FUNCTION(timecop_strtotime)
    Format a local time/date according to locale settings */
 PHP_FUNCTION(timecop_strftime)
 {
-	_timecop_call_function(INTERNAL_FUNCTION_PARAM_PASSTHRU, "strftime", "timecop_orig_strftime", 1);
+	_timecop_call_function(INTERNAL_FUNCTION_PARAM_PASSTHRU, ORIG_FUNC_NAME("strftime"), 1);
 }
 /* }}} */
 
@@ -948,7 +939,7 @@ PHP_FUNCTION(timecop_strftime)
    Format a GMT/UCT time/date according to locale settings */
 PHP_FUNCTION(timecop_gmstrftime)
 {
-	_timecop_call_function(INTERNAL_FUNCTION_PARAM_PASSTHRU, "gmstrftime", "timecop_orig_gmstrftime", 1);
+	_timecop_call_function(INTERNAL_FUNCTION_PARAM_PASSTHRU, ORIG_FUNC_NAME("gmstrftime"), 1);
 }
 /* }}} */
 
@@ -956,7 +947,7 @@ PHP_FUNCTION(timecop_gmstrftime)
    Convert UNIX timestamp to Julian Day */
 PHP_FUNCTION(timecop_unixtojd)
 {
-	_timecop_call_function(INTERNAL_FUNCTION_PARAM_PASSTHRU, "unixtojd", "timecop_orig_unixtojd", 0);
+	_timecop_call_function(INTERNAL_FUNCTION_PARAM_PASSTHRU, ORIG_FUNC_NAME("unixtojd"), 0);
 }
 /* }}} */
 
