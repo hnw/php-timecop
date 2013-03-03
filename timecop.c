@@ -221,6 +221,7 @@ static void call_callable_with_optional_timestamp(INTERNAL_FUNCTION_PARAMETERS, 
 static void _timecop_call_function(INTERNAL_FUNCTION_PARAMETERS, char* func_name, int num_required_func_args);
 static void call_constructor(zval **object_pp, zend_class_entry *ce, zval ***params, int param_count TSRMLS_DC);
 
+static int fix_datetime_timestamp(zval **datetime_obj, zval *time_str TSRMLS_DC);
 
 /* {{{ timecop_module_entry
  */
@@ -815,6 +816,26 @@ static zval *timecop_current_date(char *format TSRMLS_DC)
 	return zp;
 }
 
+static int fix_datetime_timestamp(zval **datetime_obj, zval *time_str TSRMLS_DC)
+{
+	zval *timestamp;
+	zval now;
+
+	if (time_str == NULL) {
+		ZVAL_STRING(&now, "now", 0);
+		time_str = &now;
+	}
+
+	zend_call_method_with_1_params(NULL, NULL, NULL, "timecop_strtotime", &timestamp, time_str);
+
+	zend_call_method_with_1_params(datetime_obj, Z_OBJCE_PP(datetime_obj), NULL, "settimestamp", NULL, timestamp);
+
+	if (timestamp) {
+		zval_ptr_dtor(&timestamp);
+	}
+	return 0;
+}
+
 /* {{{ php_timecop_mktime - timecop_(gm)mktime helper */
 PHPAPI void php_timecop_mktime(INTERNAL_FUNCTION_PARAMETERS, zval *mktime_callable, zval *date_callable)
 {
@@ -975,56 +996,34 @@ PHP_FUNCTION(timecop_unixtojd)
 */
 PHP_METHOD(TimecopDateTime, __construct)
 {
-	int param_count, orig_param_count;
 	zval ***params;
 	zval *obj = getThis();
+	zval *time_str;
 	zend_class_entry *datetime_ce;
 
 	datetime_ce = TIMECOP_G(ce_DateTime);
 
-	param_count = orig_param_count = ZEND_NUM_ARGS();
+	params = (zval ***) safe_emalloc(ZEND_NUM_ARGS(), sizeof(zval **), 0);
 
-	params = (zval ***) safe_emalloc(param_count, sizeof(zval **), 0);
-	if (zend_get_parameters_array_ex(param_count, params) == FAILURE) {
-		if (params) {
-			efree(params);
-		}
+	if (zend_get_parameters_array_ex(ZEND_NUM_ARGS(), params) == FAILURE) {
+		efree(params);
 		return;
-	}
-	if (orig_param_count == 0) {
-		int i;
-		zval **zpp, *zp;
-
-		param_count = 1;
-		if (params) {
-			efree(params);
-		}
-		params = (zval ***)safe_emalloc(param_count, sizeof(zval **), 0);
-		zpp = (zval **)safe_emalloc(param_count, sizeof(zval *), 0);
-		for (i = 0; i < param_count; i++) {
-			MAKE_STD_ZVAL(zpp[i]);
-			params[i] = &zpp[i];
-		}
-		zp = timecop_current_date("Y-m-d H:i:s" TSRMLS_CC);
-		ZVAL_ZVAL(*params[0], zp, 1, 1);
 	}
 
 	/* call DateTime::__constuctor() */
-	call_constructor(&obj, datetime_ce, params, param_count TSRMLS_CC);
+	call_constructor(&obj, datetime_ce, params, ZEND_NUM_ARGS() TSRMLS_CC);
 
-	if (orig_param_count == 0) {
-		int i;
-		for (i = 0; i < param_count; i++) {
-			zval_ptr_dtor(params[i]);
-		}
-		if (params && params[0]) {
-			efree(params[0]);
-		}
+	time_str = NULL;
+	if (ZEND_NUM_ARGS() >= 1) {
+		time_str = *params[0];
 	}
-	if (params) {
-		efree(params);
-	}
+	fix_datetime_timestamp(&obj, time_str TSRMLS_CC);
+
+	efree(params);
 }
+
+
+
 /* }}} */
 
 /*

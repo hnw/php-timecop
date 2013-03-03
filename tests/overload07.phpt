@@ -20,14 +20,26 @@ date.timezone=America/Los_Angeles
 --FILE--
 <?php
 timecop_freeze(timecop_orig_strtotime("2012-02-29 01:23:45"));
+
 $dt = new DateTime();
 var_dump($dt->format("c"));
-$dt2 = new DateTime();
-$dt2->modify("+3days");
+
+$dt2 = new DateTime("+1days");
+$dt2->modify("+2days");
 var_dump($dt2->format("c"));
-$dt2->modify("-1hours -11mins -11secs");
-var_dump($dt2->format("c"));
+
+$dt3 = new DateTime("1970-01-01 19:00:00 EST");
+var_dump($dt3->format("c"));
+
+$dt4 = new DateTime("@86400");
+var_dump($dt4->format("c"));
+
+$dt5 = new DateTime("now", new DateTimezone("Asia/Tokyo"));
+var_dump($dt5->format("c"));
+
 --EXPECT--
 string(25) "2012-02-29T01:23:45-08:00"
 string(25) "2012-03-03T01:23:45-08:00"
-string(25) "2012-03-03T00:12:34-08:00"
+string(25) "1970-01-01T19:00:00-05:00"
+string(25) "1970-01-02T00:00:00+00:00"
+string(25) "2012-02-29T18:23:45+09:00"
