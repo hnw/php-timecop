@@ -588,9 +588,10 @@ static void _timecop_call_function(INTERNAL_FUNCTION_PARAMETERS, char* func_name
 {
 	zval callable;
 
-	ZVAL_STRING(&callable, func_name, 1);
+	INIT_ZVAL(callable);
+	ZVAL_STRING(&callable, func_name, 0);
+
 	call_callable_with_optional_timestamp(INTERNAL_FUNCTION_PARAM_PASSTHRU, &callable, index_to_fill_timestamp);
-	zval_dtor(&callable);
 }
 
 static void call_constructor(zval **object_pp, zend_class_entry *ce, zval ***params, int param_count TSRMLS_DC)
@@ -802,7 +803,8 @@ static zval *timecop_current_date(char *format TSRMLS_DC)
 	zend_fcall_info_cache date_fci_cache;
 	zval date_callable;
 
-	ZVAL_STRING(&date_callable, ORIG_FUNC_NAME("date"), 1);
+	INIT_ZVAL(date_callable);
+	ZVAL_STRING(&date_callable, ORIG_FUNC_NAME("date"), 0);
 
 	if (!init_timecop_date_fcall_info(&date_callable, &date_fci, &date_fci_cache TSRMLS_CC)) {
 		return NULL;
@@ -812,27 +814,48 @@ static zval *timecop_current_date(char *format TSRMLS_DC)
 
 	dtor_datefunc_info(&date_fci);
 
-	zval_dtor(&date_callable);
 	return zp;
 }
 
 static int fix_datetime_timestamp(zval **datetime_obj, zval *time_str TSRMLS_DC)
 {
-	zval *timestamp;
-	zval now;
+	zval *orig_unixtime_str, *orig_timestamp, *fixed_timestamp;
+	zval now, format, modify_arg;
+	zval *tmp;
+	char buf[32];
 
 	if (time_str == NULL) {
+		INIT_ZVAL(now);
 		ZVAL_STRING(&now, "now", 0);
 		time_str = &now;
 	}
 
-	zend_call_method_with_1_params(NULL, NULL, NULL, "timecop_strtotime", &timestamp, time_str);
+	INIT_ZVAL(format);
+	ZVAL_STRING(&format, "U", 0);
 
-	zend_call_method_with_1_params(datetime_obj, Z_OBJCE_PP(datetime_obj), NULL, "settimestamp", NULL, timestamp);
+	zend_call_method_with_1_params(datetime_obj, Z_OBJCE_PP(datetime_obj), NULL, "format", &orig_unixtime_str, &format);
+	zend_call_method_with_1_params(NULL, NULL, NULL, "intval", &orig_timestamp, orig_unixtime_str);
+	zend_call_method_with_1_params(NULL, NULL, NULL, "timecop_strtotime", &fixed_timestamp, time_str);
 
-	if (timestamp) {
-		zval_ptr_dtor(&timestamp);
+	if (Z_LVAL_P(orig_timestamp) != Z_LVAL_P(fixed_timestamp)) {
+		sprintf(buf, "%+ld sec", Z_LVAL_P(fixed_timestamp) - Z_LVAL_P(orig_timestamp));
+
+		INIT_ZVAL(modify_arg);
+		ZVAL_STRING(&modify_arg, buf, 0);
+
+		zend_call_method_with_1_params(datetime_obj, Z_OBJCE_PP(datetime_obj), NULL, "modify", NULL, &modify_arg);
 	}
+
+	if (orig_unixtime_str) {
+		zval_ptr_dtor(&orig_unixtime_str);
+	}
+	if (orig_timestamp) {
+		zval_ptr_dtor(&orig_timestamp);
+	}
+	if (fixed_timestamp) {
+		zval_ptr_dtor(&fixed_timestamp);
+	}
+
 	return 0;
 }
 
@@ -892,13 +915,13 @@ PHP_FUNCTION(timecop_mktime)
 {
 	zval mktime_callable, date_callable;
 
-	ZVAL_STRING(&mktime_callable, ORIG_FUNC_NAME("mktime"), 1);
-	ZVAL_STRING(&date_callable, ORIG_FUNC_NAME("date"), 1);
+	INIT_ZVAL(mktime_callable);
+	INIT_ZVAL(date_callable);
+
+	ZVAL_STRING(&mktime_callable, ORIG_FUNC_NAME("mktime"), 0);
+	ZVAL_STRING(&date_callable, ORIG_FUNC_NAME("date"), 0);
 
 	php_timecop_mktime(INTERNAL_FUNCTION_PARAM_PASSTHRU, &mktime_callable, &date_callable);
-
-	zval_dtor(&mktime_callable);
-	zval_dtor(&date_callable);
 }
 /* }}} */
 
@@ -908,13 +931,13 @@ PHP_FUNCTION(timecop_gmmktime)
 {
 	zval mktime_callable, date_callable;
 
-	ZVAL_STRING(&mktime_callable, ORIG_FUNC_NAME("gmmktime"), 1);
-	ZVAL_STRING(&date_callable, ORIG_FUNC_NAME("gmdate"), 1);
+	INIT_ZVAL(mktime_callable);
+	INIT_ZVAL(date_callable);
+
+	ZVAL_STRING(&mktime_callable, ORIG_FUNC_NAME("gmmktime"), 0);
+	ZVAL_STRING(&date_callable, ORIG_FUNC_NAME("gmdate"), 0);
 
 	php_timecop_mktime(INTERNAL_FUNCTION_PARAM_PASSTHRU, &mktime_callable, &date_callable);
-
-	zval_dtor(&mktime_callable);
-	zval_dtor(&date_callable);
 }
 /* }}} */
 
