@@ -53,7 +53,6 @@ extension=timecop.so
 - Rewrite value of the following global variables when the time has been moved.
   - $_SERVER['REQUEST_TIME']
 
-
 ## USAGE
 
 ```php
@@ -63,6 +62,20 @@ timecop_freeze(0);
 var_dump(gmdate("Y-m-d H:i:s")); // string(19) "1970-01-01 00:00:00"
 var_dump(strtotime("+100000 sec")); // int(10000)
 ```
+
+## CHANGELOG
+
+###version 1.0.1, 2013/03/04
+
+-Fixed time traveling bug about DateTime::__construct() when it is called with 1 or 2 arguments
+
+###version 1.0.0, 2012/11/21
+
+-Fixed memory leak
+
+###version 0.0.1, 2012/06/19
+
+-Initial Release
 
 ## LICENSE
 #
