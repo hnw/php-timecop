@@ -1,6 +1,6 @@
 # php-timecop
 
-[![Build Status](https://secure.travis-ci.org/hnw/php-timecop.png?branch=master)](http://travis-ci.org/hnw/php-timecop)
+[![Build Status](https://travis-ci.org/hnw/php-timecop.png)](https://travis-ci.org/hnw/php-timecop)
 
 ## DESCRIPTION
 
@@ -26,8 +26,8 @@ extension=timecop.so
 ## SYSTEM REQUIREMENTS
 
 - OS: Linux, FreeBSD, MacOSX
-- PHP: 5.2.x, 5.3.x, 5.4.x
-  - Tested only on 5.2.17, 5.3.16, and 5.4.6
+- PHP: 5.2.x, 5.3.x, 5.4.x, 5.5.x
+  - Tested only on 5.2.17, 5.3.21, 5.4.11, and 5.5.0alpha4
 - SAPI: Apache, CLI
   - Other SAPIs are not tested, but there is no SAPI-dependent code.
 - non-ZTS(recommended), ZTS
