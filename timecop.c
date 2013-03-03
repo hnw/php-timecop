@@ -515,12 +515,42 @@ static int timecop_zend_fcall_info_init(zval *callable, zend_fcall_info *fci, ze
 	return init_result;
 }
 
-static void call_callable_with_optional_timestamp(INTERNAL_FUNCTION_PARAMETERS, zval* callable, int num_required_func_args)
+static void alloc_last_param(zend_fcall_info *fci)
+{
+	zval *zp, **zpp;
+
+	ALLOC_INIT_ZVAL(zp);
+
+	zpp = (zval **) emalloc(sizeof(zval *));
+	*zpp = zp;
+	fci->params[fci->param_count] = zpp;
+
+	fci->param_count++;
+}
+
+static void dtor_last_param(zend_fcall_info *fci)
+{
+	int last_index = fci->param_count-1;
+
+	zval_ptr_dtor(fci->params[last_index]);
+	efree(fci->params[last_index]);
+
+	fci->param_count--;
+}
+
+static void fill_last_param_by_timestamp(zend_fcall_info *fci TSRMLS_DC)
+{
+	int last_index = fci->param_count-1;
+
+	ZVAL_LONG(*(fci->params[last_index]), timecop_current_timestamp(TSRMLS_C));
+}
+
+static void call_callable_with_optional_timestamp(INTERNAL_FUNCTION_PARAMETERS, zval* callable, int index_to_fill_timestamp)
 {
 	zval *retval_ptr = NULL;
 	zend_fcall_info fci;
 	zend_fcall_info_cache fci_cache;
-	int fill_timestamp = 0;
+	int params_size;
 
 	if (timecop_zend_fcall_info_init(callable, &fci, &fci_cache TSRMLS_CC) == FAILURE) {
 		return;
@@ -528,48 +558,37 @@ static void call_callable_with_optional_timestamp(INTERNAL_FUNCTION_PARAMETERS, 
 	fci.retval_ptr_ptr = &retval_ptr;
 	fci.no_separation = 0;
 
-	fci.param_count = ZEND_NUM_ARGS();
-	fci.params = (zval ***) safe_emalloc(fci.param_count, sizeof(zval **), 0);
-	if (zend_get_parameters_array_ex(fci.param_count, fci.params) == FAILURE) {
+	params_size = MAX(ZEND_NUM_ARGS(), index_to_fill_timestamp+1);
+	fci.params = (zval ***) safe_emalloc(sizeof(zval **), params_size, 0);
+
+	if (zend_get_parameters_array_ex(ZEND_NUM_ARGS(), fci.params) == FAILURE) {
 		efree(fci.params);
 		return;
 	}
+	fci.param_count = ZEND_NUM_ARGS();
 
-	fill_timestamp = (fci.param_count == num_required_func_args) ? 1 : 0;
-
-	if (fill_timestamp) {
-		/* append optional timestamp argument */
-		zval ***orig_params;
-
-		orig_params = fci.params;
-		fci.param_count = num_required_func_args + 1;
-		fci.params = alloc_fcall_params(fci.param_count);
-		copy_fcall_params(orig_params, fci.params, num_required_func_args);
-		if (orig_params) {
-			efree(orig_params);
-		}
-		ZVAL_LONG(*fci.params[fci.param_count - 1], timecop_current_timestamp(TSRMLS_C));
+	if (ZEND_NUM_ARGS() == index_to_fill_timestamp) {
+		alloc_last_param(&fci);
+		fill_last_param_by_timestamp(&fci TSRMLS_CC);
 	}
 
 	if (zend_call_function(&fci, &fci_cache TSRMLS_CC) == SUCCESS && fci.retval_ptr_ptr && *fci.retval_ptr_ptr) {
 		COPY_PZVAL_TO_ZVAL(*return_value, *fci.retval_ptr_ptr);
 	}
 
-	if (fci.params) {
-		if (fill_timestamp) {
-			dtor_fcall_params(fci.params, fci.param_count);
-		} else {
-			efree(fci.params);
-		}
+	if (ZEND_NUM_ARGS() == index_to_fill_timestamp) {
+		dtor_last_param(&fci);
 	}
+
+	efree(fci.params);
 }
 
-static void _timecop_call_function(INTERNAL_FUNCTION_PARAMETERS, char* func_name, int num_required_func_args)
+static void _timecop_call_function(INTERNAL_FUNCTION_PARAMETERS, char* func_name, int index_to_fill_timestamp)
 {
 	zval callable;
 
 	ZVAL_STRING(&callable, func_name, 1);
-	call_callable_with_optional_timestamp(INTERNAL_FUNCTION_PARAM_PASSTHRU, &callable, num_required_func_args);
+	call_callable_with_optional_timestamp(INTERNAL_FUNCTION_PARAM_PASSTHRU, &callable, index_to_fill_timestamp);
 	zval_dtor(&callable);
 }
 
