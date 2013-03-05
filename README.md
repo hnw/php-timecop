@@ -50,6 +50,7 @@ extension=timecop.so
   - gmstrftime()
   - unixtojd()
   - DateTime
+  - date_create()
 - Rewrite value of the following global variables when the time has been moved.
   - $_SERVER['REQUEST_TIME']
 
@@ -65,9 +66,13 @@ var_dump(strtotime("+100000 sec")); // int(10000)
 
 ## CHANGELOG
 
+###version 1.0.2, 2013/03/06
+
+- Implement timecop_date_create()
+
 ###version 1.0.1, 2013/03/04
 
-- Fixed time traveling bug about DateTime::__construct() when it is called with 1 or 2 arguments
+- Fixed time traveling bug about TimecopDateTime::__construct() when it is called with 1 or 2 arguments
 
 ###version 1.0.0, 2012/11/21
 
@@ -81,7 +86,7 @@ var_dump(strtotime("+100000 sec")); // int(10000)
 #
 The MIT License
 
-Copyright (c) 2012 Yoshio HANAWA
+Copyright (c) 2012-2013 Yoshio HANAWA
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
