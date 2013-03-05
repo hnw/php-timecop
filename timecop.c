@@ -69,6 +69,7 @@ static const struct timecop_override_def timecop_ovld_func[] = {
 	{"strftime", "timecop_strftime", "timecop_orig_strftime"},
 	{"gmstrftime", "timecop_gmstrftime", "timecop_orig_gmstrftime"},
 	{"unixtojd", "timecop_unixtojd", "timecop_orig_unixtojd"},
+	{"date_create", "timecop_date_create", "timecop_orig_date_create"},
 	{NULL, NULL, NULL}
 };
 /* }}} */
@@ -155,6 +156,11 @@ ZEND_BEGIN_ARG_INFO_EX(arginfo_timecop_unixtojd, 0, 0, 0)
 	ZEND_ARG_INFO(0, timestamp)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO_EX(arginfo_timecop_date_create, 0, 0, 0)
+	ZEND_ARG_INFO(0, time)
+	ZEND_ARG_INFO(0, object)
+ZEND_END_ARG_INFO()
+
 /* {{{ timecop_functions[] */
 const zend_function_entry timecop_functions[] = {
 	PHP_FE(timecop_freeze, arginfo_timecop_freeze)
@@ -169,28 +175,47 @@ const zend_function_entry timecop_functions[] = {
 	PHP_FE(timecop_getdate, arginfo_timecop_getdate)
 	PHP_FE(timecop_localtime, arginfo_timecop_localtime)
 	PHP_FE(timecop_strtotime, arginfo_timecop_strtotime)
+
+#ifdef HAVE_STRFTIME
 	PHP_FE(timecop_strftime, arginfo_timecop_strftime)
 	PHP_FE(timecop_gmstrftime, arginfo_timecop_gmstrftime)
+#endif
+
 	PHP_FE(timecop_unixtojd, arginfo_timecop_unixtojd)
+
+	PHP_FE(timecop_date_create, arginfo_timecop_date_create)
+
 	{NULL, NULL, NULL}
 };
 /* }}} */
 
 /* declare method parameters, */
-ZEND_BEGIN_ARG_INFO_EX(arginfo_timecop_datetime_create, 0, 0, 0)
-	ZEND_ARG_INFO(0, time)
-	ZEND_ARG_INFO(0, object)
-ZEND_END_ARG_INFO()
 
 /* each method can have its own parameters and visibility */
 static zend_function_entry timecop_datetime_class_functions[] = {
-	PHP_ME(TimecopDateTime, __construct, arginfo_timecop_datetime_create,
+	PHP_ME(TimecopDateTime, __construct, arginfo_timecop_date_create,
 		   ZEND_ACC_CTOR | ZEND_ACC_PUBLIC)
 	{NULL, NULL, NULL}
 };
 
+#define MKTIME_NUM_ARGS 6
+
 #define ORIG_FUNC_NAME(funcname) \
 	TIMECOP_G(func_override) ? "timecop_orig_" funcname : funcname
+
+#define TIMECOP_CALL_FUNCTION(func_name, index_to_fill_timestamp) \
+	{\
+		zval *retval;\
+		_timecop_call_function(INTERNAL_FUNCTION_PARAM_PASSTHRU, func_name, &retval, index_to_fill_timestamp);\
+		RETURN_ZVAL(retval, 0, 1);\
+	}
+
+#define TIMECOP_CALL_MKTIME(mktime_func_name, date_func_name) \
+	{\
+		zval *retval;\
+		_timecop_call_mktime(INTERNAL_FUNCTION_PARAM_PASSTHRU, mktime_func_name, date_func_name, &retval);\
+		RETURN_ZVAL(retval, 0, 1);\
+	}
 
 static void timecop_globals_ctor(zend_timecop_globals *globals TSRMLS_DC);
 
@@ -203,25 +228,18 @@ static int timecop_class_override_clear(TSRMLS_D);
 static int update_request_time(long unixtime TSRMLS_DC);
 static int restore_request_time(TSRMLS_D);
 
-static int timecop_zend_fcall_info_init(zval *callable, zend_fcall_info *fci, zend_fcall_info_cache *fcc TSRMLS_DC);
-static int init_fcall_info(zval *callable, zend_fcall_info * fci, zend_fcall_info_cache * fcc, int num_args TSRMLS_DC);
-static int init_timecop_date_fcall_info(zval *callable, zend_fcall_info * fci, zend_fcall_info_cache * fcc TSRMLS_DC);
-static void dtor_datefunc_info(zend_fcall_info *fci);
-static zval *timecop_date_fcall(const char *format, zend_fcall_info * fci, zend_fcall_info_cache * fcc TSRMLS_DC);
-static zval ***alloc_fcall_params(int num_args);
-static void dtor_fcall_params(zval ***params, int num_args);
-static void copy_fcall_params(zval ***src, zval ***dst, int num_args);
-static int fill_mktime_params(zval ***params, zval *date_callable, int from TSRMLS_DC);
-
 static long timecop_current_timestamp(TSRMLS_D);
-static zval *timecop_current_date(char *format TSRMLS_DC);
-PHPAPI void php_timecop_mktime(INTERNAL_FUNCTION_PARAMETERS, zval *mktime_callable, zval *date_callable);
 
-static void call_callable_with_optional_timestamp(INTERNAL_FUNCTION_PARAMETERS, zval* callable, int num_required_func_args);
-static void _timecop_call_function(INTERNAL_FUNCTION_PARAMETERS, char* func_name, int num_required_func_args);
-static void call_constructor(zval **object_pp, zend_class_entry *ce, zval ***params, int param_count TSRMLS_DC);
-
+static int fill_mktime_params(zval ***params, const char *date_function_name, int from TSRMLS_DC);
 static int fix_datetime_timestamp(zval **datetime_obj, zval *time_str TSRMLS_DC);
+
+static void _timecop_call_function(INTERNAL_FUNCTION_PARAMETERS, const char *function_name, zval **retval_ptr_ptr, int index_to_fill_timestamp);
+static void _timecop_call_mktime(INTERNAL_FUNCTION_PARAMETERS, const char *mktime_function_name, const char *date_function_name, zval **retval_ptr_ptr);
+
+static void call_constructor(zval **object_pp, zend_class_entry *ce, zval ***params, int param_count TSRMLS_DC);
+static void simple_call_function(const char *function_name, zval **retval_ptr_ptr, zend_uint param_count, zval **params[] TSRMLS_DC);
+static zval **alloc_zval_ptr_ptr();
+static void zval_ptr_ptr_dtor(zval **zval_ptr_ptr);
 
 /* {{{ timecop_module_entry
  */
@@ -495,119 +513,170 @@ static int restore_request_time(TSRMLS_D)
 	return SUCCESS;
 }
 
-static int timecop_zend_fcall_info_init(zval *callable, zend_fcall_info *fci, zend_fcall_info_cache *fcc TSRMLS_DC)
+static long timecop_current_timestamp(TSRMLS_D)
 {
-	int init_result;
-	char *is_callable_error = NULL;
+	zval **array, **request_time_long;
+	long current_timestamp;
 
-#if !defined(PHP_VERSION_ID) || PHP_VERSION_ID < 50300
-	init_result = zend_fcall_info_init(callable, fci, fcc TSRMLS_CC);
-#else
-	init_result = zend_fcall_info_init(callable, 0, fci, fcc, NULL, &is_callable_error TSRMLS_CC);
-#endif
-	if (init_result == FAILURE) {
-		if (is_callable_error) {
-			zend_error(E_ERROR, "INTERNAL ERROR: to be a valid callback, %s", is_callable_error);
-		}
+	switch (TIMECOP_G(timecop_mode)) {
+	case TIMECOP_MODE_FREEZE:
+		current_timestamp = TIMECOP_G(freezed_timestamp);
+		break;
+	case TIMECOP_MODE_TRAVEL:
+		current_timestamp = time(NULL) + TIMECOP_G(travel_offset);
+		break;
+	default:
+		current_timestamp = time(NULL);
+		break;
 	}
-	if (is_callable_error) {
-		efree(is_callable_error);
+
+	return current_timestamp;
+}
+
+static int fill_mktime_params(zval ***params, const char *date_function_name, int from TSRMLS_DC)
+{
+	zval time, format;
+	char *formats[MKTIME_NUM_ARGS] = {"H", "i", "s", "n", "j", "Y"};
+	int i;
+	zval **date_params[2], *tmp[2];
+
+	date_params[0] = &tmp[0];
+	date_params[1] = &tmp[1];
+	tmp[0] = &format;
+	tmp[1] = &time;
+
+	INIT_ZVAL(time);
+	ZVAL_LONG(&time, timecop_current_timestamp(TSRMLS_C));
+
+	for (i = from; i < MKTIME_NUM_ARGS; i++) {
+		INIT_ZVAL(format);
+		ZVAL_STRING(&format, formats[i], 0);
+
+		simple_call_function(date_function_name, params[i], 2, &date_params TSRMLS_CC);
 	}
-	return init_result;
+
+	return MKTIME_NUM_ARGS;
 }
 
-static void alloc_last_param(zend_fcall_info *fci)
+static int fix_datetime_timestamp(zval **datetime_obj, zval *time_str TSRMLS_DC)
 {
-	zval *zp, **zpp;
+	zval *orig_unixtime_str, *orig_timestamp, *fixed_timestamp;
+	zval now, format, modify_arg;
+	zval *tmp;
+	char buf[32];
 
-	ALLOC_INIT_ZVAL(zp);
+	if (time_str == NULL) {
+		INIT_ZVAL(now);
+		ZVAL_STRING(&now, "now", 0);
+		time_str = &now;
+	}
 
-	zpp = (zval **) emalloc(sizeof(zval *));
-	*zpp = zp;
-	fci->params[fci->param_count] = zpp;
+	INIT_ZVAL(format);
+	ZVAL_STRING(&format, "U", 0);
 
-	fci->param_count++;
+	zend_call_method_with_1_params(datetime_obj, Z_OBJCE_PP(datetime_obj), NULL, "format", &orig_unixtime_str, &format);
+	zend_call_method_with_1_params(NULL, NULL, NULL, "intval", &orig_timestamp, orig_unixtime_str);
+	zend_call_method_with_1_params(NULL, NULL, NULL, "timecop_strtotime", &fixed_timestamp, time_str);
+
+	if (Z_LVAL_P(orig_timestamp) != Z_LVAL_P(fixed_timestamp)) {
+		sprintf(buf, "%+ld sec", Z_LVAL_P(fixed_timestamp) - Z_LVAL_P(orig_timestamp));
+
+		INIT_ZVAL(modify_arg);
+		ZVAL_STRING(&modify_arg, buf, 0);
+
+		zend_call_method_with_1_params(datetime_obj, Z_OBJCE_PP(datetime_obj), NULL, "modify", NULL, &modify_arg);
+	}
+
+	if (orig_unixtime_str) {
+		zval_ptr_dtor(&orig_unixtime_str);
+	}
+	if (orig_timestamp) {
+		zval_ptr_dtor(&orig_timestamp);
+	}
+	if (fixed_timestamp) {
+		zval_ptr_dtor(&fixed_timestamp);
+	}
+
+	return 0;
 }
 
-static void dtor_last_param(zend_fcall_info *fci)
+static void _timecop_call_function(INTERNAL_FUNCTION_PARAMETERS, const char *function_name, zval **retval_ptr_ptr, int index_to_fill_timestamp)
 {
-	int last_index = fci->param_count-1;
-
-	zval_ptr_dtor(fci->params[last_index]);
-	efree(fci->params[last_index]);
-
-	fci->param_count--;
-}
-
-static void fill_last_param_by_timestamp(zend_fcall_info *fci TSRMLS_DC)
-{
-	int last_index = fci->param_count-1;
-
-	ZVAL_LONG(*(fci->params[last_index]), timecop_current_timestamp(TSRMLS_C));
-}
-
-static void call_callable_with_optional_timestamp(INTERNAL_FUNCTION_PARAMETERS, zval* callable, int index_to_fill_timestamp)
-{
-	zval *retval_ptr = NULL;
-	zend_fcall_info fci;
-	zend_fcall_info_cache fci_cache;
+	zval ***params;
+	zend_uint param_count;
 	int params_size;
 
-	if (timecop_zend_fcall_info_init(callable, &fci, &fci_cache TSRMLS_CC) == FAILURE) {
-		return;
-	}
-	fci.retval_ptr_ptr = &retval_ptr;
-	fci.no_separation = 0;
-
 	params_size = MAX(ZEND_NUM_ARGS(), index_to_fill_timestamp+1);
-	fci.params = (zval ***) safe_emalloc(sizeof(zval **), params_size, 0);
+	params = (zval ***)safe_emalloc(sizeof(zval **), params_size, 0);
 
-	if (zend_get_parameters_array_ex(ZEND_NUM_ARGS(), fci.params) == FAILURE) {
-		efree(fci.params);
+	if (zend_get_parameters_array_ex(ZEND_NUM_ARGS(), params) == FAILURE) {
+		efree(params);
 		return;
 	}
-	fci.param_count = ZEND_NUM_ARGS();
+	param_count = ZEND_NUM_ARGS();
 
 	if (ZEND_NUM_ARGS() == index_to_fill_timestamp) {
-		alloc_last_param(&fci);
-		fill_last_param_by_timestamp(&fci TSRMLS_CC);
+		zval *zp, **zpp;
+		int last_index = param_count;
+
+		ALLOC_INIT_ZVAL(zp);
+		ZVAL_LONG(zp, timecop_current_timestamp(TSRMLS_C));
+
+		params[last_index] = zpp = alloc_zval_ptr_ptr();
+		*zpp = zp;
+
+		param_count++;
 	}
 
-	if (zend_call_function(&fci, &fci_cache TSRMLS_CC) == SUCCESS && fci.retval_ptr_ptr && *fci.retval_ptr_ptr) {
-		COPY_PZVAL_TO_ZVAL(*return_value, *fci.retval_ptr_ptr);
-	}
+	simple_call_function(function_name, retval_ptr_ptr, param_count, params TSRMLS_CC);
 
 	if (ZEND_NUM_ARGS() == index_to_fill_timestamp) {
-		dtor_last_param(&fci);
+		int last_index = param_count-1;
+		zval_ptr_ptr_dtor(params[last_index]);
+	}
+	efree(params);
+}
+
+/* {{{ _timecop_call_mktime - timecop_(gm)mktime helper */
+static void _timecop_call_mktime(INTERNAL_FUNCTION_PARAMETERS, const char *mktime_function_name, const char *date_function_name, zval **retval_ptr_ptr)
+{
+	int params_size;
+	zval ***params;
+	zend_uint param_count;
+	zval *retval;
+	int i;
+
+	params_size = MAX(ZEND_NUM_ARGS(), MKTIME_NUM_ARGS);
+	params = (zval ***)safe_emalloc(sizeof(zval **), params_size, 0);
+
+	if (zend_get_parameters_array_ex(ZEND_NUM_ARGS(), params) == FAILURE) {
+		efree(params);
+		return;
+	}
+	param_count = ZEND_NUM_ARGS();
+
+	if (ZEND_NUM_ARGS() < MKTIME_NUM_ARGS) {
+		for (i = ZEND_NUM_ARGS(); i < MKTIME_NUM_ARGS; i++) {
+			params[i] = alloc_zval_ptr_ptr();
+		}
+		fill_mktime_params(params, date_function_name, ZEND_NUM_ARGS() TSRMLS_CC);
+		param_count = MKTIME_NUM_ARGS;
 	}
 
-	efree(fci.params);
-}
-
-static void _timecop_call_function(INTERNAL_FUNCTION_PARAMETERS, char* func_name, int index_to_fill_timestamp)
-{
-	zval callable;
-
-	INIT_ZVAL(callable);
-	ZVAL_STRING(&callable, func_name, 0);
-
-	call_callable_with_optional_timestamp(INTERNAL_FUNCTION_PARAM_PASSTHRU, &callable, index_to_fill_timestamp);
-}
-
-static void call_constructor(zval **object_pp, zend_class_entry *ce, zval ***params, int param_count TSRMLS_DC)
-{
-	char* method_name = "__construct";
-
-	if (param_count == 0) {
-		zend_call_method_with_0_params(object_pp, ce, &ce->constructor, method_name, NULL);
-	} else if (param_count == 1) {
-		zend_call_method_with_1_params(object_pp, ce, &ce->constructor, method_name, NULL, *params[0]);
-	} else if (param_count == 2) {
-		zend_call_method_with_2_params(object_pp, ce, &ce->constructor, method_name, NULL, *params[0], *params[1]);
-	} else {
-		zend_error(E_ERROR, "INTERNAL ERROR: too many parameters for constructor.");
+	if (ZEND_NUM_ARGS() == 0) {
+		php_error_docref(NULL TSRMLS_CC, E_STRICT, "You should be using the time() function instead");
 	}
+
+	simple_call_function(mktime_function_name, retval_ptr_ptr, param_count, params TSRMLS_CC);
+
+	if (ZEND_NUM_ARGS() < MKTIME_NUM_ARGS) {
+		for (i = ZEND_NUM_ARGS(); i < MKTIME_NUM_ARGS; i++) {
+			zval_ptr_ptr_dtor(params[i]);
+		}
+	}
+	efree(params);
 }
+
 
 /* {{{ proto int timecop_freeze(long timestamp)
    Time travel to specified timestamp and freeze */
@@ -617,6 +686,7 @@ PHP_FUNCTION(timecop_freeze)
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &timestamp) == FAILURE) {
 		RETURN_FALSE;
 	}
+
 	TIMECOP_G(timecop_mode) = TIMECOP_MODE_FREEZE;
 	TIMECOP_G(freezed_timestamp) = timestamp;
 
@@ -669,259 +739,11 @@ PHP_FUNCTION(timecop_time)
 }
 /* }}} */
 
-static int init_fcall_info(zval *callable, zend_fcall_info * fci, zend_fcall_info_cache * fcc, int num_args TSRMLS_DC)
-{
-	zval **args;
-	int i;
-
-	if (timecop_zend_fcall_info_init(callable, fci, fcc TSRMLS_CC) == FAILURE) {
-		return 0;
-	}
-	fci->param_count = num_args;
-	fci->params = safe_emalloc(num_args, sizeof(zval**), 0);
-	args = safe_emalloc(num_args, sizeof(zval *), 0);
-	for (i = 0; i < num_args; i++) {
-		MAKE_STD_ZVAL(args[i]);
-		fci->params[i] = &args[i];
-	}
-	fci->no_separation = 0;
-	return 1;
-}
-
-static int init_timecop_date_fcall_info(zval *callable, zend_fcall_info * fci, zend_fcall_info_cache * fcc TSRMLS_DC)
-{
-	int ret;
-	ret = init_fcall_info(callable, fci, fcc, 2 TSRMLS_CC);
-	if (ret) {
-		ZVAL_LONG(*fci->params[1], timecop_current_timestamp(TSRMLS_C));
-	}
-	return ret;
-}
-
-static void dtor_datefunc_info(zend_fcall_info *fci)
-{
-	if (fci->params) {
-		int i;
-		for (i = 0; i < fci->param_count; i++) {
-			zval_ptr_dtor(fci->params[i]);
-		}
-		efree(*fci->params);
-		efree(fci->params);
-	}
-}
-
-static zval *timecop_date_fcall(const char *format, zend_fcall_info * fci, zend_fcall_info_cache * fcc TSRMLS_DC)
-{
-	zval *zvalue;
-	MAKE_STD_ZVAL(zvalue);
-	ZVAL_STRING(*(fci->params[0]), format, 0);
-	if (zend_call_function(fci, fcc TSRMLS_CC) == SUCCESS &&
-		fci->retval_ptr_ptr && *fci->retval_ptr_ptr) {
-		COPY_PZVAL_TO_ZVAL(*zvalue, *fci->retval_ptr_ptr);
-	}
-	ZVAL_NULL(*(fci->params[0]));
-	return zvalue;
-}
-
-static zval ***alloc_fcall_params(int num_args)
-{
-	int i;
-	zval ***params, **args;
-	params = safe_emalloc(num_args, sizeof(zval**), 0);
-	args = safe_emalloc(num_args, sizeof(zval *), 0);
-	for (i = 0; i < num_args; i++) {
-		MAKE_STD_ZVAL(args[i]);
-		params[i] = &args[i];
-	}
-	return params;
-}
-
-static void dtor_fcall_params(zval ***params, int num_args)
-{
-	int i;
-	for (i = 0; i < num_args; i++) {
-		zval_ptr_dtor(params[i]);
-	}
-	efree(*params);
-	efree(params);
-}
-
-static void copy_fcall_params(zval ***src, zval ***dst, int num_args)
-{
-	int i;
-	for (i = 0; i < num_args; i++) {
-		ZVAL_ZVAL(*dst[i], *src[i], 1, 0)
-	}
-}
-
-static int fill_mktime_params(zval ***params, zval *date_callable, int from TSRMLS_DC)
-{
-	zval *zp, *date_retval_ptr = NULL;
-	zend_fcall_info date_fci;
-	zend_fcall_info_cache date_fci_cache;
-	char *formats[] = {"H", "i", "s", "n", "j", "Y"};
-	int i, max_params = 6;
-
-	if (!init_timecop_date_fcall_info(date_callable, &date_fci, &date_fci_cache TSRMLS_CC)) {
-		return from;
-	}
-	date_fci.retval_ptr_ptr = &date_retval_ptr;
-
-	for (i = from; i < max_params; i++) {
-		zp = timecop_date_fcall(formats[i], &date_fci, &date_fci_cache TSRMLS_CC);
-		ZVAL_ZVAL(*params[i], zp, 1, 1);
-	}
-	dtor_datefunc_info(&date_fci);
-
-	return max_params;
-}
-
-static long timecop_current_timestamp(TSRMLS_D)
-{
-	zval **array, **request_time_long;
-	long current_timestamp;
-
-	switch (TIMECOP_G(timecop_mode)) {
-	case TIMECOP_MODE_FREEZE:
-		current_timestamp = TIMECOP_G(freezed_timestamp);
-		break;
-	case TIMECOP_MODE_TRAVEL:
-		current_timestamp = time(NULL) + TIMECOP_G(travel_offset);
-		break;
-	default:
-		current_timestamp = time(NULL);
-		break;
-	}
-
-	return current_timestamp;
-}
-
-static zval *timecop_current_date(char *format TSRMLS_DC)
-{
-	zval *zp, *date_retval_ptr = NULL;
-	zend_fcall_info date_fci;
-	zend_fcall_info_cache date_fci_cache;
-	zval date_callable;
-
-	INIT_ZVAL(date_callable);
-	ZVAL_STRING(&date_callable, ORIG_FUNC_NAME("date"), 0);
-
-	if (!init_timecop_date_fcall_info(&date_callable, &date_fci, &date_fci_cache TSRMLS_CC)) {
-		return NULL;
-	}
-	date_fci.retval_ptr_ptr = &date_retval_ptr;
-	zp = timecop_date_fcall(format, &date_fci, &date_fci_cache TSRMLS_CC);
-
-	dtor_datefunc_info(&date_fci);
-
-	return zp;
-}
-
-static int fix_datetime_timestamp(zval **datetime_obj, zval *time_str TSRMLS_DC)
-{
-	zval *orig_unixtime_str, *orig_timestamp, *fixed_timestamp;
-	zval now, format, modify_arg;
-	zval *tmp;
-	char buf[32];
-
-	if (time_str == NULL) {
-		INIT_ZVAL(now);
-		ZVAL_STRING(&now, "now", 0);
-		time_str = &now;
-	}
-
-	INIT_ZVAL(format);
-	ZVAL_STRING(&format, "U", 0);
-
-	zend_call_method_with_1_params(datetime_obj, Z_OBJCE_PP(datetime_obj), NULL, "format", &orig_unixtime_str, &format);
-	zend_call_method_with_1_params(NULL, NULL, NULL, "intval", &orig_timestamp, orig_unixtime_str);
-	zend_call_method_with_1_params(NULL, NULL, NULL, "timecop_strtotime", &fixed_timestamp, time_str);
-
-	if (Z_LVAL_P(orig_timestamp) != Z_LVAL_P(fixed_timestamp)) {
-		sprintf(buf, "%+ld sec", Z_LVAL_P(fixed_timestamp) - Z_LVAL_P(orig_timestamp));
-
-		INIT_ZVAL(modify_arg);
-		ZVAL_STRING(&modify_arg, buf, 0);
-
-		zend_call_method_with_1_params(datetime_obj, Z_OBJCE_PP(datetime_obj), NULL, "modify", NULL, &modify_arg);
-	}
-
-	if (orig_unixtime_str) {
-		zval_ptr_dtor(&orig_unixtime_str);
-	}
-	if (orig_timestamp) {
-		zval_ptr_dtor(&orig_timestamp);
-	}
-	if (fixed_timestamp) {
-		zval_ptr_dtor(&fixed_timestamp);
-	}
-
-	return 0;
-}
-
-/* {{{ php_timecop_mktime - timecop_(gm)mktime helper */
-PHPAPI void php_timecop_mktime(INTERNAL_FUNCTION_PARAMETERS, zval *mktime_callable, zval *date_callable)
-{
-	zval *retval_ptr = NULL;
-	zend_fcall_info fci;
-	zend_fcall_info_cache fci_cache;
-	int argc = ZEND_NUM_ARGS();
-	zval ***args = NULL;
-
-	if (timecop_zend_fcall_info_init(mktime_callable, &fci, &fci_cache TSRMLS_CC) == FAILURE) {
-		return;
-	}
-	fci.retval_ptr_ptr = &retval_ptr;
-	fci.no_separation = 0;
-
-	args = (zval ***) safe_emalloc(argc, sizeof(zval **), 0);
-	if (zend_get_parameters_array_ex(argc, args) == FAILURE) {
-		efree(args);
-		return;
-	}
-
-	if (ZEND_NUM_ARGS() >= 6) {
-		fci.params = args;
-		fci.param_count = argc;
-	} else {
-		fci.params = alloc_fcall_params(6);
-		copy_fcall_params(args, fci.params, argc);
-		if (args) {
-			efree(args);
-		}
-		fci.param_count = fill_mktime_params(fci.params, date_callable, argc TSRMLS_CC);
-	}
-
-	if (ZEND_NUM_ARGS() == 0) {
-		php_error_docref(NULL TSRMLS_CC, E_STRICT, "You should be using the time() function instead");
-	}
-
-	if (zend_call_function(&fci, &fci_cache TSRMLS_CC) == SUCCESS && fci.retval_ptr_ptr && *fci.retval_ptr_ptr) {
-		COPY_PZVAL_TO_ZVAL(*return_value, *fci.retval_ptr_ptr);
-	}
-
-	if (fci.params) {
-		if (ZEND_NUM_ARGS() >= 6) {
-			efree(fci.params);
-		} else {
-			dtor_fcall_params(fci.params, 6);
-		}
-	}
-}
-
 /* {{{ proto int timecop_mktime([int hour [, int min [, int sec [, int mon [, int day [, int year]]]]]])
    Get UNIX timestamp for a date */
 PHP_FUNCTION(timecop_mktime)
 {
-	zval mktime_callable, date_callable;
-
-	INIT_ZVAL(mktime_callable);
-	INIT_ZVAL(date_callable);
-
-	ZVAL_STRING(&mktime_callable, ORIG_FUNC_NAME("mktime"), 0);
-	ZVAL_STRING(&date_callable, ORIG_FUNC_NAME("date"), 0);
-
-	php_timecop_mktime(INTERNAL_FUNCTION_PARAM_PASSTHRU, &mktime_callable, &date_callable);
+	TIMECOP_CALL_MKTIME(ORIG_FUNC_NAME("mktime"), ORIG_FUNC_NAME("date"));
 }
 /* }}} */
 
@@ -929,15 +751,7 @@ PHP_FUNCTION(timecop_mktime)
    Get UNIX timestamp for a GMT date */
 PHP_FUNCTION(timecop_gmmktime)
 {
-	zval mktime_callable, date_callable;
-
-	INIT_ZVAL(mktime_callable);
-	INIT_ZVAL(date_callable);
-
-	ZVAL_STRING(&mktime_callable, ORIG_FUNC_NAME("gmmktime"), 0);
-	ZVAL_STRING(&date_callable, ORIG_FUNC_NAME("gmdate"), 0);
-
-	php_timecop_mktime(INTERNAL_FUNCTION_PARAM_PASSTHRU, &mktime_callable, &date_callable);
+	TIMECOP_CALL_MKTIME(ORIG_FUNC_NAME("gmmktime"), ORIG_FUNC_NAME("gmdate"));
 }
 /* }}} */
 
@@ -945,7 +759,7 @@ PHP_FUNCTION(timecop_gmmktime)
    Format a local date/time */
 PHP_FUNCTION(timecop_date)
 {
-	_timecop_call_function(INTERNAL_FUNCTION_PARAM_PASSTHRU, ORIG_FUNC_NAME("date"), 1);
+	TIMECOP_CALL_FUNCTION(ORIG_FUNC_NAME("date"), 1);
 }
 /* }}} */
 
@@ -953,7 +767,7 @@ PHP_FUNCTION(timecop_date)
    Format a GMT date/time */
 PHP_FUNCTION(timecop_gmdate)
 {
-	_timecop_call_function(INTERNAL_FUNCTION_PARAM_PASSTHRU, ORIG_FUNC_NAME("gmdate"), 1);
+	TIMECOP_CALL_FUNCTION(ORIG_FUNC_NAME("gmdate"), 1);
 }
 /* }}} */
 
@@ -961,7 +775,7 @@ PHP_FUNCTION(timecop_gmdate)
    Format a local time/date as integer */
 PHP_FUNCTION(timecop_idate)
 {
-	_timecop_call_function(INTERNAL_FUNCTION_PARAM_PASSTHRU, ORIG_FUNC_NAME("idate"), 1);
+	TIMECOP_CALL_FUNCTION(ORIG_FUNC_NAME("idate"), 1);
 }
 /* }}} */
 
@@ -969,7 +783,7 @@ PHP_FUNCTION(timecop_idate)
    Get date/time information */
 PHP_FUNCTION(timecop_getdate)
 {
-	_timecop_call_function(INTERNAL_FUNCTION_PARAM_PASSTHRU, ORIG_FUNC_NAME("getdate"), 0);
+	TIMECOP_CALL_FUNCTION(ORIG_FUNC_NAME("getdate"), 0);
 }
 /* }}} */
 
@@ -978,7 +792,7 @@ PHP_FUNCTION(timecop_getdate)
  the associative_array argument is set to 1 other wise it is a regular array */
 PHP_FUNCTION(timecop_localtime)
 {
-	_timecop_call_function(INTERNAL_FUNCTION_PARAM_PASSTHRU, ORIG_FUNC_NAME("localtime"), 0);
+	TIMECOP_CALL_FUNCTION(ORIG_FUNC_NAME("localtime"), 0);
 }
 /* }}} */
 
@@ -986,7 +800,7 @@ PHP_FUNCTION(timecop_localtime)
    Convert string representation of date and time to a timestamp */
 PHP_FUNCTION(timecop_strtotime)
 {
-	_timecop_call_function(INTERNAL_FUNCTION_PARAM_PASSTHRU, ORIG_FUNC_NAME("strtotime"), 1);
+	TIMECOP_CALL_FUNCTION(ORIG_FUNC_NAME("strtotime"), 1);
 }
 /* }}} */
 
@@ -994,7 +808,7 @@ PHP_FUNCTION(timecop_strtotime)
    Format a local time/date according to locale settings */
 PHP_FUNCTION(timecop_strftime)
 {
-	_timecop_call_function(INTERNAL_FUNCTION_PARAM_PASSTHRU, ORIG_FUNC_NAME("strftime"), 1);
+	TIMECOP_CALL_FUNCTION(ORIG_FUNC_NAME("strftime"), 1);
 }
 /* }}} */
 
@@ -1002,7 +816,7 @@ PHP_FUNCTION(timecop_strftime)
    Format a GMT/UCT time/date according to locale settings */
 PHP_FUNCTION(timecop_gmstrftime)
 {
-	_timecop_call_function(INTERNAL_FUNCTION_PARAM_PASSTHRU, ORIG_FUNC_NAME("gmstrftime"), 1);
+	TIMECOP_CALL_FUNCTION(ORIG_FUNC_NAME("gmstrftime"), 1);
 }
 /* }}} */
 
@@ -1010,7 +824,34 @@ PHP_FUNCTION(timecop_gmstrftime)
    Convert UNIX timestamp to Julian Day */
 PHP_FUNCTION(timecop_unixtojd)
 {
-	_timecop_call_function(INTERNAL_FUNCTION_PARAM_PASSTHRU, ORIG_FUNC_NAME("unixtojd"), 0);
+	TIMECOP_CALL_FUNCTION(ORIG_FUNC_NAME("unixtojd"), 0);
+}
+/* }}} */
+
+/* {{{ proto TimecopDateTime timecop_date_create([string time[, DateTimeZone object]])
+   Returns new TimecopDateTime object
+*/
+PHP_FUNCTION(timecop_date_create)
+{
+	zval ***params, *datetime_obj, *time_str = NULL;
+
+	params = (zval ***) safe_emalloc(ZEND_NUM_ARGS(), sizeof(zval **), 0);
+
+	if (zend_get_parameters_array_ex(ZEND_NUM_ARGS(), params) == FAILURE) {
+		efree(params);
+		RETURN_FALSE;
+	}
+
+	simple_call_function(ORIG_FUNC_NAME("date_create"), &datetime_obj, ZEND_NUM_ARGS(), params TSRMLS_CC);
+
+	if (ZEND_NUM_ARGS() >= 1) {
+		time_str = *params[0];
+	}
+	fix_datetime_timestamp(&datetime_obj, time_str TSRMLS_CC);
+
+	efree(params);
+
+	RETURN_ZVAL(datetime_obj, 0, 1);
 }
 /* }}} */
 
@@ -1021,7 +862,7 @@ PHP_METHOD(TimecopDateTime, __construct)
 {
 	zval ***params;
 	zval *obj = getThis();
-	zval *time_str;
+	zval *time_str = NULL;
 	zend_class_entry *datetime_ce;
 
 	datetime_ce = TIMECOP_G(ce_DateTime);
@@ -1030,13 +871,12 @@ PHP_METHOD(TimecopDateTime, __construct)
 
 	if (zend_get_parameters_array_ex(ZEND_NUM_ARGS(), params) == FAILURE) {
 		efree(params);
-		return;
+		RETURN_FALSE;
 	}
 
 	/* call DateTime::__constuctor() */
 	call_constructor(&obj, datetime_ce, params, ZEND_NUM_ARGS() TSRMLS_CC);
 
-	time_str = NULL;
 	if (ZEND_NUM_ARGS() >= 1) {
 		time_str = *params[0];
 	}
@@ -1045,7 +885,46 @@ PHP_METHOD(TimecopDateTime, __construct)
 	efree(params);
 }
 
+static void call_constructor(zval **object_pp, zend_class_entry *ce, zval ***params, int param_count TSRMLS_DC)
+{
+	char *method_name = "__construct";
 
+	if (param_count > 2) {
+		zend_error(E_ERROR, "INTERNAL ERROR: too many parameters for constructor.");
+		return;
+	}
+
+	if (param_count == 0) {
+		zend_call_method_with_0_params(object_pp, ce, &ce->constructor, method_name, NULL);
+	} else if (param_count == 1) {
+		zend_call_method_with_1_params(object_pp, ce, &ce->constructor, method_name, NULL, *params[0]);
+	} else if (param_count == 2) {
+		zend_call_method_with_2_params(object_pp, ce, &ce->constructor, method_name, NULL, *params[0], *params[1]);
+	}
+}
+
+static void simple_call_function(const char *function_name, zval **retval_ptr_ptr, zend_uint param_count, zval **params[] TSRMLS_DC)
+{
+	zval callable;
+
+	INIT_ZVAL(callable);
+	ZVAL_STRING(&callable, function_name, 0);
+
+	call_user_function_ex(EG(function_table), NULL, &callable, retval_ptr_ptr, param_count, params, 1, NULL TSRMLS_CC);
+}
+
+static zval **alloc_zval_ptr_ptr()
+{
+	zval **zpp;
+	zpp = (zval **) emalloc(sizeof(zval *));
+	return zpp;
+}
+
+static void zval_ptr_ptr_dtor(zval **zval_ptr_ptr)
+{
+	zval_ptr_dtor(zval_ptr_ptr);
+	efree(zval_ptr_ptr);
+}
 
 /* }}} */
 

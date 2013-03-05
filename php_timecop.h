@@ -62,6 +62,7 @@ PHP_FUNCTION(timecop_strtotime);
 PHP_FUNCTION(timecop_strftime);
 PHP_FUNCTION(timecop_gmstrftime);
 PHP_FUNCTION(timecop_unixtojd);
+PHP_FUNCTION(timecop_date_create);
 
 PHP_METHOD(TimecopDateTime, __construct);
 
