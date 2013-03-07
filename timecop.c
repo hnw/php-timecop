@@ -175,16 +175,10 @@ const zend_function_entry timecop_functions[] = {
 	PHP_FE(timecop_getdate, arginfo_timecop_getdate)
 	PHP_FE(timecop_localtime, arginfo_timecop_localtime)
 	PHP_FE(timecop_strtotime, arginfo_timecop_strtotime)
-
-#ifdef HAVE_STRFTIME
 	PHP_FE(timecop_strftime, arginfo_timecop_strftime)
 	PHP_FE(timecop_gmstrftime, arginfo_timecop_gmstrftime)
-#endif
-
 	PHP_FE(timecop_unixtojd, arginfo_timecop_unixtojd)
-
 	PHP_FE(timecop_date_create, arginfo_timecop_date_create)
-
 	{NULL, NULL, NULL}
 };
 /* }}} */
@@ -418,18 +412,22 @@ static int timecop_class_override(TSRMLS_D)
 		} else {
 			ce_ovld = *pce_ovld;
 			ce_orig = *pce_orig;
-			ce_orig->refcount++;
-			zend_hash_add(EG(class_table), p->save_name, strlen(p->save_name)+1,
-						  &ce_orig, sizeof(zend_class_entry *), NULL);
-			ce_ovld->refcount++;
-			if (zend_hash_update(EG(class_table), p->orig_name, strlen(p->orig_name)+1,
-								 &ce_ovld, sizeof(zend_class_entry *), NULL) == FAILURE) {
-				ce_ovld->refcount--;
+
+			if (zend_hash_add(EG(class_table), p->save_name, strlen(p->save_name)+1,
+							  &ce_orig, sizeof(zend_class_entry *), NULL) == FAILURE) {
 				return FAILURE;
 			}
+			ce_orig->refcount++;
+
+			if (zend_hash_update(EG(class_table), p->orig_name, strlen(p->orig_name)+1,
+								 &ce_ovld, sizeof(zend_class_entry *), NULL) == FAILURE) {
+				return FAILURE;
+			}
+			ce_ovld->refcount++;
 		}
 		p++;
 	}
+
 	return SUCCESS;
 }
 
@@ -463,10 +461,16 @@ static int timecop_class_override_clear(TSRMLS_D)
 		if (zend_hash_find(EG(class_table), p->save_name, strlen(p->save_name)+1,
 						   (void **)&pce_orig) == SUCCESS) {
 			ce_orig = *pce_orig;
+
+			if (zend_hash_update(EG(class_table), p->orig_name, strlen(p->orig_name)+1,
+								 &ce_orig, sizeof(zend_class_entry *), NULL) == FAILURE) {
+				return FAILURE;
+			}
 			ce_orig->refcount++;
-			zend_hash_update(EG(class_table), p->orig_name, strlen(p->orig_name)+1,
-							 &ce_orig, sizeof(zend_class_entry *), NULL);
-			zend_hash_del(EG(class_table), p->save_name, strlen(p->save_name)+1);
+
+			if (zend_hash_del(EG(class_table), p->save_name, strlen(p->save_name)+1) == FAILURE) {
+				return FAILURE;
+			}
 		}
 		p++;
 	}
