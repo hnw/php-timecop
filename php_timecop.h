@@ -66,6 +66,11 @@ PHP_FUNCTION(timecop_date_create);
 
 PHP_METHOD(TimecopDateTime, __construct);
 
+#if !defined(PHP_VERSION_ID) || PHP_VERSION_ID < 50300
+PHP_METHOD(TimecopDateTime, getTimestamp);
+PHP_METHOD(TimecopDateTime, setTimestamp);
+#endif
+
 typedef enum timecop_mode_t {
 	TIMECOP_MODE_NORMAL,
 	TIMECOP_MODE_FREEZE,
