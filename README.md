@@ -66,6 +66,13 @@ var_dump(strtotime("+100000 sec")); // int(10000)
 
 ## CHANGELOG
 
+###version 1.0.3, 2013/03/09
+
+- Fixed the time traveling implementation for TimecopDateTime::__construct()
+- Fixed timecop_date_create() to return TimecopDateTime instance
+-- The previous version returns DateTime instance
+- Add TimecopDateTime::getTimestamp(), TimecopDateTime::setTimestamp() only for PHP 5.2.x
+
 ###version 1.0.2, 2013/03/06
 
 - Implement timecop_date_create()
