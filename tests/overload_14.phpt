@@ -25,32 +25,40 @@ timecop_freeze(timecop_orig_strtotime("2012-02-29 01:23:45"));
 $dt0 = new DateTime();
 var_dump(get_class($dt0));
 
-// constuctor with 0 argument
-$dt1 = date_create();
-var_dump($dt1->format("c"));
+$dts = array(
+    // constuctor with 0 argument
+    date_create(),
 
-// constuctor with 1 argument(absolute format)
-$dt2 = date_create("2012-03-31 12:34:56");
-var_dump($dt2->format("c"));
+    // constuctor with 1 argument(null)
+    date_create(null),
 
-// constuctor with 1 argument(relative format)
-$dt3 = date_create("+3days");
-var_dump($dt3->format("c"));
+    // constuctor with 1 argument(empty string)
+    date_create(""),
 
-// constuctor with 1 argument(including timezone info)
-$dt4 = date_create("1970-01-01 19:00:00 EST");
-var_dump($dt4->format("c"));
+    // constuctor with 1 argument(absolute format)
+    date_create("2012-03-31 12:34:56"),
 
-// constuctor with 1 argument(unix time)
-$dt5 = date_create("@86400");
-var_dump($dt5->format("c"));
+    // constuctor with 1 argument(relative format)
+    date_create("+3days"),
 
-// constuctor with 2 argument
-$dt6 = date_create("now", new DateTimezone("Asia/Tokyo"));
-var_dump($dt6->format("c"));
+    // constuctor with 1 argument(including timezone info)
+    date_create("1970-01-01 19:00:00 EST"),
+
+    // constuctor with 1 argument(unix time)
+    date_create("@86400"),
+
+    // constuctor with 2 argument
+    date_create("now", new DateTimezone("Asia/Tokyo")),
+);
+
+foreach ($dts as $dt) {
+    var_dump($dt->format("c"));
+}
 
 --EXPECT--
 string(15) "TimecopDateTime"
+string(25) "2012-02-29T01:23:45-08:00"
+string(25) "2012-02-29T01:23:45-08:00"
 string(25) "2012-02-29T01:23:45-08:00"
 string(25) "2012-03-31T12:34:56-07:00"
 string(25) "2012-03-03T01:23:45-08:00"

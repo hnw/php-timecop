@@ -251,7 +251,7 @@ static int restore_request_time(TSRMLS_D);
 static long timecop_current_timestamp(TSRMLS_D);
 
 static int fill_mktime_params(zval ***params, const char *date_function_name, int from TSRMLS_DC);
-static int fix_datetime_timestamp(zval **datetime_obj, zval *time_str TSRMLS_DC);
+static int fix_datetime_timestamp(zval **datetime_obj, zval *time TSRMLS_DC);
 
 static void _timecop_call_function(INTERNAL_FUNCTION_PARAMETERS, const char *function_name, zval **retval_ptr_ptr, int index_to_fill_timestamp);
 static void _timecop_call_mktime(INTERNAL_FUNCTION_PARAMETERS, const char *mktime_function_name, const char *date_function_name, zval **retval_ptr_ptr);
@@ -589,21 +589,34 @@ static int fill_mktime_params(zval ***params, const char *date_function_name, in
 	return MKTIME_NUM_ARGS;
 }
 
-static int fix_datetime_timestamp(zval **datetime_obj, zval *time_str TSRMLS_DC)
+static int fix_datetime_timestamp(zval **datetime_obj, zval *time TSRMLS_DC)
 {
 	zval *orig_timestamp, *fixed_timestamp;
 	zval now;
 
-	if (time_str == NULL) {
-		INIT_ZVAL(now);
-		ZVAL_STRING(&now, "now", 0);
-		time_str = &now;
+	INIT_ZVAL(now);
+	ZVAL_STRING(&now, "now", 0);
+
+	if (time == NULL) {
+		time = &now;
+	} else {
+		zval time_str;
+		time_str = *time;
+		zval_copy_ctor(&time_str);
+		convert_to_string(&time_str);
+		if (Z_STRLEN(time_str) == 0) {
+			time = &now;
+		}
+		zval_dtor(&time_str);
 	}
 
 	zend_call_method_with_0_params(datetime_obj, Z_OBJCE_PP(datetime_obj), NULL, "gettimestamp", &orig_timestamp);
-	zend_call_method_with_1_params(NULL, NULL, NULL, "timecop_strtotime", &fixed_timestamp, time_str);
+	zend_call_method_with_1_params(NULL, NULL, NULL, "timecop_strtotime", &fixed_timestamp, time);
 
-	if (Z_LVAL_P(orig_timestamp) != Z_LVAL_P(fixed_timestamp)) {
+	if (Z_TYPE_P(fixed_timestamp) == IS_BOOL && Z_BVAL_P(fixed_timestamp) == 0) {
+		// timecop_strtotime($time) === false
+		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Failed to parse time string '%s'", Z_STRVAL_P(time));
+	} else if (Z_LVAL_P(orig_timestamp) != Z_LVAL_P(fixed_timestamp)) {
 		zend_call_method_with_1_params(datetime_obj, Z_OBJCE_PP(datetime_obj), NULL, "settimestamp", NULL, fixed_timestamp);
 	}
 
@@ -850,7 +863,7 @@ PHP_FUNCTION(timecop_unixtojd)
 */
 PHP_FUNCTION(timecop_date_create)
 {
-	zval ***params, *datetime_obj, *time_str = NULL;
+	zval ***params, *datetime_obj, *time = NULL;
 
 	params = (zval ***) safe_emalloc(ZEND_NUM_ARGS(), sizeof(zval **), 0);
 
@@ -875,7 +888,7 @@ PHP_METHOD(TimecopDateTime, __construct)
 {
 	zval ***params;
 	zval *obj = getThis();
-	zval *time_str = NULL;
+	zval *time = NULL;
 	zend_class_entry *datetime_ce;
 
 	params = (zval ***) safe_emalloc(ZEND_NUM_ARGS(), sizeof(zval **), 0);
@@ -888,10 +901,12 @@ PHP_METHOD(TimecopDateTime, __construct)
 	/* call DateTime::__constuctor() */
 	call_constructor(&obj, TIMECOP_G(ce_DateTime), params, ZEND_NUM_ARGS() TSRMLS_CC);
 
-	if (ZEND_NUM_ARGS() >= 1) {
-		time_str = *params[0];
+	if (!EG(exception)) {
+		if (ZEND_NUM_ARGS() >= 1) {
+			time = *params[0];
+		}
+		fix_datetime_timestamp(&obj, time TSRMLS_CC);
 	}
-	fix_datetime_timestamp(&obj, time_str TSRMLS_CC);
 
 	efree(params);
 }
