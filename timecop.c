@@ -276,7 +276,7 @@ zend_module_entry timecop_module_entry = {
 	PHP_RSHUTDOWN(timecop),
 	PHP_MINFO(timecop),
 #if ZEND_MODULE_API_NO >= 20010901
-	"0.1",
+	PHP_TIMECOP_VERSION,
 #endif
 	STANDARD_MODULE_PROPERTIES
 };
@@ -600,14 +600,14 @@ static int fix_datetime_timestamp(zval **datetime_obj, zval *time TSRMLS_DC)
 	if (time == NULL) {
 		time = &now;
 	} else {
-		zval time_str;
-		time_str = *time;
-		zval_copy_ctor(&time_str);
-		convert_to_string(&time_str);
-		if (Z_STRLEN(time_str) == 0) {
-			time = &now;
+		zval *len;
+		zend_call_method_with_1_params(NULL, NULL, NULL, "strlen", &len, time);
+		if (len) {
+			if (Z_LVAL_P(len) == 0) {
+				time = &now;
+			}
+			zval_ptr_dtor(&len);
 		}
-		zval_dtor(&time_str);
 	}
 
 	zend_call_method_with_0_params(datetime_obj, Z_OBJCE_PP(datetime_obj), NULL, "gettimestamp", &orig_timestamp);
@@ -615,7 +615,7 @@ static int fix_datetime_timestamp(zval **datetime_obj, zval *time TSRMLS_DC)
 
 	if (Z_TYPE_P(fixed_timestamp) == IS_BOOL && Z_BVAL_P(fixed_timestamp) == 0) {
 		// timecop_strtotime($time) === false
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Failed to parse time string '%s'", Z_STRVAL_P(time));
+		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Failed to parse time string '%s': giving up time traveling", Z_STRVAL_P(time));
 	} else if (Z_LVAL_P(orig_timestamp) != Z_LVAL_P(fixed_timestamp)) {
 		zend_call_method_with_1_params(datetime_obj, Z_OBJCE_PP(datetime_obj), NULL, "settimestamp", NULL, fixed_timestamp);
 	}

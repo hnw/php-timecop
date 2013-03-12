@@ -66,6 +66,9 @@ var_dump(strtotime("+100000 sec")); // int(10000)
 
 ## CHANGELOG
 
+###version 1.0.4, 2013/03/11
+- Fixed SIGSEGV in TimecopDateTime::__construct() called with NULL as 1st argument
+
 ###version 1.0.3, 2013/03/09
 
 - Fixed the time traveling implementation for TimecopDateTime::__construct()
@@ -79,7 +82,8 @@ var_dump(strtotime("+100000 sec")); // int(10000)
 
 ###version 1.0.1, 2013/03/04
 
-- Fixed time traveling bug about TimecopDateTime::__construct() when it is called with 1 or 2 arguments
+- Implement time traveling feature for TimecopDateTime::__construct() with 1 or 2 arguments
+  - The previous version works collectly only for no arguments calling: "new TimecopDateTime()"
 
 ###version 1.0.0, 2012/11/21
 
