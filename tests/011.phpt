@@ -4,7 +4,7 @@ Check for serialize/unserialize TimecopDateTime instance
 <?php
 extension_loaded('timecop') or die('skip timecop not available');
 if (version_compare(PHP_VERSION, '5.3.0') < 0) {
-    die("skip requires PHP >=  5.3.0");
+    die("skip requires PHP >= 5.3.0");
 }
 $required_class = array("timecopdatetime");
 foreach ($required_class as $class_name) {
