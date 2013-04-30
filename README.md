@@ -83,7 +83,7 @@ var_dump(strtotime("+100000 sec")); // int(10000)
 ###version 1.0.1, 2013/03/04
 
 - Implement time traveling feature for TimecopDateTime::__construct() with 1 or 2 arguments
-  - The previous version works collectly only for no arguments calling: "new TimecopDateTime()"
+  - The previous version works correctly only for no arguments calling: "new TimecopDateTime()"
 
 ###version 1.0.0, 2012/11/21
 
