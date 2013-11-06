@@ -66,7 +66,9 @@ static const struct timecop_override_def timecop_ovld_func[] = {
 	{"gmstrftime", "timecop_gmstrftime", "timecop_orig_gmstrftime"},
 	{"unixtojd", "timecop_unixtojd", "timecop_orig_unixtojd"},
 	{"date_create", "timecop_date_create", "timecop_orig_date_create"},
+#if !defined(PHP_VERSION_ID) || PHP_VERSION_ID >= 50300
 	{"date_create_from_format", "timecop_date_create_from_format", "timecop_orig_date_create_from_format"},
+#endif
 	{NULL, NULL, NULL}
 };
 /* }}} */
@@ -158,11 +160,13 @@ ZEND_BEGIN_ARG_INFO_EX(arginfo_timecop_date_create, 0, 0, 0)
 	ZEND_ARG_INFO(0, object)
 ZEND_END_ARG_INFO()
 
+#if !defined(PHP_VERSION_ID) || PHP_VERSION_ID >= 50300
 ZEND_BEGIN_ARG_INFO_EX(arginfo_timecop_date_create_from_format, 0, 0, 2)
-ZEND_ARG_INFO(0, format)
-ZEND_ARG_INFO(0, time)
-ZEND_ARG_INFO(0, object)
+	ZEND_ARG_INFO(0, format)
+	ZEND_ARG_INFO(0, time)
+	ZEND_ARG_INFO(0, object)
 ZEND_END_ARG_INFO()
+#endif
 
 #if !defined(PHP_VERSION_ID) || PHP_VERSION_ID < 50300
 ZEND_BEGIN_ARG_INFO_EX(arginfo_timecop_date_method_timestamp_set, 0, 0, 1)
@@ -191,7 +195,9 @@ const zend_function_entry timecop_functions[] = {
 	PHP_FE(timecop_gmstrftime, arginfo_timecop_gmstrftime)
 	PHP_FE(timecop_unixtojd, arginfo_timecop_unixtojd)
 	PHP_FE(timecop_date_create, arginfo_timecop_date_create)
+#if !defined(PHP_VERSION_ID) || PHP_VERSION_ID >= 50300
 	PHP_FE(timecop_date_create_from_format, arginfo_timecop_date_create_from_format)
+#endif
 	{NULL, NULL, NULL}
 };
 /* }}} */
@@ -202,8 +208,10 @@ const zend_function_entry timecop_functions[] = {
 static zend_function_entry timecop_datetime_class_functions[] = {
 	PHP_ME(TimecopDateTime, __construct, arginfo_timecop_date_create,
 		   ZEND_ACC_CTOR | ZEND_ACC_PUBLIC)
+#if !defined(PHP_VERSION_ID) || PHP_VERSION_ID >= 50300
    PHP_ME_MAPPING(createFromFormat, timecop_date_create_from_format, arginfo_timecop_date_create_from_format,
 		   ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+#endif
 #if !defined(PHP_VERSION_ID) || PHP_VERSION_ID < 50300
 	PHP_ME(TimecopDateTime, getTimestamp,
 				   arginfo_timecop_date_method_timestamp_get, 0)
@@ -891,6 +899,7 @@ PHP_FUNCTION(timecop_date_create)
 }
 /* }}} */
 
+#if !defined(PHP_VERSION_ID) || PHP_VERSION_ID >= 50300
 /* {{{ proto TimecopDateTime timecop_date_create_from_format(string format, string time[, DateTimeZone object])
  Returns new TimecopDateTime object
  */
@@ -913,6 +922,7 @@ PHP_FUNCTION(timecop_date_create_from_format)
 	zend_call_method_with_2_params(&return_value, ce, &ce->constructor, "__construct", NULL, time, timezone);
 }
 /* }}} */
+#endif
 
 /* {{{ proto TimecopDateTime::__construct([string time[, DateTimeZone object]])
    Creates new TimecopDateTime object

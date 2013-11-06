@@ -23,6 +23,8 @@ date.timezone=America/Los_Angeles
 // checking class name of instance
 $dt0 = new DateTime();
 var_dump(get_class($dt0));
+$dt1 = DateTime::createFromFormat('U', 0);
+var_dump(get_class($dt1));
 
 $dts = array(
     // constuctor with 2 argument(absolute format)
@@ -45,6 +47,7 @@ foreach ($dts as $dt) {
 }
 
 --EXPECT--
+string(15) "TimecopDateTime"
 string(15) "TimecopDateTime"
 string(25) "2012-03-31T12:34:56-07:00"
 string(19) "America/Los_Angeles"
