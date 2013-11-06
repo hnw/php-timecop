@@ -24,6 +24,8 @@ timecop_freeze(timecop_orig_strtotime("2012-02-29 01:23:45"));
 // checking class name of instance
 $dt0 = new DateTime();
 var_dump(get_class($dt0));
+$dt1 = DateTime::createFromFormat('U', 0);
+var_dump(get_class($dt1));
 
 $dts = array(
     // constuctor with 0 argument
@@ -56,6 +58,7 @@ foreach ($dts as $dt) {
 }
 
 --EXPECT--
+string(15) "TimecopDateTime"
 string(15) "TimecopDateTime"
 string(25) "2012-02-29T01:23:45-08:00"
 string(25) "2012-02-29T01:23:45-08:00"
