@@ -25,9 +25,9 @@
 #include "php.h"
 #include "php_ini.h"
 #include "ext/standard/info.h"
+#include "ext/date/php_date.h"
 
 #if !defined(PHP_VERSION_ID) || PHP_VERSION_ID < 50300
-#include "ext/date/php_date.h"
 #include "ext/date/lib/timelib.h"
 #endif
 
@@ -905,26 +905,18 @@ PHP_FUNCTION(timecop_date_create)
  */
 PHP_FUNCTION(timecop_date_create_from_format)
 {
-	zval *datetime_obj, *time = NULL, *null_value = NULL, *timezone = NULL;
-	zend_class_entry *ce;
+	zval *timezone_object = NULL;
+	char *time_str = NULL, *format_str = NULL;
+	int  time_str_len = 0, format_str_len = 0;
 
-	MAKE_STD_ZVAL(null_value);
-	ZVAL_NULL(null_value);
-
-	_timecop_call_function(INTERNAL_FUNCTION_PARAM_PASSTHRU, ORIG_FUNC_NAME("date_create_from_format"), &datetime_obj, 0);
-	zend_call_method_with_0_params(&datetime_obj, NULL, NULL, "getTimestamp", &time);
-	zend_call_method_with_0_params(&datetime_obj, NULL, NULL, "getTimezone", &timezone);
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss|O", &format_str, &format_str_len, &time_str, &time_str_len, &timezone_object, php_date_get_timezone_ce()) == FAILURE) {
+		RETURN_FALSE;
+	}
 
 	php_timecop_date_instantiate(TIMECOP_G(ce_TimecopDateTime), return_value TSRMLS_CC);
-	/* call TimecopDateTime::__constuctor() */
-	ce = TIMECOP_G(ce_TimecopDateTime);
-	zend_call_method_with_2_params(&return_value, ce, &ce->constructor, "__construct", NULL, null_value, timezone);
-	zend_call_method_with_1_params(&return_value, NULL, NULL, "setTimestamp", NULL, time);
-
-	efree(datetime_obj);
-	efree(null_value);
-	efree(time);
-	efree(timezone);
+	if (!php_date_initialize(zend_object_store_get_object(return_value TSRMLS_CC), time_str, time_str_len, format_str, timezone_object, 0 TSRMLS_CC)) {
+		RETURN_FALSE;
+	}
 }
 /* }}} */
 #endif
