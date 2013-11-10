@@ -66,7 +66,7 @@ static const struct timecop_override_def timecop_ovld_func[] = {
 	{"gmstrftime", "timecop_gmstrftime", "timecop_orig_gmstrftime"},
 	{"unixtojd", "timecop_unixtojd", "timecop_orig_unixtojd"},
 	{"date_create", "timecop_date_create", "timecop_orig_date_create"},
-#if !defined(PHP_VERSION_ID) || PHP_VERSION_ID >= 50300
+#if PHP_VERSION_ID >= 50300
 	{"date_create_from_format", "timecop_date_create_from_format", "timecop_orig_date_create_from_format"},
 #endif
 	{NULL, NULL, NULL}
@@ -160,7 +160,7 @@ ZEND_BEGIN_ARG_INFO_EX(arginfo_timecop_date_create, 0, 0, 0)
 	ZEND_ARG_INFO(0, object)
 ZEND_END_ARG_INFO()
 
-#if !defined(PHP_VERSION_ID) || PHP_VERSION_ID >= 50300
+#if PHP_VERSION_ID >= 50300
 ZEND_BEGIN_ARG_INFO_EX(arginfo_timecop_date_create_from_format, 0, 0, 2)
 	ZEND_ARG_INFO(0, format)
 	ZEND_ARG_INFO(0, time)
@@ -195,7 +195,7 @@ const zend_function_entry timecop_functions[] = {
 	PHP_FE(timecop_gmstrftime, arginfo_timecop_gmstrftime)
 	PHP_FE(timecop_unixtojd, arginfo_timecop_unixtojd)
 	PHP_FE(timecop_date_create, arginfo_timecop_date_create)
-#if !defined(PHP_VERSION_ID) || PHP_VERSION_ID >= 50300
+#if PHP_VERSION_ID >= 50300
 	PHP_FE(timecop_date_create_from_format, arginfo_timecop_date_create_from_format)
 #endif
 	{NULL, NULL, NULL}
@@ -208,7 +208,7 @@ const zend_function_entry timecop_functions[] = {
 static zend_function_entry timecop_datetime_class_functions[] = {
 	PHP_ME(TimecopDateTime, __construct, arginfo_timecop_date_create,
 		   ZEND_ACC_CTOR | ZEND_ACC_PUBLIC)
-#if !defined(PHP_VERSION_ID) || PHP_VERSION_ID >= 50300
+#if PHP_VERSION_ID >= 50300
    PHP_ME_MAPPING(createFromFormat, timecop_date_create_from_format, arginfo_timecop_date_create_from_format,
 		   ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
 #endif
@@ -899,7 +899,7 @@ PHP_FUNCTION(timecop_date_create)
 }
 /* }}} */
 
-#if !defined(PHP_VERSION_ID) || PHP_VERSION_ID >= 50300
+#if PHP_VERSION_ID >= 50300
 /* {{{ proto TimecopDateTime timecop_date_create_from_format(string format, string time[, DateTimeZone object])
  Returns new TimecopDateTime object
  */
@@ -909,6 +909,9 @@ PHP_FUNCTION(timecop_date_create_from_format)
 	char *time_str = NULL, *format_str = NULL;
 	int  time_str_len = 0, format_str_len = 0;
 
+#if PHP_VERSION_ID <= 50303
+	php_error_docref(NULL TSRMLS_CC, E_ERROR, "Currently this method is unsupported on PHP 5.3.0-5.3.3. Please upgrade PHP to 5.3.4+.");
+#else
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss|O", &format_str, &format_str_len, &time_str, &time_str_len, &timezone_object, php_date_get_timezone_ce()) == FAILURE) {
 		RETURN_FALSE;
 	}
@@ -917,6 +920,7 @@ PHP_FUNCTION(timecop_date_create_from_format)
 	if (!php_date_initialize(zend_object_store_get_object(return_value TSRMLS_CC), time_str, time_str_len, format_str, timezone_object, 0 TSRMLS_CC)) {
 		RETURN_FALSE;
 	}
+#endif
 }
 /* }}} */
 #endif

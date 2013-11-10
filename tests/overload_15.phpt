@@ -15,6 +15,7 @@ Function overrideing test for date_create_from_format
 			die("skip $class_name class is not available.");
 		}
 	}
+    if (version_compare(PHP_VERSION, "5.3.4", "<")) die("skip PHP 5.3.4+ required for this test");
 --INI--
 date.timezone=America/Los_Angeles
 --FILE--
