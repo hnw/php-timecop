@@ -538,7 +538,6 @@ static int update_request_time(long unixtime TSRMLS_DC)
 		MAKE_STD_ZVAL(tmp);
 		ZVAL_LONG(tmp, unixtime);
 		add_assoc_zval(*server_vars, "REQUEST_TIME", tmp);
-		zval_dtor(tmp);
 	}
 
 	return SUCCESS;
@@ -556,7 +555,6 @@ static int restore_request_time(TSRMLS_D)
 		Z_TYPE_PP(server_vars) == IS_ARRAY &&
 		zend_hash_find(Z_ARRVAL_PP(server_vars), "REQUEST_TIME", sizeof("REQUEST_TIME"), (void **) &request_time) == SUCCESS) {
 		add_assoc_zval(*server_vars, "REQUEST_TIME", orig_request_time);
-		zval_dtor(orig_request_time);
 		TIMECOP_G(orig_request_time) = NULL;
 	}
 	return SUCCESS;
@@ -628,8 +626,6 @@ static int fix_datetime_timestamp(zval **datetime_obj, zval *time, zval *timezon
 			zval_ptr_dtor(&len);
 		}
 	}
-
-	//zend_call_method_with_1_params(NULL, NULL, NULL, "var_dump", NULL, &now);
 
 	zend_call_method_with_0_params(datetime_obj, Z_OBJCE_PP(datetime_obj), NULL, "gettimestamp", &orig_timestamp);
 	if (timezone_obj) {
