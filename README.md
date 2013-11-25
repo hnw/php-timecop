@@ -4,7 +4,7 @@
 
 ## DESCRIPTION
 
-A PHP extension providing "time travel" and "time freezing" capabilities, inspired by [ruby timecop gem](http://github.com/jtrupiano/timecop).
+A PHP extension providing "time travel" and "time freezing" capabilities, inspired by [ruby timecop gem](https://github.com/travisjeffery/timecop).
 
 ## INSTALL
 
@@ -27,7 +27,7 @@ extension=timecop.so
 
 - OS: Linux, FreeBSD, MacOSX
 - PHP: 5.2.x, 5.3.x, 5.4.x, 5.5.x
-  - Tested only on 5.2.17, 5.3.21, 5.4.11, and 5.5.0alpha4
+  - Tested only on 5.2.17, 5.3.21, 5.4.11, and 5.5.5
 - SAPI: Apache, CLI
   - Other SAPIs are not tested, but there is no SAPI-dependent code.
 - non-ZTS(recommended), ZTS
@@ -49,8 +49,10 @@ extension=timecop.so
   - strftime()
   - gmstrftime()
   - unixtojd()
-  - DateTime
+  - DateTime::_construct()
+  - DateTime::createFromFormat() (PHP >= 5.3.4)
   - date_create()
+  - date_create_from_format() (PHP >= 5.3.4)
 - Rewrite value of the following global variables when the time has been moved.
   - $_SERVER['REQUEST_TIME']
 
@@ -64,15 +66,40 @@ var_dump(gmdate("Y-m-d H:i:s")); // string(19) "1970-01-01 00:00:00"
 var_dump(strtotime("+100000 sec")); // int(100000)
 ```
 
+## The difference between `timecop_freeze()` and `timecop_travel()`
+
+`timecop_freeze()` is used to statically mock the concept of now. As your program executes, `time()` will not change unless you make subsequent calls into the Timecop API. `timecop_travel()`, on the other hand, computes an offset between what we currently think time() is and the time passed in. It uses this offset to simulate the passage of time. To demonstrate, consider the following code snippets:
+
+```php
+<?php
+$new_time = mktime(12, 0, 0, 9, 1, 2008);
+timecop_freeze($new_time);
+sleep(10);
+var_dump($new_time == time()); // bool(true)
+
+timecop_return(); // "turn off" Timecop
+
+timecop_travel($new_time);
+sleep(10);
+var_dump($new_time == time()); // bool(false)
+```
+
 ## CHANGELOG
 
+###version 1.0.5, 2013/11/26
+- Fix `TimecopDateTime::createFromFormat()` to reutrn TimecopDateTime instance on PHP >= 5.3.4
+  - The previous version returns DateTime instance
+  - Implement identical function `timecop_date_create_from_format()` 
+  - BUG: not supporting "relative formats" currently.
+- Support 2nd argument of TimecopDateTime::_construct()
+
 ###version 1.0.4, 2013/03/11
-- Fixed SIGSEGV in TimecopDateTime::__construct() called with NULL as 1st argument
+- Fix SIGSEGV in TimecopDateTime::__construct() called with NULL as 1st argument
 
 ###version 1.0.3, 2013/03/09
 
-- Fixed the time traveling implementation for TimecopDateTime::__construct()
-- Fixed timecop_date_create() to return TimecopDateTime instance
+- Fix the time traveling implementation for TimecopDateTime::__construct()
+- Fix timecop_date_create() to return TimecopDateTime instance
   - The previous version returns DateTime instance
 - Add TimecopDateTime::getTimestamp(), TimecopDateTime::setTimestamp() only for PHP 5.2.x
 
@@ -87,7 +114,7 @@ var_dump(strtotime("+100000 sec")); // int(100000)
 
 ###version 1.0.0, 2012/11/21
 
-- Fixed memory leak
+- Fix memory leak
 
 ###version 0.0.1, 2012/06/19
 
