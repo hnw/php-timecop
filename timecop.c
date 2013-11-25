@@ -25,9 +25,9 @@
 #include "php.h"
 #include "php_ini.h"
 #include "ext/standard/info.h"
+#include "ext/date/php_date.h"
 
 #if !defined(PHP_VERSION_ID) || PHP_VERSION_ID < 50300
-#include "ext/date/php_date.h"
 #include "ext/date/lib/timelib.h"
 #endif
 
@@ -66,6 +66,9 @@ static const struct timecop_override_def timecop_ovld_func[] = {
 	{"gmstrftime", "timecop_gmstrftime", "timecop_orig_gmstrftime"},
 	{"unixtojd", "timecop_unixtojd", "timecop_orig_unixtojd"},
 	{"date_create", "timecop_date_create", "timecop_orig_date_create"},
+#if PHP_VERSION_ID >= 50300
+	{"date_create_from_format", "timecop_date_create_from_format", "timecop_orig_date_create_from_format"},
+#endif
 	{NULL, NULL, NULL}
 };
 /* }}} */
@@ -157,6 +160,14 @@ ZEND_BEGIN_ARG_INFO_EX(arginfo_timecop_date_create, 0, 0, 0)
 	ZEND_ARG_INFO(0, object)
 ZEND_END_ARG_INFO()
 
+#if PHP_VERSION_ID >= 50300
+ZEND_BEGIN_ARG_INFO_EX(arginfo_timecop_date_create_from_format, 0, 0, 2)
+	ZEND_ARG_INFO(0, format)
+	ZEND_ARG_INFO(0, time)
+	ZEND_ARG_INFO(0, object)
+ZEND_END_ARG_INFO()
+#endif
+
 #if !defined(PHP_VERSION_ID) || PHP_VERSION_ID < 50300
 ZEND_BEGIN_ARG_INFO_EX(arginfo_timecop_date_method_timestamp_set, 0, 0, 1)
         ZEND_ARG_INFO(0, unixtimestamp)
@@ -184,6 +195,9 @@ const zend_function_entry timecop_functions[] = {
 	PHP_FE(timecop_gmstrftime, arginfo_timecop_gmstrftime)
 	PHP_FE(timecop_unixtojd, arginfo_timecop_unixtojd)
 	PHP_FE(timecop_date_create, arginfo_timecop_date_create)
+#if PHP_VERSION_ID >= 50300
+	PHP_FE(timecop_date_create_from_format, arginfo_timecop_date_create_from_format)
+#endif
 	{NULL, NULL, NULL}
 };
 /* }}} */
@@ -194,6 +208,10 @@ const zend_function_entry timecop_functions[] = {
 static zend_function_entry timecop_datetime_class_functions[] = {
 	PHP_ME(TimecopDateTime, __construct, arginfo_timecop_date_create,
 		   ZEND_ACC_CTOR | ZEND_ACC_PUBLIC)
+#if PHP_VERSION_ID >= 50300
+   PHP_ME_MAPPING(createFromFormat, timecop_date_create_from_format, arginfo_timecop_date_create_from_format,
+		   ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+#endif
 #if !defined(PHP_VERSION_ID) || PHP_VERSION_ID < 50300
 	PHP_ME(TimecopDateTime, getTimestamp,
 				   arginfo_timecop_date_method_timestamp_get, 0)
@@ -251,7 +269,7 @@ static int restore_request_time(TSRMLS_D);
 static long timecop_current_timestamp(TSRMLS_D);
 
 static int fill_mktime_params(zval ***params, const char *date_function_name, int from TSRMLS_DC);
-static int fix_datetime_timestamp(zval **datetime_obj, zval *time TSRMLS_DC);
+static int fix_datetime_timestamp(zval **datetime_obj, zval *time, zval *timezone_obj TSRMLS_DC);
 
 static void _timecop_call_function(INTERNAL_FUNCTION_PARAMETERS, const char *function_name, zval **retval_ptr_ptr, int index_to_fill_timestamp);
 static void _timecop_call_mktime(INTERNAL_FUNCTION_PARAMETERS, const char *mktime_function_name, const char *date_function_name, zval **retval_ptr_ptr);
@@ -520,7 +538,6 @@ static int update_request_time(long unixtime TSRMLS_DC)
 		MAKE_STD_ZVAL(tmp);
 		ZVAL_LONG(tmp, unixtime);
 		add_assoc_zval(*server_vars, "REQUEST_TIME", tmp);
-		zval_dtor(tmp);
 	}
 
 	return SUCCESS;
@@ -538,7 +555,6 @@ static int restore_request_time(TSRMLS_D)
 		Z_TYPE_PP(server_vars) == IS_ARRAY &&
 		zend_hash_find(Z_ARRVAL_PP(server_vars), "REQUEST_TIME", sizeof("REQUEST_TIME"), (void **) &request_time) == SUCCESS) {
 		add_assoc_zval(*server_vars, "REQUEST_TIME", orig_request_time);
-		zval_dtor(orig_request_time);
 		TIMECOP_G(orig_request_time) = NULL;
 	}
 	return SUCCESS;
@@ -589,10 +605,11 @@ static int fill_mktime_params(zval ***params, const char *date_function_name, in
 	return MKTIME_NUM_ARGS;
 }
 
-static int fix_datetime_timestamp(zval **datetime_obj, zval *time TSRMLS_DC)
+static int fix_datetime_timestamp(zval **datetime_obj, zval *time, zval *timezone_obj TSRMLS_DC)
 {
 	zval *orig_timestamp, *fixed_timestamp;
 	zval now;
+	zval *orig_zonename;
 
 	INIT_ZVAL(now);
 	ZVAL_STRING(&now, "now", 0);
@@ -611,7 +628,18 @@ static int fix_datetime_timestamp(zval **datetime_obj, zval *time TSRMLS_DC)
 	}
 
 	zend_call_method_with_0_params(datetime_obj, Z_OBJCE_PP(datetime_obj), NULL, "gettimestamp", &orig_timestamp);
+	if (timezone_obj) {
+		zval *zonename;
+		zend_call_method_with_0_params(&timezone_obj, Z_OBJCE_PP(&timezone_obj), NULL, "getname", &zonename);
+		zend_call_method_with_0_params(NULL, NULL, NULL, "date_default_timezone_get", &orig_zonename);
+		zend_call_method_with_1_params(NULL, NULL, NULL, "date_default_timezone_set", NULL, zonename);
+		zval_ptr_dtor(&zonename);
+	}
 	zend_call_method_with_1_params(NULL, NULL, NULL, "timecop_strtotime", &fixed_timestamp, time);
+	if (timezone_obj) {
+		zend_call_method_with_1_params(NULL, NULL, NULL, "date_default_timezone_set", NULL, orig_zonename);
+		zval_ptr_dtor(&orig_zonename);
+	}
 
 	if (Z_TYPE_P(fixed_timestamp) == IS_BOOL && Z_BVAL_P(fixed_timestamp) == 0) {
 		// timecop_strtotime($time) === false
@@ -881,6 +909,32 @@ PHP_FUNCTION(timecop_date_create)
 }
 /* }}} */
 
+#if PHP_VERSION_ID >= 50300
+/* {{{ proto TimecopDateTime timecop_date_create_from_format(string format, string time[, DateTimeZone object])
+ Returns new TimecopDateTime object
+ */
+PHP_FUNCTION(timecop_date_create_from_format)
+{
+	zval *timezone_object = NULL;
+	char *time_str = NULL, *format_str = NULL;
+	int  time_str_len = 0, format_str_len = 0;
+
+#if PHP_VERSION_ID <= 50303
+	php_error_docref(NULL TSRMLS_CC, E_ERROR, "Currently this method is unsupported on PHP 5.3.0-5.3.3. Please upgrade PHP to 5.3.4+.");
+#else
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss|O", &format_str, &format_str_len, &time_str, &time_str_len, &timezone_object, php_date_get_timezone_ce()) == FAILURE) {
+		RETURN_FALSE;
+	}
+
+	php_timecop_date_instantiate(TIMECOP_G(ce_TimecopDateTime), return_value TSRMLS_CC);
+	if (!php_date_initialize(zend_object_store_get_object(return_value TSRMLS_CC), time_str, time_str_len, format_str, timezone_object, 0 TSRMLS_CC)) {
+		RETURN_FALSE;
+	}
+#endif
+}
+/* }}} */
+#endif
+
 /* {{{ proto TimecopDateTime::__construct([string time[, DateTimeZone object]])
    Creates new TimecopDateTime object
 */
@@ -888,7 +942,6 @@ PHP_METHOD(TimecopDateTime, __construct)
 {
 	zval ***params;
 	zval *obj = getThis();
-	zval *time = NULL;
 	zend_class_entry *datetime_ce;
 
 	params = (zval ***) safe_emalloc(ZEND_NUM_ARGS(), sizeof(zval **), 0);
@@ -902,10 +955,14 @@ PHP_METHOD(TimecopDateTime, __construct)
 	call_constructor(&obj, TIMECOP_G(ce_DateTime), params, ZEND_NUM_ARGS() TSRMLS_CC);
 
 	if (!EG(exception)) {
+		zval *time = NULL, *timezone_obj = NULL;
 		if (ZEND_NUM_ARGS() >= 1) {
 			time = *params[0];
 		}
-		fix_datetime_timestamp(&obj, time TSRMLS_CC);
+		if (ZEND_NUM_ARGS() >= 2) {
+			timezone_obj = *params[1];
+		}
+		fix_datetime_timestamp(&obj, time, timezone_obj TSRMLS_CC);
 	}
 
 	efree(params);
