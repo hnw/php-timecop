@@ -20,4 +20,4 @@ print "Called mktime\n";
 --EXPECTREGEX--
 About to call mktime:
 
-Fatal error: Uncaught exception 'Exception' with message '(|timecop_)mktime\(\): You should be using the time\(\) function instead'(.|\n)*
+Fatal error: Uncaught (exception 'Exception' with message|Exception:) '?(|timecop_)mktime\(\): You should be using the time\(\) function instead(.|\n)*

@@ -1,19 +1,13 @@
 /*
-  +----------------------------------------------------------------------+
-  | PHP Version 5                                                        |
-  +----------------------------------------------------------------------+
-  | Copyright (c) 1997-2012 The PHP Group                                |
-  +----------------------------------------------------------------------+
-  | This source file is subject to version 3.01 of the PHP license,      |
-  | that is bundled with this package in the file LICENSE, and is        |
-  | available through the world-wide-web at the following url:           |
-  | http://www.php.net/license/3_01.txt                                  |
-  | If you did not receive a copy of the PHP license and are unable to   |
-  | obtain it through the world-wide-web, please send a note to          |
-  | license@php.net so we can mail you a copy immediately.               |
-  +----------------------------------------------------------------------+
-  | Author:                                                              |
-  +----------------------------------------------------------------------+
+The MIT License
+
+Copyright (c) 2012-2016 Yoshio HANAWA
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
 /* $Id$ */
@@ -21,7 +15,7 @@
 #ifndef PHP_TIMECOP_H
 #define PHP_TIMECOP_H
 
-#define PHP_TIMECOP_VERSION "1.0.4"
+#define PHP_TIMECOP_VERSION "1.1.0"
 
 extern zend_module_entry timecop_module_entry;
 #define phpext_timecop_ptr &timecop_module_entry
@@ -81,7 +75,11 @@ typedef enum timecop_mode_t {
 ZEND_BEGIN_MODULE_GLOBALS(timecop)
 	long func_override;
 	long sync_request_time;
+#if PHP_VERSION_ID >= 70000
+	zval orig_request_time;
+#else
 	zval *orig_request_time;
+#endif
 	timecop_mode_t timecop_mode;
 	long freezed_timestamp;
 	long travel_offset;
@@ -89,10 +87,38 @@ ZEND_BEGIN_MODULE_GLOBALS(timecop)
 	zend_class_entry *ce_TimecopDateTime;
 ZEND_END_MODULE_GLOBALS(timecop)
 
-struct timecop_override_def {
-	char *orig_name;
-	char *ovld_name;
-	char *save_name;
+#if ZEND_DEBUG
+#  define TIMECOP_ASSERT(c) assert(c)
+#else
+#  define TIMECOP_ASSERT(c)
+#endif /* ZEND_DEBUG */
+
+#define SAVE_FUNC_PREFIX "timecop_orig_"
+#define OVRD_FUNC_PREFIX "timecop_"
+
+#define OVRD_CLASS_PREFIX "timecop"
+
+#define ORIG_FUNC_NAME(fname) \
+	(TIMECOP_G(func_override) ? (SAVE_FUNC_PREFIX fname) : fname)
+
+#define ORIG_FUNC_NAME_SIZEOF(fname) \
+	(TIMECOP_G(func_override) ? sizeof(SAVE_FUNC_PREFIX fname) : sizeof(fname))
+
+#define TIMECOP_OFE(fname) {fname, OVRD_FUNC_PREFIX fname, SAVE_FUNC_PREFIX fname}
+#define TIMECOP_OCE(cname, mname) \
+	{cname, mname, OVRD_CLASS_PREFIX cname, SAVE_FUNC_PREFIX mname}
+
+struct timecop_override_func_entry {
+	char *orig_func;
+	char *ovrd_func;
+	char *save_func;
+};
+
+struct timecop_override_class_entry {
+	char *orig_class;
+	char *orig_method;
+	char *ovrd_class;
+	char *save_method;
 };
 
 /* In every utility function you add that needs to use variables 
@@ -105,14 +131,20 @@ struct timecop_override_def {
    examples in any other php module directory.
 */
 
-#ifdef ZTS
-#define TIMECOP_G(v) TSRMG(timecop_globals_id, zend_timecop_globals *, v)
+#if PHP_VERSION_ID >= 70000
+#  define TIMECOP_G(v) ZEND_MODULE_GLOBALS_ACCESSOR(timecop, v)
+#  if defined(ZTS) && defined(COMPILE_DL_TIMECOP)
+     ZEND_TSRMLS_CACHE_EXTERN();
+#  endif
 #else
-#define TIMECOP_G(v) (timecop_globals.v)
+#  ifdef ZTS
+#    define TIMECOP_G(v) TSRMG(timecop_globals_id, zend_timecop_globals *, v)
+#  else
+#    define TIMECOP_G(v) (timecop_globals.v)
+#  endif
 #endif
 
 #endif	/* PHP_TIMECOP_H */
-
 
 /*
  * Local variables:

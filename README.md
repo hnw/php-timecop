@@ -26,8 +26,7 @@ extension=timecop.so
 ## SYSTEM REQUIREMENTS
 
 - OS: Linux, FreeBSD, MacOSX
-- PHP: 5.2.x, 5.3.x, 5.4.x, 5.5.x
-  - Tested only on 5.2.17, 5.3.21, 5.4.11, and 5.5.5
+- PHP: 5.3.x, 5.4.x, 5.5.x, 5.6.x, 7.0.x
 - SAPI: Apache, CLI
   - Other SAPIs are not tested, but there is no SAPI-dependent code.
 - non-ZTS(recommended), ZTS
@@ -86,7 +85,12 @@ var_dump($new_time == time()); // bool(false)
 
 ## CHANGELOG
 
-###version 1.0.6, 2016/04/13
+###version 1.1.0(alpha), 2016/04/??
+- Support PHP 7.0.x
+- Now `new DateTime()` always returns `DateTime` instance
+  - The previous version returns `TimecopDateTime` instance when `timecop.func_override=1`.
+
+###version 1.0.6, 2016/04/15
 - Fix #10 (Timecop segfaults when set_error_handler throws an exception)
 
 ###version 1.0.5, 2013/11/26
@@ -127,7 +131,7 @@ var_dump($new_time == time()); // bool(false)
 #
 The MIT License
 
-Copyright (c) 2012-2013 Yoshio HANAWA
+Copyright (c) 2012-2016 Yoshio HANAWA
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 

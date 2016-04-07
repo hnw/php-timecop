@@ -1,7 +1,7 @@
 --TEST--
 Class overrideing test for datetime
 --SKIPIF--
-<?php 
+<?php
 	extension_loaded('timecop') or die('skip timecop not available');
 	$required_func = array("timecop_freeze", "timecop_orig_strtotime");
 	foreach ($required_func as $func_name) {
@@ -30,7 +30,10 @@ $dts = array(
     new DateTime(),
 
     // constuctor with 1 argument(null)
-    new DateTime(""),
+    new DateTime(NULL),
+
+    // constuctor with 1 argument(false)
+    new DateTime(false),
 
     // constuctor with 1 argument(empty string)
     new DateTime(""),
@@ -56,7 +59,8 @@ foreach ($dts as $dt) {
 }
 
 --EXPECT--
-string(15) "TimecopDateTime"
+string(8) "DateTime"
+string(25) "2012-02-29T01:23:45-08:00"
 string(25) "2012-02-29T01:23:45-08:00"
 string(25) "2012-02-29T01:23:45-08:00"
 string(25) "2012-02-29T01:23:45-08:00"
