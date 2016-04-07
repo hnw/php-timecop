@@ -6,6 +6,7 @@ php:
   - 5.4
   - 5.5
   - 5.6
+  - 7.0
 
 env:
   - REPORT_EXIT_STATUS=1 NO_INTERACTION=1 TESTS="--show-all"
@@ -14,4 +15,4 @@ before_script:
   - phpize && ./configure && make
 
 script:
-  - make test | tee test-output.txt && grep 'TEST SUMMARY$' test-output.txt > /dev/null ; test $? '!=' 0
+  - make test | tee tests-output.txt && grep 'TEST SUMMARY$' tests-output.txt > /dev/null ; test $? -ne 0

@@ -1,9 +1,9 @@
 --TEST--
-Function overrideing test for date_create
+Check for timecop_date_create
 --SKIPIF--
 <?php
 	extension_loaded('timecop') or die('skip timecop not available');
-	$required_func = array("timecop_freeze", "timecop_orig_strtotime", "date_create");
+	$required_func = array("timecop_freeze", "strtotime", "timecop_date_create");
 	foreach ($required_func as $func_name) {
 		if (!function_exists($func_name)) {
 			die("skip $func_name() function is not available.");
@@ -17,9 +17,10 @@ Function overrideing test for date_create
 	}
 --INI--
 date.timezone=America/Los_Angeles
+timecop.func_override=0
 --FILE--
 <?php
-timecop_freeze(timecop_orig_strtotime("2012-02-29 01:23:45"));
+timecop_freeze(strtotime("2012-02-29 01:23:45"));
 
 // checking class name of instance
 $dt0 = new DateTime();
@@ -27,28 +28,28 @@ var_dump(get_class($dt0));
 
 $dts = array(
     // constuctor with 0 argument
-    date_create(),
+    timecop_date_create(),
 
     // constuctor with 1 argument(null)
-    date_create(null),
+    timecop_date_create(null),
 
     // constuctor with 1 argument(empty string)
-    date_create(""),
+    timecop_date_create(""),
 
     // constuctor with 1 argument(absolute format)
-    date_create("2012-03-31 12:34:56"),
+    timecop_date_create("2012-03-31 12:34:56"),
 
     // constuctor with 1 argument(relative format)
-    date_create("+3days"),
+    timecop_date_create("+3days"),
 
     // constuctor with 1 argument(including timezone info)
-    date_create("1970-01-01 19:00:00 EST"),
+    timecop_date_create("1970-01-01 19:00:00 EST"),
 
     // constuctor with 1 argument(unix time)
-    date_create("@86400"),
+    timecop_date_create("@86400"),
 
     // constuctor with 2 argument
-    date_create("now", new DateTimezone("Asia/Tokyo")),
+    timecop_date_create("now", new DateTimezone("Asia/Tokyo")),
 );
 
 foreach ($dts as $dt) {
