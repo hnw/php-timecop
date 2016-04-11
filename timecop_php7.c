@@ -41,32 +41,28 @@ static void timecop_globals_ctor(zend_timecop_globals *globals) {
 	globals->ce_TimecopDateTime = NULL;
 }
 
-/* {{{ timecop_override_def mb_ovld_func[] */
-static const struct timecop_override_def timecop_ovld_func[] = {
-	{"time", "timecop_time", "timecop_orig_time"},
-	{"mktime", "timecop_mktime", "timecop_orig_mktime"},
-	{"gmmktime", "timecop_gmmktime", "timecop_orig_gmmktime"},
-	{"date", "timecop_date", "timecop_orig_date"},
-	{"gmdate", "timecop_gmdate", "timecop_orig_gmdate"},
-	{"idate", "timecop_idate", "timecop_orig_idate"},
-	{"getdate", "timecop_getdate", "timecop_orig_getdate"},
-	{"localtime", "timecop_localtime", "timecop_orig_localtime"},
-	{"strtotime", "timecop_strtotime", "timecop_orig_strtotime"},
-	{"strftime", "timecop_strftime", "timecop_orig_strftime"},
-	{"gmstrftime", "timecop_gmstrftime", "timecop_orig_gmstrftime"},
-	{"unixtojd", "timecop_unixtojd", "timecop_orig_unixtojd"},
-	{"date_create", "timecop_date_create", "timecop_orig_date_create"},
-	{"date_create_from_format", "timecop_date_create_from_format", "timecop_orig_date_create_from_format"},
+static const struct timecop_override_func_entry timecop_override_func_table[] = {
+	TIMECOP_OFE("time"),
+	TIMECOP_OFE("mktime"),
+	TIMECOP_OFE("gmmktime"),
+	TIMECOP_OFE("date"),
+	TIMECOP_OFE("gmdate"),
+	TIMECOP_OFE("idate"),
+	TIMECOP_OFE("getdate"),
+	TIMECOP_OFE("localtime"),
+	TIMECOP_OFE("strtotime"),
+	TIMECOP_OFE("strftime"),
+	TIMECOP_OFE("gmstrftime"),
+	TIMECOP_OFE("unixtojd"),
+	TIMECOP_OFE("date_create"),
+	TIMECOP_OFE("date_create_from_format"),
 	{NULL, NULL, NULL}
 };
-/* }}} */
 
-/* {{{ timecop_override_def mb_ovld_class[] */
-static const struct timecop_override_def timecop_ovld_class[] = {
-	{"datetime", "timecopdatetime", "timecoporigdatetime"},
-	{NULL, NULL, NULL}
+static const struct timecop_override_class_entry timecop_override_class_table[] = {
+	TIMECOP_OCE("datetime", "__construct"),
+	{NULL, NULL, NULL, NULL}
 };
-/* }}} */
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_timecop_freeze, 0, 0, 1)
 	ZEND_ARG_INFO(0, timestamp)
@@ -190,9 +186,6 @@ static zend_function_entry timecop_datetime_class_functions[] = {
 
 #define MKTIME_NUM_ARGS 6
 
-#define ORIG_FUNC_NAME(funcname) \
-	TIMECOP_G(func_override) ? "timecop_orig_" funcname : funcname
-
 #define TIMECOP_CALL_FUNCTION(func_name, index_to_fill_timestamp) \
 	{\
 		zval retval;\
@@ -226,7 +219,9 @@ static int fix_datetime_timestamp(zval *datetime_obj, zval *time, zval *timezone
 static void _timecop_call_function(INTERNAL_FUNCTION_PARAMETERS, const char *function_name, zval *retval_ptr, int index_to_fill_timestamp);
 static void _timecop_call_mktime(INTERNAL_FUNCTION_PARAMETERS, const char *mktime_function_name, const char *date_function_name, zval *retval_ptr_ptr);
 
-static void call_constructor(zval *object, zend_class_entry *ce, zval *params, int param_count);
+static inline void timecop_call_original_constructor(zval *obj, zend_class_entry *ce, zval *params, int param_count);
+static inline void timecop_call_constructor(zval *obj, zend_class_entry *ce, zval *params, int param_count);
+static void timecop_call_constructor_ex(zval *obj, zend_class_entry *ce, zval *params, int param_count, int call_original);
 static void simple_call_function(const char *function_name, zval *retval_ptr, uint32_t param_count, zval params[]);
 
 /* {{{ timecop_module_entry
@@ -355,48 +350,55 @@ static int register_timecop_classes()
 	TIMECOP_G(ce_DateTime) = parent_ce;
 	TIMECOP_G(ce_TimecopDateTime) = self_ce;
 
+	INIT_CLASS_ENTRY(ce, "TimecopOrigDateTime", NULL);
+	self_ce = zend_register_internal_class_ex(&ce, parent_ce);
+	self_ce->create_object = parent_ce->create_object;
+
 	return SUCCESS;
 }
 
 static int timecop_func_override()
 {
-	zend_function *orig, *ovld, *save;
-	const struct timecop_override_def *p;
+	const struct timecop_override_func_entry *p;
+	zend_function *zf_orig, *zf_ovrd, *zf_save;
 
-	p = &(timecop_ovld_func[0]);
-	while (p->orig_name != NULL) {
-		orig = zend_hash_str_find_ptr(EG(function_table), p->orig_name, strlen(p->orig_name));
-		ovld = zend_hash_str_find_ptr(EG(function_table), p->ovld_name, strlen(p->ovld_name));
-		save = zend_hash_str_find_ptr(EG(function_table), p->save_name, strlen(p->save_name));
-		if (orig == NULL) {
-			// do nothing
-		} else if (ovld == NULL) {
-			php_error_docref("https://github.com/hnw/php-timecop", E_WARNING,
-							 "timecop couldn't find function %s.", p->ovld_name);
-		} else if (save != NULL) {
-			php_error_docref("https://github.com/hnw/php-timecop", E_WARNING,
-							 "timecop couldn't create function %s because already exists.", p->save_name);
-		} else {
-			ZEND_ASSERT(orig->type == ZEND_INTERNAL_FUNCTION);
-			if (zend_hash_str_add_mem(EG(function_table),
-									  p->save_name, strlen(p->save_name),
-									  orig, sizeof(zend_internal_function)) == NULL) {
-				php_error_docref("https://github.com/hnw/php-timecop", E_WARNING,
-								 "timecop couldn't register function %s.", p->save_name);
-				return FAILURE;
-			}
-			function_add_ref(orig);
-
-			ZEND_ASSERT(ovld->type == ZEND_INTERNAL_FUNCTION);
-			if (zend_hash_str_update_mem(EG(function_table),
-										 p->orig_name, strlen(p->orig_name),
-										 ovld, sizeof(zend_internal_function)) == NULL) {
-				php_error_docref("https://github.com/hnw/php-timecop", E_WARNING,
-								 "timecop couldn't replace function %s.", p->orig_name);
-				return FAILURE;
-			}
-			function_add_ref(ovld);
+	p = &(timecop_override_func_table[0]);
+	while (p->orig_func != NULL) {
+		zf_orig = zend_hash_str_find_ptr(EG(function_table), p->orig_func, strlen(p->orig_func));
+		if (zf_orig == NULL) {
+			// Do nothing. Because some functions are introduced by optional extensions.
+			p++;
+			continue;
 		}
+
+		zf_ovrd = zend_hash_str_find_ptr(EG(function_table), p->ovrd_func, strlen(p->ovrd_func));
+		if (zf_ovrd == NULL) {
+			php_error_docref("https://github.com/hnw/php-timecop", E_WARNING,
+							 "timecop couldn't find function %s.", p->ovrd_func);
+			p++;
+			continue;
+		}
+
+		zf_save = zend_hash_str_find_ptr(EG(function_table), p->save_func, strlen(p->save_func));
+		if (zf_save != NULL) {
+			php_error_docref("https://github.com/hnw/php-timecop", E_WARNING,
+							 "timecop couldn't create function %s because already exists.",
+							 p->save_func);
+			p++;
+			continue;
+		}
+
+		TIMECOP_ASSERT(zf_orig->type == ZEND_INTERNAL_FUNCTION);
+		TIMECOP_ASSERT(zf_ovrd->type == ZEND_INTERNAL_FUNCTION);
+
+		zend_hash_str_add_mem(EG(function_table), p->save_func, strlen(p->save_func),
+							  zf_orig, sizeof(zend_internal_function));
+		function_add_ref(zf_orig);
+
+		zend_hash_str_update_mem(EG(function_table), p->orig_func, strlen(p->orig_func),
+								 zf_ovrd, sizeof(zend_internal_function));
+		function_add_ref(zf_ovrd);
+
 		p++;
 	}
 	return SUCCESS;
@@ -404,68 +406,105 @@ static int timecop_func_override()
 
 static int timecop_class_override()
 {
-	zend_class_entry *ce_orig, *ce_ovld, *ce_save;
-	const struct timecop_override_def *p;
+	const struct timecop_override_class_entry *p;
+	zend_class_entry *ce_orig, *ce_ovrd;
+	zend_function *zf_orig, *zf_ovrd, *zf_save, *zf_new;
 
-	p = &(timecop_ovld_class[0]);
-	while (p->orig_name != NULL) {
-		ce_orig = zend_hash_str_find_ptr(EG(class_table), p->orig_name, strlen(p->orig_name));
-		ce_ovld = zend_hash_str_find_ptr(EG(class_table), p->ovld_name, strlen(p->ovld_name));
-		ce_save = zend_hash_str_find_ptr(EG(class_table), p->save_name, strlen(p->save_name));
+	p = &(timecop_override_class_table[0]);
+	while (p->orig_class != NULL) {
+		ce_orig = zend_hash_str_find_ptr(EG(class_table), p->orig_class, strlen(p->orig_class));
 		if (ce_orig == NULL) {
 			php_error_docref("https://github.com/hnw/php-timecop", E_WARNING,
-							 "timecop couldn't find function %s.", p->orig_name);
-		} else if (ce_ovld == NULL) {
+							 "timecop couldn't find class %s.", p->orig_class);
+			p++;
+			continue;
+		}
+
+		ce_ovrd = zend_hash_str_find_ptr(EG(class_table), p->ovrd_class, strlen(p->ovrd_class));
+		if (ce_ovrd == NULL) {
 			php_error_docref("https://github.com/hnw/php-timecop", E_WARNING,
-							 "timecop couldn't find class %s.", p->ovld_name);
-		} else if (ce_save != NULL) {
+							 "timecop couldn't find class %s.", p->ovrd_class);
+			p++;
+			continue;
+		}
+
+		zf_orig = zend_hash_str_find_ptr(&ce_orig->function_table,
+										 p->orig_method, strlen(p->orig_method));
+		if (zf_orig == NULL) {
 			php_error_docref("https://github.com/hnw/php-timecop", E_WARNING,
-							 "timecop couldn't create class %s because already exists.", p->save_name);
-		} else {
-			if (zend_hash_str_add_ptr(EG(class_table),
-									  p->save_name, strlen(p->save_name),
-									  ce_orig) == NULL) {
-				php_error_docref("https://github.com/hnw/php-timecop", E_WARNING,
-								 "timecop couldn't register class %s.", p->save_name);
-				return FAILURE;
-			} else {
-				ce_orig->refcount++;
-			}
-			if (zend_hash_str_update_ptr(EG(class_table),
-										 p->orig_name, strlen(p->orig_name),
-										 ce_ovld) == NULL) {
-				php_error_docref("https://github.com/hnw/php-timecop", E_WARNING,
-								 "timecop couldn't replace class %s.", p->orig_name);
-				return FAILURE;
-			} else {
-				ce_ovld->refcount++;
-			}
+							 "timecop couldn't find method %s::%s.",
+							 p->orig_class, p->orig_method);
+			p++;
+			continue;
+		}
+
+		zf_ovrd = zend_hash_str_find_ptr(&ce_ovrd->function_table,
+										 p->orig_method, strlen(p->orig_method));
+		if (zf_ovrd == NULL) {
+			php_error_docref("https://github.com/hnw/php-timecop", E_WARNING,
+							 "timecop couldn't find method %s::%s.",
+							 p->ovrd_class, p->orig_method);
+			p++;
+			continue;
+		}
+
+		zf_save = zend_hash_str_find_ptr(&ce_orig->function_table,
+										 p->save_method, strlen(p->save_method));
+		if (zf_save != NULL) {
+			php_error_docref("https://github.com/hnw/php-timecop", E_WARNING,
+							 "timecop couldn't create method %s::%s because already exists.",
+							 p->orig_class, p->save_method);
+			p++;
+			continue;
+		}
+
+		TIMECOP_ASSERT(zf_orig->type == ZEND_INTERNAL_FUNCTION);
+		TIMECOP_ASSERT(ce_orig->type & ZEND_INTERNAL_CLASS);
+		TIMECOP_ASSERT(zf_ovrd->type == ZEND_INTERNAL_FUNCTION);
+		TIMECOP_ASSERT(ce_ovrd->type & ZEND_INTERNAL_CLASS);
+
+		zend_hash_str_add_mem(&ce_orig->function_table,
+							  p->save_method, strlen(p->save_method),
+							  zf_orig, sizeof(zend_internal_function));
+		function_add_ref(zf_orig);
+
+		zf_new = zend_hash_str_update_mem(&ce_orig->function_table,
+										  p->orig_method, strlen(p->orig_method),
+										  zf_ovrd, sizeof(zend_internal_function));
+		function_add_ref(zf_ovrd);
+
+		TIMECOP_ASSERT(zf_new != NULL);
+		TIMECOP_ASSERT(zf_new != zf_orig);
+
+		if (strcmp(p->orig_method, "__construct") == 0) {
+			ce_orig->constructor = zf_new;
 		}
 		p++;
 	}
-
 	return SUCCESS;
 }
 
 /*  clear overrideed function. */
 static int timecop_func_override_clear()
 {
-	const struct timecop_override_def *p;
-	zend_function *orig;
+	const struct timecop_override_func_entry *p;
+	zend_function *zf_orig;
 
-	p = &(timecop_ovld_func[0]);
-	while (p->orig_name != NULL) {
-		orig = zend_hash_str_find_ptr(EG(function_table),
-									  p->save_name, strlen(p->save_name));
-		if (orig != NULL) {
-			zend_hash_str_update_mem(EG(function_table),
-									 p->orig_name, strlen(p->orig_name),
-									 orig, sizeof(zend_internal_function));
-			function_add_ref(orig); // 不要かと思ったけど、無いとshutdownで死ぬ
-
-			zend_hash_str_del(EG(function_table),
-							  p->save_name, strlen(p->save_name));
+	p = &(timecop_override_func_table[0]);
+	while (p->orig_func != NULL) {
+		zf_orig = zend_hash_str_find_ptr(EG(function_table),
+										 p->save_func, strlen(p->save_func));
+		if (zf_orig == NULL) {
+			p++;
+			continue;
 		}
+
+		zend_hash_str_update_mem(EG(function_table), p->orig_func, strlen(p->orig_func),
+								 zf_orig, sizeof(zend_internal_function));
+		function_add_ref(zf_orig);
+
+		zend_hash_str_del(EG(function_table), p->save_func, strlen(p->save_func));
+
 		p++;
 	}
 	return SUCCESS;
@@ -473,21 +512,39 @@ static int timecop_func_override_clear()
 
 static int timecop_class_override_clear()
 {
-	const struct timecop_override_def *p;
+	const struct timecop_override_class_entry *p;
 	zend_class_entry *ce_orig;
+	zend_function *zf_orig, *zf_ovrd, *zf_save;
 
-	p = &(timecop_ovld_class[0]);
-	while (p->orig_name != NULL) {
+	p = &(timecop_override_class_table[0]);
+	while (p->orig_class != NULL) {
 		ce_orig = zend_hash_str_find_ptr(EG(class_table),
-										 p->save_name, strlen(p->save_name));
-		if (ce_orig != NULL) {
-			zend_hash_str_update_ptr(EG(class_table),
-									 p->orig_name, strlen(p->orig_name),
-									 ce_orig);
-			ce_orig->refcount++; // 不要かと思ったけど、無いとshutdownで死ぬ
+										 p->orig_class, strlen(p->orig_class));
+		if (ce_orig == NULL) {
+			php_error_docref("https://github.com/hnw/php-timecop", E_WARNING,
+							 "timecop couldn't find class %s.", p->orig_class);
+			p++;
+			continue;
+		}
 
-			zend_hash_str_del(EG(class_table),
-							  p->save_name, strlen(p->save_name));
+		zf_orig = zend_hash_str_find_ptr(&ce_orig->function_table,
+										 p->save_method, strlen(p->save_method));
+		if (zf_orig == NULL) {
+			php_error_docref("https://github.com/hnw/php-timecop", E_WARNING,
+							 "timecop couldn't find method %s::%s.",
+							 p->orig_class, p->save_method);
+			p++;
+			continue;
+		}
+
+		zend_hash_str_update_mem(&ce_orig->function_table, p->orig_method, strlen(p->orig_method),
+								 zf_orig, sizeof(zend_internal_function));
+		function_add_ref(zf_orig);
+
+		zend_hash_str_del(&ce_orig->function_table, p->save_method, strlen(p->save_method));
+
+		if (strcmp(p->orig_method, "__construct") == 0) {
+			ce_orig->constructor = zf_orig;
 		}
 		p++;
 	}
@@ -573,6 +630,7 @@ static int fix_datetime_timestamp(zval *datetime_obj, zval *time, zval *timezone
 	zval now;
 	zval orig_zonename;
 
+	//zend_call_method_with_1_params(NULL, NULL, NULL, "var_dump", NULL, datetime_obj);
 
 	ZVAL_STRING(&now, "now");
 
@@ -581,9 +639,18 @@ static int fix_datetime_timestamp(zval *datetime_obj, zval *time, zval *timezone
 		time = &now;
 	}
 
+	/*
+	 * $orig_timestamp = $datetime_obj->getTimeStamp();
+	 */
 	zend_call_method_with_0_params(datetime_obj, Z_OBJCE_P(datetime_obj), NULL, "gettimestamp", &orig_timestamp);
 
-	// set timezone to object's timezone
+	/*
+	 * if ($timezone_obj) {
+	 *     $zonename = $timezone_obj->getName()
+	 *     $orig_zonename = date_default_timezone_get();
+	 *     date_default_timezone_set($zonename);
+	 * }
+	 */
 	if (timezone_obj) {
 		zval zonename;
 		zend_call_method_with_0_params(timezone_obj, Z_OBJCE_P(timezone_obj), NULL, "getname", &zonename);
@@ -592,8 +659,18 @@ static int fix_datetime_timestamp(zval *datetime_obj, zval *time, zval *timezone
 		zval_dtor(&zonename);
 	}
 
+	/*
+	 * $fixed_timestamp = timecop_strtotime();
+	 */
 	zend_call_method_with_1_params(NULL, NULL, NULL, "timecop_strtotime", &fixed_timestamp, time);
 
+	/*
+	 * if ($fixed_timestamp == false) {
+	 *     // warn
+	 * } elseif ($orig_timestamp != $fixed_timestamp) {
+	 *     $datetime_obj->setTimeStamp($fixed_timestamp)
+	 * }
+	 */
 	if (Z_TYPE(fixed_timestamp) == IS_FALSE) {
 		php_error_docref(NULL, E_WARNING,
 						 "Failed to parse time string '%s': giving up time traveling",
@@ -604,6 +681,11 @@ static int fix_datetime_timestamp(zval *datetime_obj, zval *time, zval *timezone
 	}
 
 	// restore original timezone
+	/*
+	 * if ($timezone_obj) {
+	 *     date_default_timezone_set($orig_zonename);
+	 * }
+	 */
 	if (timezone_obj) {
 		zend_call_method_with_1_params(NULL, NULL, NULL, "date_default_timezone_set", NULL, &orig_zonename);
 		zval_dtor(&orig_zonename);
@@ -837,10 +919,10 @@ PHP_FUNCTION(timecop_date_create)
 		RETURN_FALSE;
 	}
 
-	object_init_ex(return_value, TIMECOP_G(ce_TimecopDateTime));
+	object_init_ex(return_value, TIMECOP_G(ce_DateTime));
 
-	/* call TimecopDateTime::__constuctor() */
-	call_constructor(return_value, TIMECOP_G(ce_TimecopDateTime), params, ZEND_NUM_ARGS());
+	/* call TimecopDateTime::__construct() */
+	timecop_call_constructor(return_value, TIMECOP_G(ce_TimecopDateTime), params, ZEND_NUM_ARGS());
 
 	efree(params);
 }
@@ -884,8 +966,8 @@ PHP_METHOD(TimecopDateTime, __construct)
 		RETURN_FALSE;
 	}
 
-	/* call DateTime::__constuctor() */
-	call_constructor(obj, TIMECOP_G(ce_DateTime), params, ZEND_NUM_ARGS());
+	/* call original DateTime::__construct() */
+	timecop_call_original_constructor(obj, TIMECOP_G(ce_DateTime), params, ZEND_NUM_ARGS());
 
 	if (!EG(exception)) {
 		zval *time = NULL, *timezone_obj = NULL;
@@ -901,20 +983,39 @@ PHP_METHOD(TimecopDateTime, __construct)
 	efree(params);
 }
 
-static void call_constructor(zval *object, zend_class_entry *ce, zval *params, int param_count)
-{
+static inline void timecop_call_original_constructor(zval *obj, zend_class_entry *ce, zval *params, int param_count) {
+	timecop_call_constructor_ex(obj, ce, params, param_count, 1);
+}
+static inline void timecop_call_constructor(zval *obj, zend_class_entry *ce, zval *params, int param_count) {
+	timecop_call_constructor_ex(obj, ce, params, param_count, 0);
+}
+
+static void timecop_call_constructor_ex(zval *obj, zend_class_entry *ce, zval *params, int param_count, int call_original) {
+	zval *arg1 = NULL, *arg2 = NULL;
+	char *func_name;
+	size_t func_name_len;
+
 	if (param_count > 2) {
 		zend_error(E_ERROR, "INTERNAL ERROR: too many parameters for constructor.");
 		return;
 	}
 
-	if (param_count == 0) {
-		zend_call_method_with_0_params(object, ce, &ce->constructor, "__construct", NULL);
-	} else if (param_count == 1) {
-		zend_call_method_with_1_params(object, ce, &ce->constructor, "__construct", NULL, &params[0]);
+	if (param_count == 1) {
+		arg1 = &params[0];
 	} else if (param_count == 2) {
-		zend_call_method_with_2_params(object, ce, &ce->constructor, "__construct", NULL, &params[0], &params[1]);
+		arg1 = &params[0];
+		arg2 = &params[1];
 	}
+
+	if (call_original) {
+		func_name = ORIG_FUNC_NAME("__construct");
+		func_name_len = ORIG_FUNC_NAME_SIZEOF("__construct")-1;
+	} else {
+		func_name = "__construct";
+		func_name_len = sizeof("__construct")-1;
+	}
+
+	zend_call_method(obj, ce, NULL, func_name, func_name_len, NULL, param_count, arg1, arg2);
 }
 
 static void simple_call_function(const char *function_name, zval *retval_ptr, uint32_t param_count, zval *params)

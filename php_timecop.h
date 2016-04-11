@@ -87,10 +87,38 @@ ZEND_BEGIN_MODULE_GLOBALS(timecop)
 	zend_class_entry *ce_TimecopDateTime;
 ZEND_END_MODULE_GLOBALS(timecop)
 
-struct timecop_override_def {
-	char *orig_name;
-	char *ovld_name;
-	char *save_name;
+#if ZEND_DEBUG
+#  define TIMECOP_ASSERT(c) assert(c)
+#else
+#  define TIMECOP_ASSERT(c)
+#endif /* ZEND_DEBUG */
+
+#define SAVE_FUNC_PREFIX "timecop_orig_"
+#define OVRD_FUNC_PREFIX "timecop_"
+
+#define OVRD_CLASS_PREFIX "timecop"
+
+#define ORIG_FUNC_NAME(fname) \
+	(TIMECOP_G(func_override) ? (SAVE_FUNC_PREFIX fname) : fname)
+
+#define ORIG_FUNC_NAME_SIZEOF(fname) \
+	(TIMECOP_G(func_override) ? sizeof(SAVE_FUNC_PREFIX fname) : sizeof(fname))
+
+#define TIMECOP_OFE(fname) {fname, OVRD_FUNC_PREFIX fname, SAVE_FUNC_PREFIX fname}
+#define TIMECOP_OCE(cname, mname) \
+	{cname, mname, OVRD_CLASS_PREFIX cname, SAVE_FUNC_PREFIX mname}
+
+struct timecop_override_func_entry {
+	char *orig_func;
+	char *ovrd_func;
+	char *save_func;
+};
+
+struct timecop_override_class_entry {
+	char *orig_class;
+	char *orig_method;
+	char *ovrd_class;
+	char *save_method;
 };
 
 /* In every utility function you add that needs to use variables 

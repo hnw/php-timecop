@@ -1,7 +1,7 @@
 --TEST--
 Function overrideing test for date_create
 --SKIPIF--
-<?php 
+<?php
 	extension_loaded('timecop') or die('skip timecop not available');
 	$required_func = array("timecop_freeze", "timecop_orig_strtotime", "date_create");
 	foreach ($required_func as $func_name) {
@@ -56,7 +56,7 @@ foreach ($dts as $dt) {
 }
 
 --EXPECT--
-string(15) "TimecopDateTime"
+string(8) "DateTime"
 string(25) "2012-02-29T01:23:45-08:00"
 string(25) "2012-02-29T01:23:45-08:00"
 string(25) "2012-02-29T01:23:45-08:00"

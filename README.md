@@ -87,6 +87,7 @@ var_dump($new_time == time()); // bool(false)
 
 ###version 1.1.0(alpha), 2016/04/??
 - Support PHP 7.0.x
+- Now `new DateTime()` returns not `TimecopDateTime` instance but `DateTime` one.
 
 ###version 1.0.5, 2013/11/26
 - Fix `TimecopDateTime::createFromFormat()` to reutrn `TimecopDateTime` instance on PHP >= 5.3.4
