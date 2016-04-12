@@ -86,6 +86,9 @@ var_dump($new_time == time()); // bool(false)
 
 ## CHANGELOG
 
+###version 1.0.6, 2016/04/13
+- Fix #10 (Timecop segfaults when set_error_handler throws an exception)
+
 ###version 1.0.5, 2013/11/26
 - Fix `TimecopDateTime::createFromFormat()` to reutrn `TimecopDateTime` instance on PHP >= 5.3.4
   - The previous version returns `DateTime` instance
