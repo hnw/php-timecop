@@ -268,8 +268,6 @@ static void _timecop_call_mktime(INTERNAL_FUNCTION_PARAMETERS, const char *mktim
 
 static void call_constructor(zval **object_pp, zend_class_entry *ce, zval ***params, int param_count TSRMLS_DC);
 static void simple_call_function(const char *function_name, zval **retval_ptr_ptr, zend_uint param_count, zval **params[] TSRMLS_DC);
-static zval **alloc_zval_ptr_ptr();
-static void zval_ptr_ptr_dtor(zval **zval_ptr_ptr);
 static zval *php_timecop_date_instantiate(zend_class_entry *pce, zval *object TSRMLS_DC);
 
 /* {{{ timecop_module_entry
@@ -554,7 +552,6 @@ static int restore_request_time(TSRMLS_D)
 
 static long timecop_current_timestamp(TSRMLS_D)
 {
-	zval **array, **request_time_long;
 	long current_timestamp;
 
 	switch (TIMECOP_G(timecop_mode)) {
@@ -574,15 +571,11 @@ static long timecop_current_timestamp(TSRMLS_D)
 
 static int fill_mktime_params(zval ***params, const char *date_function_name, int from TSRMLS_DC)
 {
-	zval time, format;
-	char *formats[MKTIME_NUM_ARGS] = {"H", "i", "s", "n", "j", "Y"};
 	int i;
-	zval **date_params[2], *tmp[2];
-
-	date_params[0] = &tmp[0];
-	date_params[1] = &tmp[1];
-	tmp[0] = &format;
-	tmp[1] = &time;
+	char *formats[MKTIME_NUM_ARGS] = {"H", "i", "s", "n", "j", "Y"};
+	zval time, format, *retval_ptr;
+	zval *zps[2] = {&format, &time};
+	zval **date_params[2] = {&zps[0], &zps[1]};
 
 	INIT_ZVAL(time);
 	ZVAL_LONG(&time, timecop_current_timestamp(TSRMLS_C));
@@ -591,7 +584,10 @@ static int fill_mktime_params(zval ***params, const char *date_function_name, in
 		INIT_ZVAL(format);
 		ZVAL_STRING(&format, formats[i], 0);
 
-		simple_call_function(date_function_name, params[i], 2, date_params TSRMLS_CC);
+		simple_call_function(date_function_name, &retval_ptr, 2, date_params TSRMLS_CC);
+		if (retval_ptr) {
+			ZVAL_ZVAL(*params[i], retval_ptr, 1, 1);
+		}
 	}
 
 	return MKTIME_NUM_ARGS;
@@ -623,12 +619,16 @@ static int fix_datetime_timestamp(zval **datetime_obj, zval *time, zval *timezon
 	if (timezone_obj) {
 		zval *zonename;
 		zend_call_method_with_0_params(&timezone_obj, Z_OBJCE_PP(&timezone_obj), NULL, "getname", &zonename);
-		zend_call_method_with_0_params(NULL, NULL, NULL, "date_default_timezone_get", &orig_zonename);
-		zend_call_method_with_1_params(NULL, NULL, NULL, "date_default_timezone_set", NULL, zonename);
-		zval_ptr_dtor(&zonename);
+		if (zonename) {
+			zend_call_method_with_0_params(NULL, NULL, NULL, "date_default_timezone_get", &orig_zonename);
+			if (orig_zonename) {
+				zend_call_method_with_1_params(NULL, NULL, NULL, "date_default_timezone_set", NULL, zonename);
+			}
+			zval_ptr_dtor(&zonename);
+		}
 	}
 	zend_call_method_with_1_params(NULL, NULL, NULL, "timecop_strtotime", &fixed_timestamp, time);
-	if (timezone_obj) {
+	if (timezone_obj && orig_zonename) {
 		zend_call_method_with_1_params(NULL, NULL, NULL, "date_default_timezone_set", NULL, orig_zonename);
 		zval_ptr_dtor(&orig_zonename);
 	}
@@ -636,7 +636,9 @@ static int fix_datetime_timestamp(zval **datetime_obj, zval *time, zval *timezon
 	if (Z_TYPE_P(fixed_timestamp) == IS_BOOL && Z_BVAL_P(fixed_timestamp) == 0) {
 		// timecop_strtotime($time) === false
 		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Failed to parse time string '%s': giving up time traveling", Z_STRVAL_P(time));
-	} else if (Z_LVAL_P(orig_timestamp) != Z_LVAL_P(fixed_timestamp)) {
+	} else if (Z_TYPE_P(orig_timestamp) == IS_LONG &&
+			   Z_TYPE_P(fixed_timestamp) == IS_LONG &&
+			   Z_LVAL_P(orig_timestamp) != Z_LVAL_P(fixed_timestamp)) {
 		zend_call_method_with_1_params(datetime_obj, Z_OBJCE_PP(datetime_obj), NULL, "settimestamp", NULL, fixed_timestamp);
 	}
 
@@ -652,9 +654,9 @@ static int fix_datetime_timestamp(zval **datetime_obj, zval *time, zval *timezon
 
 static void _timecop_call_function(INTERNAL_FUNCTION_PARAMETERS, const char *function_name, int index_to_fill_timestamp)
 {
-	zval ***params, *retval_ptr;
-	zend_uint param_count;
 	int params_size;
+	zval ***params, *zp, filled_timestamp, *retval_ptr;
+	zend_uint argc;
 
 	params_size = MAX(ZEND_NUM_ARGS(), index_to_fill_timestamp+1);
 	params = (zval ***)safe_emalloc(sizeof(zval **), params_size, 0);
@@ -663,27 +665,19 @@ static void _timecop_call_function(INTERNAL_FUNCTION_PARAMETERS, const char *fun
 		efree(params);
 		return;
 	}
-	param_count = ZEND_NUM_ARGS();
+	argc = ZEND_NUM_ARGS();
 
 	if (ZEND_NUM_ARGS() == index_to_fill_timestamp) {
-		zval *zp, **zpp;
-		int last_index = param_count;
+		INIT_ZVAL(filled_timestamp);
+		ZVAL_LONG(&filled_timestamp, timecop_current_timestamp(TSRMLS_C));
+		zp = &filled_timestamp;
 
-		ALLOC_INIT_ZVAL(zp);
-		ZVAL_LONG(zp, timecop_current_timestamp(TSRMLS_C));
-
-		params[last_index] = zpp = alloc_zval_ptr_ptr();
-		*zpp = zp;
-
-		param_count++;
+		params[argc] = &zp;
+		argc++;
 	}
 
-	simple_call_function(function_name, &retval_ptr, param_count, params TSRMLS_CC);
+	simple_call_function(function_name, &retval_ptr, argc, params TSRMLS_CC);
 
-	if (ZEND_NUM_ARGS() == index_to_fill_timestamp) {
-		int last_index = param_count-1;
-		zval_ptr_ptr_dtor(params[last_index]);
-	}
 	efree(params);
 
 	if (retval_ptr) {
@@ -695,8 +689,8 @@ static void _timecop_call_function(INTERNAL_FUNCTION_PARAMETERS, const char *fun
 static void _timecop_call_mktime(INTERNAL_FUNCTION_PARAMETERS, const char *mktime_function_name, const char *date_function_name)
 {
 	int params_size;
-	zval ***params, *retval_ptr;
-	zend_uint param_count;
+	zval ***params, *filled_value[MKTIME_NUM_ARGS], *retval_ptr;
+	zend_uint argc;
 	int i;
 
 	params_size = MAX(ZEND_NUM_ARGS(), MKTIME_NUM_ARGS);
@@ -706,26 +700,22 @@ static void _timecop_call_mktime(INTERNAL_FUNCTION_PARAMETERS, const char *mktim
 		efree(params);
 		return;
 	}
-	param_count = ZEND_NUM_ARGS();
+	argc = ZEND_NUM_ARGS();
 
-	if (ZEND_NUM_ARGS() < MKTIME_NUM_ARGS) {
-		for (i = ZEND_NUM_ARGS(); i < MKTIME_NUM_ARGS; i++) {
-			params[i] = alloc_zval_ptr_ptr();
-		}
-		fill_mktime_params(params, date_function_name, ZEND_NUM_ARGS() TSRMLS_CC);
-		param_count = MKTIME_NUM_ARGS;
+	for (i = argc; i < MKTIME_NUM_ARGS; i++) {
+		ALLOC_INIT_ZVAL(filled_value[i]);
+		params[i] = &filled_value[i];
 	}
+	fill_mktime_params(params, date_function_name, argc TSRMLS_CC);
 
 	if (ZEND_NUM_ARGS() == 0) {
 		php_error_docref(NULL TSRMLS_CC, E_STRICT, "You should be using the time() function instead");
 	}
 
-	simple_call_function(mktime_function_name, &retval_ptr, param_count, params TSRMLS_CC);
+	simple_call_function(mktime_function_name, &retval_ptr, params_size, params TSRMLS_CC);
 
-	if (ZEND_NUM_ARGS() < MKTIME_NUM_ARGS) {
-		for (i = ZEND_NUM_ARGS(); i < MKTIME_NUM_ARGS; i++) {
-			zval_ptr_ptr_dtor(params[i]);
-		}
+	for (i = argc; i < MKTIME_NUM_ARGS; i++) {
+		zval_ptr_dtor(&filled_value[i]);
 	}
 	efree(params);
 
@@ -1042,19 +1032,6 @@ static void simple_call_function(const char *function_name, zval **retval_ptr_pt
 	ZVAL_STRING(&callable, function_name, 0);
 
 	call_user_function_ex(EG(function_table), NULL, &callable, retval_ptr_ptr, param_count, params, 1, NULL TSRMLS_CC);
-}
-
-static zval **alloc_zval_ptr_ptr()
-{
-	zval **zpp;
-	zpp = (zval **) emalloc(sizeof(zval *));
-	return zpp;
-}
-
-static void zval_ptr_ptr_dtor(zval **zval_ptr_ptr)
-{
-	zval_ptr_dtor(zval_ptr_ptr);
-	efree(zval_ptr_ptr);
 }
 
 /* Advanced Interface */
