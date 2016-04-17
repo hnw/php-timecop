@@ -184,6 +184,12 @@ static zend_function_entry timecop_datetime_class_functions[] = {
 	{NULL, NULL, NULL}
 };
 
+static zend_function_entry timecop_orig_datetime_class_functions[] = {
+	PHP_ME(TimecopOrigDateTime, __construct, arginfo_timecop_date_create,
+		   ZEND_ACC_CTOR | ZEND_ACC_PUBLIC)
+	{NULL, NULL, NULL}
+};
+
 #define MKTIME_NUM_ARGS 6
 
 #define TIMECOP_CALL_FUNCTION(func_name, index_to_fill_timestamp) \
@@ -342,7 +348,7 @@ static int register_timecop_classes()
 	TIMECOP_G(ce_DateTime) = parent_ce;
 	TIMECOP_G(ce_TimecopDateTime) = self_ce;
 
-	INIT_CLASS_ENTRY(ce, "TimecopOrigDateTime", NULL);
+	INIT_CLASS_ENTRY(ce, "TimecopOrigDateTime", timecop_orig_datetime_class_functions);
 	self_ce = zend_register_internal_class_ex(&ce, parent_ce);
 	self_ce->create_object = parent_ce->create_object;
 
@@ -610,7 +616,7 @@ static int fill_mktime_params(zval *fill_params, const char *date_function_name,
 	for (i = from; i < MKTIME_NUM_ARGS; i++) {
 		ZVAL_STRING(&params[0], formats[i]);
 		simple_call_function(date_function_name, &fill_params[i], 2, params);
-		zval_dtor(&params[0]);
+		zval_ptr_dtor(&params[0]);
 	}
 
 	return MKTIME_NUM_ARGS;
@@ -651,7 +657,7 @@ static int fix_datetime_timestamp(zval *datetime_obj, zval *time, zval *timezone
 		zend_call_method_with_0_params(timezone_obj, Z_OBJCE_P(timezone_obj), NULL, "getname", &zonename);
 		zend_call_method_with_0_params(NULL, NULL, NULL, "date_default_timezone_get", &orig_zonename);
 		zend_call_method_with_1_params(NULL, NULL, NULL, "date_default_timezone_set", NULL, &zonename);
-		zval_dtor(&zonename);
+		zval_ptr_dtor(&zonename);
 	}
 
 	/*
@@ -692,15 +698,19 @@ static int fix_datetime_timestamp(zval *datetime_obj, zval *time, zval *timezone
 	 */
 	if (timezone_obj) {
 		zend_call_method_with_1_params(NULL, NULL, NULL, "date_default_timezone_set", NULL, &orig_zonename);
-		zval_dtor(&orig_zonename);
+		zval_ptr_dtor(&orig_zonename);
 	}
-	zval_dtor(&now);
+	if (time == &now) {
+		zval_ptr_dtor(&now);
+	}
+	zval_ptr_dtor(&orig_timestamp);
+	zval_ptr_dtor(&fixed_timestamp);
 	return 0;
 }
 
 static void _timecop_call_function(INTERNAL_FUNCTION_PARAMETERS, const char *function_name, int index_to_fill_timestamp)
 {
-	zval *params, retval;
+	zval *params;
 	uint32_t param_count;
 
 	param_count = MAX(ZEND_NUM_ARGS(), index_to_fill_timestamp+1);
@@ -725,7 +735,7 @@ static void _timecop_call_function(INTERNAL_FUNCTION_PARAMETERS, const char *fun
 /* {{{ _timecop_call_mktime - timecop_(gm)mktime helper */
 static void _timecop_call_mktime(INTERNAL_FUNCTION_PARAMETERS, const char *mktime_function_name, const char *date_function_name)
 {
-	zval *params, retval;
+	zval *params;
 	uint32_t param_count;
 
 	int i;
@@ -752,7 +762,7 @@ static void _timecop_call_mktime(INTERNAL_FUNCTION_PARAMETERS, const char *mktim
 	simple_call_function(mktime_function_name, return_value, param_count, params);
 
 	for (i = ZEND_NUM_ARGS(); i < MKTIME_NUM_ARGS; i++) {
-		zval_dtor(&params[i]);
+		zval_ptr_dtor(&params[i]);
 	}
 	efree(params);
 }
@@ -959,7 +969,6 @@ PHP_METHOD(TimecopDateTime, __construct)
 {
 	zval *params;
 	zval *obj = getThis();
-	zend_class_entry *datetime_ce;
 
 	params = (zval *)safe_emalloc(ZEND_NUM_ARGS(), sizeof(zval), 0);
 
@@ -982,6 +991,28 @@ PHP_METHOD(TimecopDateTime, __construct)
 		}
 		fix_datetime_timestamp(obj, time, timezone_obj);
 	}
+
+	efree(params);
+}
+
+/* {{{ proto TimecopOrigDateTime::__construct([string time[, DateTimeZone object]])
+   Creates new TimecopOrigDateTime object
+*/
+PHP_METHOD(TimecopOrigDateTime, __construct)
+{
+	zval *params;
+	zval *obj = getThis();
+
+	params = (zval *)safe_emalloc(ZEND_NUM_ARGS(), sizeof(zval), 0);
+
+	if (zend_get_parameters_array_ex(ZEND_NUM_ARGS(), params) == FAILURE) {
+		efree(params);
+		zend_throw_error(NULL, "Cannot get arguments for TimecopOrigDateTime::__construct");
+		RETURN_FALSE;
+	}
+
+	/* call original DateTime::__construct() */
+	timecop_call_original_constructor(obj, TIMECOP_G(ce_DateTime), params, ZEND_NUM_ARGS());
 
 	efree(params);
 }
@@ -1028,7 +1059,7 @@ static void simple_call_function(const char *function_name, zval *retval_ptr, ui
 
 	call_user_function_ex(EG(function_table), NULL, &callable, retval_ptr, param_count, params, 1, NULL);
 
-	zval_dtor(&callable);
+	zval_ptr_dtor(&callable);
 }
 
 /*

@@ -211,6 +211,12 @@ static zend_function_entry timecop_datetime_class_functions[] = {
 	{NULL, NULL, NULL}
 };
 
+static zend_function_entry timecop_orig_datetime_class_functions[] = {
+	PHP_ME(TimecopOrigDateTime, __construct, arginfo_timecop_date_create,
+		   ZEND_ACC_CTOR | ZEND_ACC_PUBLIC)
+	{NULL, NULL, NULL}
+};
+
 #define MKTIME_NUM_ARGS 6
 
 #define TIMECOP_CALL_FUNCTION(func_name, index_to_fill_timestamp) \
@@ -380,7 +386,7 @@ static int register_timecop_classes(TSRMLS_D)
 	TIMECOP_G(ce_DateTime) = parent_ce;
 	TIMECOP_G(ce_TimecopDateTime) = self_ce;
 
-	INIT_CLASS_ENTRY(ce, "TimecopOrigDateTime", NULL);
+	INIT_CLASS_ENTRY(ce, "TimecopOrigDateTime", timecop_orig_datetime_class_functions);
 	self_ce = zend_register_internal_class_ex(&ce, parent_ce, NULL TSRMLS_CC);
 	self_ce->create_object = parent_ce->create_object;
 
@@ -1020,7 +1026,6 @@ PHP_METHOD(TimecopDateTime, __construct)
 {
 	zval ***params;
 	zval *obj = getThis();
-	zend_class_entry *datetime_ce;
 
 	params = (zval ***) safe_emalloc(ZEND_NUM_ARGS(), sizeof(zval **), 0);
 
@@ -1042,6 +1047,27 @@ PHP_METHOD(TimecopDateTime, __construct)
 		}
 		fix_datetime_timestamp(&obj, time, timezone_obj TSRMLS_CC);
 	}
+
+	efree(params);
+}
+
+/* {{{ proto TimecopOrigDateTime::__construct([string time[, DateTimeZone object]])
+   Creates new TimecopOrigDateTime object
+*/
+PHP_METHOD(TimecopOrigDateTime, __construct)
+{
+	zval ***params;
+	zval *obj = getThis();
+
+	params = (zval ***) safe_emalloc(ZEND_NUM_ARGS(), sizeof(zval **), 0);
+
+	if (zend_get_parameters_array_ex(ZEND_NUM_ARGS(), params) == FAILURE) {
+		efree(params);
+		RETURN_FALSE;
+	}
+
+	/* call original DateTime::__construct() */
+	timecop_call_original_constructor(&obj, TIMECOP_G(ce_DateTime), params, ZEND_NUM_ARGS() TSRMLS_CC);
 
 	efree(params);
 }
