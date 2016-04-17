@@ -53,6 +53,10 @@ static const struct timecop_override_func_entry timecop_override_func_table[] = 
 	TIMECOP_OFE("strtotime"),
 	TIMECOP_OFE("strftime"),
 	TIMECOP_OFE("gmstrftime"),
+#ifdef HAVE_GETTIMEOFDAY
+	TIMECOP_OFE("microtime"),
+	TIMECOP_OFE("gettimeofday"),
+#endif
 	TIMECOP_OFE("unixtojd"),
 	TIMECOP_OFE("date_create"),
 	TIMECOP_OFE("date_create_from_format"),
@@ -135,6 +139,16 @@ ZEND_BEGIN_ARG_INFO_EX(arginfo_timecop_gmstrftime, 0, 0, 1)
 	ZEND_ARG_INFO(0, timestamp)
 ZEND_END_ARG_INFO()
 
+#ifdef HAVE_GETTIMEOFDAY
+ZEND_BEGIN_ARG_INFO_EX(arginfo_timecop_microtime, 0, 0, 0)
+	ZEND_ARG_INFO(0, get_as_float)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_timecop_gettimeofday, 0, 0, 0)
+	ZEND_ARG_INFO(0, get_as_float)
+ZEND_END_ARG_INFO()
+#endif
+
 ZEND_BEGIN_ARG_INFO_EX(arginfo_timecop_unixtojd, 0, 0, 0)
 	ZEND_ARG_INFO(0, timestamp)
 ZEND_END_ARG_INFO()
@@ -166,6 +180,10 @@ const zend_function_entry timecop_functions[] = {
 	PHP_FE(timecop_strtotime, arginfo_timecop_strtotime)
 	PHP_FE(timecop_strftime, arginfo_timecop_strftime)
 	PHP_FE(timecop_gmstrftime, arginfo_timecop_gmstrftime)
+#ifdef HAVE_GETTIMEOFDAY
+	PHP_FE(timecop_microtime, arginfo_timecop_microtime)
+	PHP_FE(timecop_gettimeofday, arginfo_timecop_gettimeofday)
+#endif
 	PHP_FE(timecop_unixtojd, arginfo_timecop_unixtojd)
 	PHP_FE(timecop_date_create, arginfo_timecop_date_create)
 	PHP_FE(timecop_date_create_from_format, arginfo_timecop_date_create_from_format)
@@ -661,7 +679,7 @@ static int fix_datetime_timestamp(zval *datetime_obj, zval *time, zval *timezone
 	}
 
 	/*
-	 * $fixed_timestamp = timecop_strtotime();
+	 * $fixed_timestamp = timecop_strtotime($time);
 	 */
 	zend_call_method_with_1_params(NULL, NULL, NULL, "timecop_strtotime", &fixed_timestamp, time);
 
@@ -910,6 +928,118 @@ PHP_FUNCTION(timecop_gmstrftime)
 }
 /* }}} */
 
+#ifdef HAVE_GETTIMEOFDAY
+
+#define MICRO_IN_SEC 1000000.00
+#define SEC_IN_MIN 60
+
+static void _timecop_gettimeofday(INTERNAL_FUNCTION_PARAMETERS, int mode)
+{
+	zend_bool get_as_float = 0;
+	long fixed_sec = 0, fixed_usec = 0;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|b", &get_as_float) == FAILURE) {
+		return;
+	}
+
+	switch (TIMECOP_G(timecop_mode)) {
+	case TIMECOP_MODE_FREEZE:
+		fixed_sec = TIMECOP_G(freezed_timestamp);
+		fixed_usec = 0;
+		break;
+	case TIMECOP_MODE_TRAVEL:
+		{
+			zval timeofday, *zv_sec, *zv_usec;
+			timecop_call_orig_method_with_0_params(NULL, NULL, NULL, "gettimeofday", &timeofday);
+			zv_sec = zend_hash_str_find(Z_ARR(timeofday), "sec", sizeof("sec")-1);
+			if (zv_sec) {
+				fixed_sec = Z_LVAL_P(zv_sec) + TIMECOP_G(travel_offset);
+			}
+			zv_usec = zend_hash_str_find(Z_ARR(timeofday), "usec", sizeof("usec")-1);
+			if (zv_sec) {
+				fixed_usec = Z_LVAL_P(zv_usec);
+			}
+			zval_ptr_dtor(&timeofday);
+		}
+		break;
+	default:
+		{
+			const char *func_name;
+			size_t func_name_len;
+			zval *arg1 = NULL, tmp;
+			int param_count = 0;
+
+			if (mode) {
+				func_name = ORIG_FUNC_NAME("gettimeofday");
+				func_name_len = ORIG_FUNC_NAME_SIZEOF("gettimeofday")-1;
+			} else {
+				func_name = ORIG_FUNC_NAME("microtime");
+				func_name_len = ORIG_FUNC_NAME_SIZEOF("microtime")-1;
+			}
+			if (get_as_float) {
+				ZVAL_TRUE(&tmp);
+				arg1 = &tmp;
+				param_count = 1;
+			}
+			zend_call_method(NULL, NULL, NULL, func_name, func_name_len, return_value, param_count, arg1, NULL);
+			return;
+		}
+	}
+
+	if (get_as_float) {
+		RETURN_DOUBLE((double)(fixed_sec + fixed_usec / MICRO_IN_SEC));
+	}
+	if (mode) {
+		zval zv_offset, zv_dst, format, timestamp;
+		long offset = 0, is_dst = 0;
+
+		ZVAL_LONG(&timestamp, fixed_sec);
+
+		/* offset */
+		ZVAL_STRING(&format, "Z");
+		timecop_call_orig_method_with_2_params(NULL, NULL, NULL, "date", &zv_offset, &format, &timestamp);
+		convert_to_long(&zv_offset);
+		offset = Z_LVAL(zv_offset);
+		zval_ptr_dtor(&zv_offset);
+		zval_ptr_dtor(&format);
+
+		/* is_dst */
+		ZVAL_STRING(&format, "I");
+		timecop_call_orig_method_with_2_params(NULL, NULL, NULL, "date", &zv_dst, &format, &timestamp);
+		convert_to_long(&zv_dst);
+		is_dst = Z_LVAL(zv_dst);
+		zval_ptr_dtor(&zv_dst);
+		zval_ptr_dtor(&format);
+
+		array_init(return_value);
+		add_assoc_long(return_value, "sec", fixed_sec);
+		add_assoc_long(return_value, "usec", fixed_usec);
+		add_assoc_long(return_value, "minuteswest", -offset / SEC_IN_MIN);
+		add_assoc_long(return_value, "dsttime", is_dst);
+	} else {
+		char ret[100];
+		snprintf(ret, 100, "%.8F %ld", fixed_usec / MICRO_IN_SEC, fixed_sec);
+		RETURN_STRING(ret);
+	}
+}
+
+/* {{{ proto mixed microtime([bool get_as_float])
+   Returns either a string or a float containing the current time in seconds and microseconds */
+PHP_FUNCTION(timecop_microtime)
+{
+	_timecop_gettimeofday(INTERNAL_FUNCTION_PARAM_PASSTHRU, 0);
+}
+/* }}} */
+
+/* {{{ proto array gettimeofday([bool get_as_float])
+   Returns the current time as array */
+PHP_FUNCTION(timecop_gettimeofday)
+{
+	_timecop_gettimeofday(INTERNAL_FUNCTION_PARAM_PASSTHRU, 1);
+}
+/* }}} */
+#endif
+
 /* {{{ proto int timecop_unixtojd([int timestamp])
    Convert UNIX timestamp to Julian Day */
 PHP_FUNCTION(timecop_unixtojd)
@@ -1026,7 +1156,7 @@ static inline void timecop_call_constructor(zval *obj, zend_class_entry *ce, zva
 
 static void timecop_call_constructor_ex(zval *obj, zend_class_entry *ce, zval *params, int param_count, int call_original) {
 	zval *arg1 = NULL, *arg2 = NULL;
-	char *func_name;
+	const char *func_name;
 	size_t func_name_len;
 
 	if (param_count > 2) {

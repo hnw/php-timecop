@@ -55,6 +55,10 @@ PHP_FUNCTION(timecop_localtime);
 PHP_FUNCTION(timecop_strtotime);
 PHP_FUNCTION(timecop_strftime);
 PHP_FUNCTION(timecop_gmstrftime);
+#ifdef HAVE_GETTIMEOFDAY
+PHP_FUNCTION(timecop_microtime);
+PHP_FUNCTION(timecop_gettimeofday);
+#endif
 PHP_FUNCTION(timecop_unixtojd);
 PHP_FUNCTION(timecop_date_create);
 PHP_FUNCTION(timecop_date_create_from_format);
@@ -121,6 +125,15 @@ struct timecop_override_class_entry {
 	char *ovrd_class;
 	char *save_method;
 };
+
+#define timecop_call_orig_method_with_0_params(obj, obj_ce, fn_proxy, function_name, retval) \
+	zend_call_method(obj, obj_ce, fn_proxy, ORIG_FUNC_NAME(function_name), ORIG_FUNC_NAME_SIZEOF(function_name)-1, retval, 0, NULL, NULL TSRMLS_CC)
+
+#define timecop_call_orig_method_with_1_params(obj, obj_ce, fn_proxy, function_name, retval, arg1) \
+	zend_call_method(obj, obj_ce, fn_proxy, ORIG_FUNC_NAME(function_name), ORIG_FUNC_NAME_SIZEOF(function_name)-1, retval, 1, arg1, NULL TSRMLS_CC)
+
+#define timecop_call_orig_method_with_2_params(obj, obj_ce, fn_proxy, function_name, retval, arg1, arg2) \
+	zend_call_method(obj, obj_ce, fn_proxy, ORIG_FUNC_NAME(function_name), ORIG_FUNC_NAME_SIZEOF(function_name)-1, retval, 2, arg1, arg2 TSRMLS_CC)
 
 /* In every utility function you add that needs to use variables 
    in php_timecop_globals, call TSRMLS_FETCH(); after declaring other 

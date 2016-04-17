@@ -47,6 +47,8 @@ extension=timecop.so
   - `strtotime()`
   - `strftime()`
   - `gmstrftime()`
+  - `microtime()`
+  - `gettimeofday()`
   - `unixtojd()`
   - `DateTime::_construct()`
   - `DateTime::createFromFormat()` (PHP >= 5.3.4)
@@ -85,10 +87,11 @@ var_dump($new_time == time()); // bool(false)
 
 ## CHANGELOG
 
-###version 1.1.0(alpha), 2016/04/15
+###version 1.1.0(alpha), 2016/04/18
 - Support PHP 7.0.x
 - Now `new DateTime()` always returns `DateTime` instance
   - The previous version returns `TimecopDateTime` instance when `timecop.func_override=1`.
+- Implement `timecop_gettimeofday()` and  `timecop_microtime()`
 
 ###version 1.0.6, 2016/04/15
 - Fix #10 (Timecop segfaults when set_error_handler throws an exception)
@@ -114,7 +117,7 @@ var_dump($new_time == time()); // bool(false)
 
 - Implement `timecop_date_create()`
 
-###version 1.0.1, 2013/03/04
+###Version 1.0.1, 2013/03/04
 
 - Implement time traveling feature for `TimecopDateTime::__construct()` with 1 or 2 arguments
   - The previous version works correctly only for no arguments calling: "new TimecopDateTime()"
