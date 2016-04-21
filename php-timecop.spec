@@ -1,14 +1,13 @@
 %define __ext_name timecop
 Name:		php-%{__ext_name}
-Version:	1.0.4
+Version:	1.1.0
 Release:	1%{?dist}
 Summary:	php-timecop module
 
 Group:		Development/Languages
 License:	MIT
 URL:		https://github.com/hnw/php-timecop
-# git archive --format=tar --prefix=php-timecop-1.0.4/ v1.0.4 | gzip > php-timecop-1.0.4.tar.gz
-Source0:	php-timecop-%{version}.tar.gz
+Source0:        https://github.com/hnw/php-timecop/%{name}-%{version}.tar.gz
 BuildRoot:	%(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
 
 BuildRequires:	php, php-devel
