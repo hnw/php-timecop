@@ -1,4 +1,4 @@
-# php-timecop [![Travis CI Build Status](https://travis-ci.org/hnw/php-timecop.png)](https://travis-ci.org/hnw/php-timecop) [![CircleCI Build Status](https://circleci.com/gh/hnw/php-timecop.svg?style=shield)](https://circleci.com/gh/hnw/php-timecop)
+# php-timecop [![Travis CI Build Status](https://travis-ci.org/hnw/php-timecop.svg?branch=master)](https://travis-ci.org/hnw/php-timecop) [![CircleCI Build Status](https://circleci.com/gh/hnw/php-timecop.svg?style=shield)](https://circleci.com/gh/hnw/php-timecop)
 
 ## DESCRIPTION
 
