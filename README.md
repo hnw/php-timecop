@@ -85,7 +85,7 @@ var_dump($new_time == time()); // bool(false)
 
 ## CHANGELOG
 
-###version 1.1.1(alpha), 2016/04/23
+###version 1.1.2(alpha), 2016/04/23
 - Fix for stock PHP on Ubuntu
 
 ###version 1.1.0(alpha), 2016/04/18
