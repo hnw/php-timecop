@@ -1,6 +1,12 @@
 sudo: false
 language: php
 
+branches:
+  except:
+    - gh-pages
+    - /^circleci-.*$/
+    - /^wercker-.*$/
+
 php:
   - 5.3
   - 5.4
@@ -8,11 +14,8 @@ php:
   - 5.6
   - 7.0
 
-env:
-  - REPORT_EXIT_STATUS=1 NO_INTERACTION=1 TESTS="--show-all"
-
 before_script:
   - phpize && ./configure && make
 
 script:
-  - make test | tee tests-output.txt && grep 'TEST SUMMARY$' tests-output.txt > /dev/null ; test $? -ne 0
+  - make test REPORT_EXIT_STATUS=1 NO_INTERACTION=1 TESTS="--show-all" | tee tests-output.txt && if grep -q 'TEST SUMMARY$' tests-output.txt ; then exit 1 ; fi

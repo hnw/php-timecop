@@ -7,7 +7,7 @@ Summary:	php-timecop module
 Group:		Development/Languages
 License:	MIT
 URL:		https://github.com/hnw/php-timecop
-Source0:        https://github.com/hnw/php-timecop/%{name}-%{version}.tar.gz
+Source0:	https://github.com/hnw/php-timecop/archive/v%{version}.tar.gz#/%{name}-%{version}.tar.gz
 BuildRoot:	%(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
 
 BuildRequires:	php, php-devel
@@ -30,7 +30,7 @@ EOF
 phpize
 %configure
 make %{?_smp_mflags}
-
+make test REPORT_EXIT_STATUS=1 NO_INTERACTION=1 TESTS="--show-all" | tee tests-output.txt && if grep -q 'TEST SUMMARY$' tests-output.txt ; then exit 1 ; fi
 
 %install
 rm -rf %{buildroot}

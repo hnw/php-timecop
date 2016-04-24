@@ -1,0 +1,22 @@
+box: docker.io/centos:7
+build:
+  steps:
+    - script:
+        name: yum -y install gcc make php php-devel rpm-build
+        code: |-
+          yum -y install gcc make php php-devel rpm-build
+    - script:
+        name: setenv TIMECOP_VER
+        code: |-
+          export TIMECOP_VER=$(grep '^Version' php-timecop.spec | sed 's/^.*[^0-9.]\([0-9.]*\)$/\1/')
+          echo TIMECOP_VER=${TIMECOP_VER}
+    - script:
+        name: rpmbuild
+        code: |-
+          TIMECOP_TMP="$(dirname $(mktemp --dry-run 2>/dev/null || echo "/var/tmp/tmp_dir"))/php-timecop"
+          echo TIMECOP_TMP=${TIMECOP_TMP}
+          mkdir -p ~/rpmbuild/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS,SRPMS}
+          mkdir -p ${TIMECOP_TMP}/php-timecop-${TIMECOP_VER}/
+          cp -R ./ ${TIMECOP_TMP}/php-timecop-${TIMECOP_VER}/
+          tar cvzf ~/rpmbuild/SOURCES/php-timecop-${TIMECOP_VER}.tar.gz -C ${TIMECOP_TMP} php-timecop-${TIMECOP_VER}/
+          rpmbuild -bb php-timecop.spec
