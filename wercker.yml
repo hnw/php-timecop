@@ -1,4 +1,4 @@
-box: docker.io/centos:7
+box: centos:7
 build:
   steps:
     - script:
