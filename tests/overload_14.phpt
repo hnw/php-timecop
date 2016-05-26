@@ -25,6 +25,9 @@ timecop_freeze(timecop_orig_strtotime("2012-02-29 01:23:45"));
 $dt0 = new DateTime();
 var_dump(get_class($dt0));
 
+$dt1 = date_create();
+var_dump(get_class($dt1));
+
 $dts = array(
     // constuctor with 0 argument
     date_create(),
@@ -56,6 +59,7 @@ foreach ($dts as $dt) {
 }
 
 --EXPECT--
+string(8) "DateTime"
 string(8) "DateTime"
 string(25) "2012-02-29T01:23:45-08:00"
 string(25) "2012-02-29T01:23:45-08:00"
