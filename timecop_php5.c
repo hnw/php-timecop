@@ -1119,7 +1119,7 @@ PHP_FUNCTION(timecop_date_create)
 		RETURN_FALSE;
 	}
 
-	php_timecop_date_instantiate(TIMECOP_G(ce_TimecopDateTime), return_value TSRMLS_CC);
+	php_timecop_date_instantiate(TIMECOP_G(ce_DateTime), return_value TSRMLS_CC);
 
 	/* call TimecopDateTime::__construct() */
 	timecop_call_constructor(&return_value, TIMECOP_G(ce_TimecopDateTime), params, ZEND_NUM_ARGS() TSRMLS_CC);
