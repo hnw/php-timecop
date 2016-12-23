@@ -24,7 +24,7 @@ extension=timecop.so
 ## SYSTEM REQUIREMENTS
 
 - OS: Linux, FreeBSD, MacOSX
-- PHP: 5.3.x, 5.4.x, 5.5.x, 5.6.x, 7.0.x
+- PHP: 5.3.x, 5.4.x, 5.5.x, 5.6.x, 7.0.x, 7.1.x
 - SAPI: Apache, CLI
   - Other SAPIs are not tested, but there is no SAPI-dependent code.
 - non-ZTS(recommended), ZTS
@@ -84,6 +84,10 @@ var_dump($new_time == time()); // bool(false)
 ```
 
 ## CHANGELOG
+
+###version 1.1.3, 2016/12/27
+- Fix crash when non-object passed as 2nd argument of TimecopDateTime::__construct() (Fix #9)'
+- Add CI environment (CentOS, Ubuntu 32-bit, PHP 7.1)
 
 ###version 1.1.2(alpha), 2016/04/23
 - Fix for stock PHP on Ubuntu
