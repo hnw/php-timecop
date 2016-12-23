@@ -38,7 +38,7 @@ static void timecop_globals_ctor(zend_timecop_globals *globals TSRMLS_DC) {
 	globals->func_override = 1;
 	globals->sync_request_time = 1;
 	globals->orig_request_time = NULL;
-	globals->timecop_mode = TIMECOP_MODE_NORMAL;
+	globals->timecop_mode = TIMECOP_MODE_REALTIME;
 	globals->freezed_timestamp = 0;
 	globals->travel_offset = 0;
 	globals->ce_DateTime = NULL;
@@ -366,7 +366,7 @@ PHP_RSHUTDOWN_FUNCTION(timecop)
 		restore_request_time(TSRMLS_C);
 	}
 
-	TIMECOP_G(timecop_mode) = TIMECOP_MODE_NORMAL;
+	TIMECOP_G(timecop_mode) = TIMECOP_MODE_REALTIME;
 
 	return SUCCESS;
 }
@@ -684,7 +684,7 @@ static int fix_datetime_timestamp(zval **datetime_obj, zval *time, zval *timezon
 	zval now;
 	zval *orig_zonename;
 
-	if (TIMECOP_G(timecop_mode) == TIMECOP_MODE_NORMAL) {
+	if (TIMECOP_G(timecop_mode) == TIMECOP_MODE_REALTIME) {
 		return 0;
 	}
 
@@ -885,7 +885,7 @@ PHP_FUNCTION(timecop_travel)
    Return to Time travel to specified timestamp */
 PHP_FUNCTION(timecop_return)
 {
-	TIMECOP_G(timecop_mode) = TIMECOP_MODE_NORMAL;
+	TIMECOP_G(timecop_mode) = TIMECOP_MODE_REALTIME;
 
 	if (TIMECOP_G(sync_request_time)){
 		restore_request_time(TSRMLS_C);

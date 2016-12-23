@@ -72,7 +72,7 @@ PHP_METHOD(TimecopDateTime, setTimestamp);
 #endif
 
 typedef enum timecop_mode_t {
-	TIMECOP_MODE_NORMAL,
+	TIMECOP_MODE_REALTIME,
 	TIMECOP_MODE_FREEZE,
 	TIMECOP_MODE_TRAVEL
 } timecop_mode_t;
