@@ -7,7 +7,7 @@ general:
 
 dependencies:
   pre:
-    - case $CIRCLE_NODE_INDEX in 0) phpenv global system ;; 1) phpenv global 5.5.21 ;; 2) phpenv global 5.6.14 ;; 3) phpenv global 7.0.4 ;; esac
+    - case $CIRCLE_NODE_INDEX in 0) phpenv global system ;; 1) phpenv global 5.5.36 ;; 2) phpenv global 5.6.22 ;; 3) phpenv global 7.0.11 ;; esac
     - phpenv versions
     - phpize && ./configure && make
 
