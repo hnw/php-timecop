@@ -684,6 +684,10 @@ static int fix_datetime_timestamp(zval **datetime_obj, zval *time, zval *timezon
 	zval now;
 	zval *orig_zonename;
 
+	if (TIMECOP_G(timecop_mode) == TIMECOP_MODE_NORMAL) {
+		return 0;
+	}
+
 	/*
 	 * if ($time === null || $time === false || $time === "") {
 	 *     $time = "now";
