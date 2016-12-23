@@ -717,7 +717,7 @@ static int fix_datetime_timestamp(zval **datetime_obj, zval *time, zval *timezon
 	 *     }
 	 * }
 	 */
-	if (timezone_obj) {
+	if (timezone_obj && Z_TYPE_P(timezone_obj) == IS_OBJECT) {
 		zval *zonename;
 		zend_call_method_with_0_params(&timezone_obj, Z_OBJCE_PP(&timezone_obj), NULL, "getname", &zonename);
 		if (zonename) {
@@ -739,7 +739,7 @@ static int fix_datetime_timestamp(zval **datetime_obj, zval *time, zval *timezon
 	 *     date_default_timezone_set($orig_zonename);
 	 * }
 	 */
-	if (timezone_obj && orig_zonename) {
+	if (timezone_obj && Z_TYPE_P(timezone_obj) == IS_OBJECT) {
 		zend_call_method_with_1_params(NULL, NULL, NULL, "date_default_timezone_set", NULL, orig_zonename);
 		zval_ptr_dtor(&orig_zonename);
 	}
