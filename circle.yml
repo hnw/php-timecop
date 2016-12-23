@@ -5,11 +5,6 @@ general:
       - /^travisci-.*$/
       - /^wercker-.*$/
 
-      dependencies:
-  pre:
-If you need to use a specific version of Redis that isn’t provided by apt-get, you can download and compile the needed version into your home directory:
-
-
 dependencies:
   pre:
     - case $CIRCLE_NODE_INDEX in 0) sudo apt-get update; sudo apt-get install php5-dev; phpenv global system ;; 1) phpenv global 5.5.36 ;; 2) phpenv global 5.6.22 ;; 3) phpenv global 7.0.11 ;; esac
