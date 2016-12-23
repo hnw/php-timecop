@@ -1,5 +1,5 @@
-box: docker.io/centos:7
-build:
+centos:
+  box: library/centos
   steps:
     - script:
         name: yum -y install gcc make php php-devel rpm-build
@@ -20,3 +20,22 @@ build:
           cp -R ./ ${TIMECOP_TMP}/php-timecop-${TIMECOP_VER}/
           tar cvzf ~/rpmbuild/SOURCES/php-timecop-${TIMECOP_VER}.tar.gz -C ${TIMECOP_TMP} php-timecop-${TIMECOP_VER}/
           rpmbuild -bb php-timecop.spec
+ubuntu-32bit:
+  box: 32bit/ubuntu:16.04
+  steps:
+    - script:
+        name: apt-get update
+        code: |-
+          apt-get -y update
+    - script:
+        name: apt-get upgrade
+        code: |-
+          apt-get -y upgrade build-essential php-dev
+    - script:
+        name: phpize && ./configure && make
+        code: |-
+          phpize && ./configure && make
+    - script:
+        name: make test
+        code: |-
+          make test REPORT_EXIT_STATUS=1 NO_INTERACTION=1 TESTS="--show-all" | tee tests-output.txt && if grep -q 'TEST SUMMARY$' tests-output.txt ; then exit 1 ; fi
