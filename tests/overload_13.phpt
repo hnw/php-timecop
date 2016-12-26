@@ -39,7 +39,22 @@ $dts = array(
     new DateTime(""),
 
     // constuctor with 1 argument(absolute format)
-    new DateTime("2012-03-31 12:34:56"),
+    new DateTime("March 31"),
+
+    // constuctor with 1 argument(absolute format)
+    new DateTime("2013-03"),
+
+    // constuctor with 1 argument(absolute format)
+    new DateTime("2013-03-31"),
+
+    // constuctor with 1 argument(absolute format)
+    new DateTime("2013-03-31 12:34:56"),
+
+    // constuctor with 1 argument(absolute format)
+    new DateTime("12:34:56"),
+
+    // constuctor with 1 argument(absolute format)
+    new DateTime("12:34"),
 
     // constuctor with 1 argument(relative format)
     new DateTime("+3days"),
@@ -64,7 +79,12 @@ string(25) "2012-02-29T01:23:45-08:00"
 string(25) "2012-02-29T01:23:45-08:00"
 string(25) "2012-02-29T01:23:45-08:00"
 string(25) "2012-02-29T01:23:45-08:00"
-string(25) "2012-03-31T12:34:56-07:00"
+string(25) "2012-03-31T00:00:00-07:00"
+string(25) "2013-03-01T00:00:00-08:00"
+string(25) "2013-03-31T00:00:00-07:00"
+string(25) "2013-03-31T12:34:56-07:00"
+string(25) "2012-02-29T12:34:56-08:00"
+string(25) "2012-02-29T12:34:00-08:00"
 string(25) "2012-03-03T01:23:45-08:00"
 string(25) "1970-01-01T19:00:00-05:00"
 string(25) "1970-01-02T00:00:00+00:00"
