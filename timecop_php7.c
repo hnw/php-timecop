@@ -35,8 +35,13 @@ static void timecop_globals_ctor(zend_timecop_globals *globals) {
 	globals->sync_request_time = 1;
 	ZVAL_NULL(&globals->orig_request_time);
 	globals->timecop_mode = TIMECOP_MODE_REALTIME;
-	globals->freezed_timestamp = 0;
-	globals->travel_offset = 0;
+	globals->freezed_time.sec = 0;
+	globals->freezed_time.usec = 0;
+	globals->travel_origin.sec = 0;
+	globals->travel_origin.usec = 0;
+	globals->travel_offset.sec = 0;
+	globals->travel_offset.usec = 0;
+	globals->scaling_factor = 1;
 	globals->ce_DateTime = NULL;
 	globals->ce_TimecopDateTime = NULL;
 }
@@ -74,6 +79,10 @@ ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_timecop_travel, 0, 0, 1)
 	ZEND_ARG_INFO(0, timestamp)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_timecop_scale, 0, 0, 1)
+	ZEND_ARG_INFO(0, scale)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO(arginfo_timecop_return, 0)
@@ -168,6 +177,7 @@ ZEND_END_ARG_INFO()
 const zend_function_entry timecop_functions[] = {
 	PHP_FE(timecop_freeze, arginfo_timecop_freeze)
 	PHP_FE(timecop_travel, arginfo_timecop_travel)
+	PHP_FE(timecop_scale, arginfo_timecop_scale)
 	PHP_FE(timecop_return, arginfo_timecop_return)
 	PHP_FE(timecop_time, arginfo_timecop_time)
 	PHP_FE(timecop_mktime, arginfo_timecop_mktime)
@@ -227,13 +237,27 @@ static int timecop_class_override_clear();
 static int update_request_time(long unixtime);
 static int restore_request_time();
 
-static long timecop_current_timestamp();
+static long mocked_timestamp();
 
 static int fill_mktime_params(zval *fill_params, const char *date_function_name, int from);
 static int fix_datetime_timestamp(zval *datetime_obj, zval *time, zval *timezone_obj);
 
 static void _timecop_call_function(INTERNAL_FUNCTION_PARAMETERS, const char *function_name, int index_to_fill_timestamp);
 static void _timecop_call_mktime(INTERNAL_FUNCTION_PARAMETERS, const char *mktime_function_name, const char *date_function_name);
+
+#define compute_mock_time(fixed) \
+	_compute_mock_time(fixed, NULL, 1)
+#define compute_mock_time_from_current_time(fixed, now) \
+	_compute_mock_time(fixed, now, 1)
+#define compute_mock_timestamp(fixed) \
+	_compute_mock_time(fixed, NULL, 0)
+#define fill_current_time(tp) \
+	_fill_current_time(tp, 1)
+#define fill_current_timestamp(tp) \
+	_fill_current_time(tp, 0)
+
+static void _compute_mock_time(timecop_timeval *fixed, timecop_timeval *now, int fill_usec);
+static void _fill_current_time(timecop_timeval *tp, int fill_usec);
 
 static inline void timecop_call_original_constructor(zval *obj, zend_class_entry *ce, zval *params, int param_count);
 static inline void timecop_call_constructor(zval *obj, zend_class_entry *ce, zval *params, int param_count);
@@ -330,6 +354,7 @@ PHP_RSHUTDOWN_FUNCTION(timecop)
 	}
 
 	TIMECOP_G(timecop_mode) = TIMECOP_MODE_REALTIME;
+	TIMECOP_G(scaling_factor) = 1;
 
 	return SUCCESS;
 }
@@ -604,23 +629,11 @@ static int restore_request_time()
 	return SUCCESS;
 }
 
-static long timecop_current_timestamp()
+static long mocked_timestamp()
 {
-	long current_timestamp;
-
-	switch (TIMECOP_G(timecop_mode)) {
-	case TIMECOP_MODE_FREEZE:
-		current_timestamp = TIMECOP_G(freezed_timestamp);
-		break;
-	case TIMECOP_MODE_TRAVEL:
-		current_timestamp = time(NULL) + TIMECOP_G(travel_offset);
-		break;
-	default:
-		current_timestamp = time(NULL);
-		break;
-	}
-
-	return current_timestamp;
+	timecop_timeval tv;
+	compute_mock_timestamp(&tv);
+	return tv.sec;
 }
 
 static int fill_mktime_params(zval *fill_params, const char *date_function_name, int from)
@@ -629,7 +642,7 @@ static int fill_mktime_params(zval *fill_params, const char *date_function_name,
 	zval params[2];
 	int i;
 
-	ZVAL_LONG(&params[1], timecop_current_timestamp());
+	ZVAL_LONG(&params[1], mocked_timestamp());
 
 	for (i = from; i < MKTIME_NUM_ARGS; i++) {
 		ZVAL_STRING(&params[0], formats[i]);
@@ -745,7 +758,7 @@ static void _timecop_call_function(INTERNAL_FUNCTION_PARAMETERS, const char *fun
 
 	param_count = ZEND_NUM_ARGS();
 	if (param_count == index_to_fill_timestamp) {
-		ZVAL_LONG(&params[param_count], timecop_current_timestamp());
+		ZVAL_LONG(&params[param_count], mocked_timestamp());
 		param_count++;
 	}
 
@@ -800,7 +813,8 @@ PHP_FUNCTION(timecop_freeze)
 	}
 
 	TIMECOP_G(timecop_mode) = TIMECOP_MODE_FREEZE;
-	TIMECOP_G(freezed_timestamp) = timestamp;
+	TIMECOP_G(freezed_time).sec = timestamp;
+	TIMECOP_G(freezed_time).usec = 0;
 
 	if (TIMECOP_G(sync_request_time)){
 		update_request_time(timestamp);
@@ -815,14 +829,57 @@ PHP_FUNCTION(timecop_freeze)
 PHP_FUNCTION(timecop_travel)
 {
 	long timestamp;
+	timecop_timeval now;
 	if (zend_parse_parameters(ZEND_NUM_ARGS(), "l", &timestamp) == FAILURE) {
 		RETURN_FALSE;
 	}
+	fill_current_time(&now);
 	TIMECOP_G(timecop_mode) = TIMECOP_MODE_TRAVEL;
-	TIMECOP_G(travel_offset) = timestamp - time(NULL);
+	TIMECOP_G(travel_origin).sec = timestamp;
+	TIMECOP_G(travel_origin).usec = 0;
+	if (now.usec <= 0) {
+		TIMECOP_G(travel_offset).sec = timestamp - now.sec;
+		TIMECOP_G(travel_offset).usec = 0;
+	} else {
+		TIMECOP_G(travel_offset).sec = timestamp - now.sec - 1;
+		TIMECOP_G(travel_offset).usec = USEC_PER_SEC - now.usec;
+	}
 
 	if (TIMECOP_G(sync_request_time)){
 		update_request_time(timestamp);
+	}
+
+	RETURN_TRUE;
+}
+/* }}} */
+
+/* {{{ proto int timecop_scale(long scale)
+   Time travel to specified timestamp */
+PHP_FUNCTION(timecop_scale)
+{
+	long scale;
+	timecop_timeval now = {0, 0}, mock_time = {0, 0};
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), "l", &scale) == FAILURE) {
+		RETURN_FALSE;
+	}
+	if (scale < 0) {
+		RETURN_FALSE;
+	}
+	fill_current_time(&now);
+	compute_mock_time_from_current_time(&mock_time, &now);
+	TIMECOP_G(timecop_mode) = TIMECOP_MODE_TRAVEL;
+	TIMECOP_G(travel_origin).sec = now.sec;
+	TIMECOP_G(travel_origin).usec = now.usec;
+	TIMECOP_G(travel_offset).sec = mock_time.sec - now.sec;
+	TIMECOP_G(travel_offset).usec = mock_time.usec - now.usec;
+	if (TIMECOP_G(travel_offset).usec < 0) {
+		TIMECOP_G(travel_offset).sec  -= 1;
+		TIMECOP_G(travel_offset).usec += USEC_PER_SEC;
+	}
+	TIMECOP_G(scaling_factor) = scale;
+
+	if (TIMECOP_G(sync_request_time)){
+		update_request_time(mock_time.sec);
 	}
 
 	RETURN_TRUE;
@@ -847,7 +904,7 @@ PHP_FUNCTION(timecop_return)
    Return virtual timestamp */
 PHP_FUNCTION(timecop_time)
 {
-	RETURN_LONG(timecop_current_timestamp());
+	RETURN_LONG(mocked_timestamp());
 }
 /* }}} */
 
@@ -932,6 +989,92 @@ PHP_FUNCTION(timecop_gmstrftime)
 }
 /* }}} */
 
+/*
+ * _compute_mock_time(fixed, now, fill_usec)
+ *
+ *
+ *               delta
+ *   |<----------------------->|
+ *     travel_offset                  delta * scaling_factor
+ *   |<------------->|<------------------------------------------------->|
+ * ==@===============@=========@=========================================@==
+ *   ^                         ^                                         ^
+ *   |                         |                                         |
+ *   travel_origin             orig_time                     traveled_time
+ *
+ *
+ * delta = orig_time - travel_origin
+ * traveled_time = travel_origin + travel_offset + delta * scaling_factor
+ */
+static void _compute_mock_time(timecop_timeval *fixed, timecop_timeval *now, int fill_usec)
+{
+	if (TIMECOP_G(timecop_mode) == TIMECOP_MODE_FREEZE) {
+		fixed->sec  = TIMECOP_G(freezed_time).sec;
+		fixed->usec = TIMECOP_G(freezed_time).usec;
+	} else if (TIMECOP_G(timecop_mode) == TIMECOP_MODE_TRAVEL) {
+		timecop_timeval delta, origin = TIMECOP_G(travel_origin);
+		long scale = TIMECOP_G(scaling_factor);
+		if (now == NULL) {
+			fill_current_time(&delta);
+		} else {
+			delta.sec  = now->sec;
+			delta.usec = now->usec;
+		}
+		delta.usec -= origin.usec;
+		delta.sec  -= origin.sec;
+		if (delta.usec < 0) {
+			delta.sec--;
+			delta.usec += USEC_PER_SEC;
+		}
+		delta.usec *= scale;
+		delta.sec  *= scale;
+		if (delta.usec > USEC_PER_SEC) {
+			delta.sec  += (delta.usec / USEC_PER_SEC);
+			delta.usec %= USEC_PER_SEC;
+		}
+		fixed->sec  = origin.sec  + TIMECOP_G(travel_offset).sec  + delta.sec;
+		fixed->usec = origin.usec + TIMECOP_G(travel_offset).usec + delta.usec;
+		if (fixed->usec > USEC_PER_SEC) {
+			fixed->sec  += (fixed->usec / USEC_PER_SEC);
+			fixed->usec %= USEC_PER_SEC;
+		}
+	} else {
+		if (now == NULL) {
+			if (fill_usec) {
+				fill_current_time(fixed);
+			} else {
+				fill_current_timestamp(fixed);
+			}
+		} else {
+			fixed->sec  = now->sec;
+			fixed->usec = now->usec;
+		}
+	}
+	return;
+}
+
+static void _fill_current_time(timecop_timeval *tp, int fill_usec)
+{
+#ifndef HAVE_GETTIMEOFDAY
+	fill_usec = 0;
+#endif
+	if (fill_usec) {
+		zval timeofday, *zv_sec, *zv_usec;
+		timecop_call_orig_method_with_0_params(NULL, NULL, NULL, "gettimeofday", &timeofday);
+		zv_sec = zend_hash_str_find(Z_ARR(timeofday), "sec", sizeof("sec")-1);
+		zv_usec = zend_hash_str_find(Z_ARR(timeofday), "usec", sizeof("usec")-1);
+		if (!zv_sec || !zv_usec) {
+			// warn
+		}
+		tp->sec  = Z_LVAL_P(zv_sec);
+		tp->usec = Z_LVAL_P(zv_usec);
+	} else {
+		tp->sec  = time(NULL);
+		tp->usec = 0;
+	}
+	return;
+}
+
 #ifdef HAVE_GETTIMEOFDAY
 
 #define MICRO_IN_SEC 1000000.00
@@ -940,64 +1083,22 @@ PHP_FUNCTION(timecop_gmstrftime)
 static void _timecop_gettimeofday(INTERNAL_FUNCTION_PARAMETERS, int mode)
 {
 	zend_bool get_as_float = 0;
-	long fixed_sec = 0, fixed_usec = 0;
+	timecop_timeval fixed = {0, 0};
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|b", &get_as_float) == FAILURE) {
 		return;
 	}
 
-	switch (TIMECOP_G(timecop_mode)) {
-	case TIMECOP_MODE_FREEZE:
-		fixed_sec = TIMECOP_G(freezed_timestamp);
-		fixed_usec = 0;
-		break;
-	case TIMECOP_MODE_TRAVEL:
-		{
-			zval timeofday, *zv_sec, *zv_usec;
-			timecop_call_orig_method_with_0_params(NULL, NULL, NULL, "gettimeofday", &timeofday);
-			zv_sec = zend_hash_str_find(Z_ARR(timeofday), "sec", sizeof("sec")-1);
-			if (zv_sec) {
-				fixed_sec = Z_LVAL_P(zv_sec) + TIMECOP_G(travel_offset);
-			}
-			zv_usec = zend_hash_str_find(Z_ARR(timeofday), "usec", sizeof("usec")-1);
-			if (zv_sec) {
-				fixed_usec = Z_LVAL_P(zv_usec);
-			}
-			zval_ptr_dtor(&timeofday);
-		}
-		break;
-	default:
-		{
-			const char *func_name;
-			size_t func_name_len;
-			zval *arg1 = NULL, tmp;
-			int param_count = 0;
-
-			if (mode) {
-				func_name = ORIG_FUNC_NAME("gettimeofday");
-				func_name_len = ORIG_FUNC_NAME_SIZEOF("gettimeofday")-1;
-			} else {
-				func_name = ORIG_FUNC_NAME("microtime");
-				func_name_len = ORIG_FUNC_NAME_SIZEOF("microtime")-1;
-			}
-			if (get_as_float) {
-				ZVAL_TRUE(&tmp);
-				arg1 = &tmp;
-				param_count = 1;
-			}
-			zend_call_method(NULL, NULL, NULL, func_name, func_name_len, return_value, param_count, arg1, NULL);
-			return;
-		}
-	}
+	compute_mock_time(&fixed);
 
 	if (get_as_float) {
-		RETURN_DOUBLE((double)(fixed_sec + fixed_usec / MICRO_IN_SEC));
+		RETURN_DOUBLE((double)(fixed.sec + fixed.usec / MICRO_IN_SEC));
 	}
 	if (mode) {
 		zval zv_offset, zv_dst, format, timestamp;
 		long offset = 0, is_dst = 0;
 
-		ZVAL_LONG(&timestamp, fixed_sec);
+		ZVAL_LONG(&timestamp, fixed.sec);
 
 		/* offset */
 		ZVAL_STRING(&format, "Z");
@@ -1016,13 +1117,13 @@ static void _timecop_gettimeofday(INTERNAL_FUNCTION_PARAMETERS, int mode)
 		zval_ptr_dtor(&format);
 
 		array_init(return_value);
-		add_assoc_long(return_value, "sec", fixed_sec);
-		add_assoc_long(return_value, "usec", fixed_usec);
+		add_assoc_long(return_value, "sec", fixed.sec);
+		add_assoc_long(return_value, "usec", fixed.usec);
 		add_assoc_long(return_value, "minuteswest", -offset / SEC_IN_MIN);
 		add_assoc_long(return_value, "dsttime", is_dst);
 	} else {
 		char ret[100];
-		snprintf(ret, 100, "%.8F %ld", fixed_usec / MICRO_IN_SEC, fixed_sec);
+		snprintf(ret, 100, "%.8F %ld", fixed.usec / MICRO_IN_SEC, fixed.sec);
 		RETURN_STRING(ret);
 	}
 }

@@ -11,6 +11,7 @@ Check for timecop.sync_request_time=0 and $_SERVER['REQUEST_TIME']
 	}
 ?>
 --INI--
+date.timezone=UTC
 timecop.sync_request_time=0
 --FILE--
 <?php

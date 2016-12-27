@@ -15,7 +15,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 #ifndef PHP_TIMECOP_H
 #define PHP_TIMECOP_H
 
-#define PHP_TIMECOP_VERSION "1.1.0"
+#define PHP_TIMECOP_VERSION "1.2.0alpha"
+
+#define USEC_PER_SEC 1000000
 
 extern zend_module_entry timecop_module_entry;
 #define phpext_timecop_ptr &timecop_module_entry
@@ -43,6 +45,7 @@ PHP_MINFO_FUNCTION(timecop);
 
 PHP_FUNCTION(timecop_freeze);
 PHP_FUNCTION(timecop_travel);
+PHP_FUNCTION(timecop_scale);
 PHP_FUNCTION(timecop_return);
 PHP_FUNCTION(timecop_time);
 PHP_FUNCTION(timecop_mktime);
@@ -77,6 +80,11 @@ typedef enum timecop_mode_t {
 	TIMECOP_MODE_TRAVEL
 } timecop_mode_t;
 
+typedef struct _timecop_timeval {
+	long sec;
+	long usec;
+} timecop_timeval;
+
 ZEND_BEGIN_MODULE_GLOBALS(timecop)
 	long func_override;
 	long sync_request_time;
@@ -86,8 +94,10 @@ ZEND_BEGIN_MODULE_GLOBALS(timecop)
 	zval *orig_request_time;
 #endif
 	timecop_mode_t timecop_mode;
-	long freezed_timestamp;
-	long travel_offset;
+	timecop_timeval freezed_time;
+	timecop_timeval travel_origin;
+	timecop_timeval travel_offset;
+	long scaling_factor;
 	zend_class_entry *ce_DateTime;
 	zend_class_entry *ce_TimecopDateTime;
 ZEND_END_MODULE_GLOBALS(timecop)
