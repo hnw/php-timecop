@@ -1,6 +1,6 @@
 %define __ext_name timecop
 Name:		php-%{__ext_name}
-Version:	1.1.3
+Version:	1.2.0
 Release:	1%{?dist}
 Summary:	php-timecop module
 

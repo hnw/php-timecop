@@ -85,53 +85,60 @@ var_dump($new_time == time()); // bool(false)
 
 ## CHANGELOG
 
-###version 1.1.3, 2016/12/27
+### version 1.2.0(alpha), 2016/12/30
+- Big internal change (without BC break): handle microseconds accurately in time traveling.
+- Now `timecop_freeze()` and `timecop_travel()` accepts either `DateTimeInterface` or `int`.
+  - With `DateTimeInterface` argument, freezed/traveled time would have fraction of second.
+- Implement `timecop_scale()`: Make time go faster.
+- Implement `Timecop::***()` as alias of `timecop_***()`. (For `freeze`, `travel`, `return`, `scale`)
+
+### version 1.1.3, 2016/12/27
 - Fix crash when non-object passed as 2nd argument of TimecopDateTime::__construct() (Fix [#9](https://github.com/hnw/php-timecop/issues/9))'
 - Add CI environment (CentOS, Ubuntu 32-bit, PHP 7.1)
 
-###version 1.1.2(alpha), 2016/04/23
+### version 1.1.2(alpha), 2016/04/23
 - Fix for stock PHP on Ubuntu
 
-###version 1.1.0(alpha), 2016/04/18
+### version 1.1.0(alpha), 2016/04/18
 - Support PHP 7.0.x
 - Now `new DateTime()` always returns `DateTime` instance
   - The previous version returns `TimecopDateTime` instance when `timecop.func_override=1`.
 - Implement `timecop_gettimeofday()` and  `timecop_microtime()`
 
-###version 1.0.6, 2016/04/15
+### version 1.0.6, 2016/04/15
 - Fix #10 (Timecop segfaults when set_error_handler throws an exception)
 
-###version 1.0.5, 2013/11/26
+### version 1.0.5, 2013/11/26
 - Fix `TimecopDateTime::createFromFormat()` to reutrn `TimecopDateTime` instance on PHP >= 5.3.4
   - The previous version returns `DateTime` instance
   - Implement identical function `timecop_date_create_from_format()` 
   - BUG: not supporting "relative formats" for this method currently.
 - Fix behavior of `TimecopDateTime::_construct()` when its 2nd argument is specified.
 
-###version 1.0.4, 2013/03/11
+### version 1.0.4, 2013/03/11
 - Fix SIGSEGV in `TimecopDateTime::__construct()` called with NULL as 1st argument
 
-###version 1.0.3, 2013/03/09
+### version 1.0.3, 2013/03/09
 
 - Fix the time traveling implementation for `TimecopDateTime::__construct()`
 - Fix `timecop_date_create()` to return `TimecopDateTime` instance
   - The previous version returns `DateTime` instance
 - Add `TimecopDateTime::getTimestamp()`, `TimecopDateTime::setTimestamp()` only for PHP 5.2.x
 
-###version 1.0.2, 2013/03/06
+### version 1.0.2, 2013/03/06
 
 - Implement `timecop_date_create()`
 
-###Version 1.0.1, 2013/03/04
+### Version 1.0.1, 2013/03/04
 
 - Implement time traveling feature for `TimecopDateTime::__construct()` with 1 or 2 arguments
   - The previous version works correctly only for no arguments calling: "new TimecopDateTime()"
 
-###version 1.0.0, 2012/11/21
+### version 1.0.0, 2012/11/21
 
 - Fix memory leak
 
-###version 0.0.1, 2012/06/19
+### version 0.0.1, 2012/06/19
 
 - Initial Release
 
