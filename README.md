@@ -86,7 +86,7 @@ var_dump($new_time == time()); // bool(false)
 ## CHANGELOG
 
 ###version 1.1.3, 2016/12/27
-- Fix crash when non-object passed as 2nd argument of TimecopDateTime::__construct() (Fix #9)'
+- Fix crash when non-object passed as 2nd argument of TimecopDateTime::__construct() (Fix [#9](https://github.com/hnw/php-timecop/issues/9))'
 - Add CI environment (CentOS, Ubuntu 32-bit, PHP 7.1)
 
 ###version 1.1.2(alpha), 2016/04/23
