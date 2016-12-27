@@ -274,7 +274,7 @@ static int timecop_class_override_clear(TSRMLS_D);
 static int update_request_time(long unixtime TSRMLS_DC);
 static int restore_request_time(TSRMLS_D);
 
-static long mocked_timestamp(TSRMLS_D);
+static long mocked_timestamp();
 
 static int fill_mktime_params(zval ***params, const char *date_function_name, int from TSRMLS_DC);
 static int fix_datetime_timestamp(zval **datetime_obj, zval *time, zval *timezone_obj TSRMLS_DC);
@@ -283,18 +283,18 @@ static void _timecop_call_function(INTERNAL_FUNCTION_PARAMETERS, const char *fun
 static void _timecop_call_mktime(INTERNAL_FUNCTION_PARAMETERS, const char *mktime_function_name, const char *date_function_name);
 
 #define compute_mock_time(fixed) \
-	_compute_mock_time(fixed, NULL, 1)
+	_compute_mock_time(fixed, NULL, 1 TSRMLS_CC)
 #define compute_mock_time_from_current_time(fixed, now) \
-	_compute_mock_time(fixed, now, 1)
+	_compute_mock_time(fixed, now, 1 TSRMLS_CC)
 #define compute_mock_timestamp(fixed) \
-	_compute_mock_time(fixed, NULL, 0)
+	_compute_mock_time(fixed, NULL, 0 TSRMLS_CC)
 #define fill_current_time(tp) \
-	_fill_current_time(tp, 1)
+	_fill_current_time(tp, 1 TSRMLS_CC)
 #define fill_current_timestamp(tp) \
-	_fill_current_time(tp, 0)
+	_fill_current_time(tp, 0 TSRMLS_CC)
 
-static void _compute_mock_time(timecop_timeval *fixed, timecop_timeval *now, int fill_usec);
-static void _fill_current_time(timecop_timeval *tp, int fill_usec);
+static void _compute_mock_time(timecop_timeval *fixed, timecop_timeval *now, int fill_usec TSRMLS_DC);
+static void _fill_current_time(timecop_timeval *tp, int fill_usec TSRMLS_DC);
 
 static inline void timecop_call_original_constructor(zval **obj, zend_class_entry *ce, zval ***params, int param_count TSRMLS_DC);
 static inline void timecop_call_constructor(zval **obj, zend_class_entry *ce, zval ***params, int param_count TSRMLS_DC);
@@ -1053,7 +1053,7 @@ PHP_FUNCTION(timecop_gmstrftime)
  * delta = orig_time - travel_origin
  * traveled_time = travel_origin + travel_offset + delta * scaling_factor
  */
-static void _compute_mock_time(timecop_timeval *fixed, timecop_timeval *now, int fill_usec)
+static void _compute_mock_time(timecop_timeval *fixed, timecop_timeval *now, int fill_usec TSRMLS_DC)
 {
 	if (TIMECOP_G(timecop_mode) == TIMECOP_MODE_FREEZE) {
 		fixed->sec  = TIMECOP_G(freezed_time).sec;
@@ -1100,7 +1100,7 @@ static void _compute_mock_time(timecop_timeval *fixed, timecop_timeval *now, int
 	return;
 }
 
-static void _fill_current_time(timecop_timeval *tp, int fill_usec)
+static void _fill_current_time(timecop_timeval *tp, int fill_usec TSRMLS_DC)
 {
 #ifndef HAVE_GETTIMEOFDAY
 	fill_usec = 0;
