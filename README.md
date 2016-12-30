@@ -86,7 +86,7 @@ var_dump($new_time == time()); // bool(false)
 ## CHANGELOG
 
 ### version 1.2.1(alpha), 2016/12/30
-- Fixed the year 2038 problem for PHP 7.x on Windows.
+- Fix the year 2038 problem for PHP 7.x on 64bit Windows.
 
 ### version 1.2.0(alpha), 2016/12/30
 - Big internal change (without BC break): handle microseconds accurately in time traveling.
