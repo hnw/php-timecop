@@ -244,10 +244,10 @@ static int timecop_class_override();
 static int timecop_func_override_clear();
 static int timecop_class_override_clear();
 
-static int update_request_time(long unixtime);
+static int update_request_time(zend_long unixtime);
 static int restore_request_time();
 
-static long mocked_timestamp();
+static zend_long mocked_timestamp();
 
 static int fill_mktime_params(zval *fill_params, const char *date_function_name, int from);
 static int get_formatted_mock_time(zval *time, zval *timezone_obj, zval *retval_time, zval *retval_timezone);
@@ -256,7 +256,7 @@ static void _timecop_call_function(INTERNAL_FUNCTION_PARAMETERS, const char *fun
 static void _timecop_call_mktime(INTERNAL_FUNCTION_PARAMETERS, const char *mktime_function_name, const char *date_function_name);
 
 static int get_mock_time(tc_timeval *fixed, const tc_timeval *now);
-static inline int get_mock_timestamp(long *fixed_timestamp);
+static inline int get_mock_timestamp(zend_long *fixed_timestamp);
 
 static int get_time_from_datetime(tc_timeval *tp, zval *dt);
 static int get_current_time(tc_timeval *now);
@@ -329,8 +329,6 @@ PHP_RINIT_FUNCTION(timecop)
 #if defined(COMPILE_DL_TIMECOP) && defined(ZTS)
 	ZEND_TSRMLS_CACHE_UPDATE();
 #endif
-
-	int ret;
 
 	if (TIMECOP_G(func_override)) {
 		if (SUCCESS != timecop_func_override() ||
@@ -604,7 +602,7 @@ static int timecop_class_override_clear()
 	return SUCCESS;
 }
 
-static int update_request_time(long unixtime)
+static int update_request_time(zend_long unixtime)
 {
 	zval *server_vars, *request_time, tmp;
 
@@ -641,9 +639,9 @@ static int restore_request_time()
 	return SUCCESS;
 }
 
-static long mocked_timestamp()
+static zend_long mocked_timestamp()
 {
-	long ts;
+	zend_long ts;
 	get_mock_timestamp(&ts);
 	return ts;
 }
@@ -749,10 +747,8 @@ static int get_formatted_mock_time(zval *time, zval *timezone_obj, zval *retval_
 	{
 		zval dt1, dt2, usec1, usec2;
 		zval null_val, u_str, format_str;
-		long fixed_usec;
+		zend_long fixed_usec;
 		char buf[64];
-		zval params[2];
-		int nparams = 1;
 
 		if (timezone_obj == NULL) {
 			ZVAL_NULL(&null_val);
@@ -865,7 +861,7 @@ static void _timecop_call_mktime(INTERNAL_FUNCTION_PARAMETERS, const char *mktim
 PHP_FUNCTION(timecop_freeze)
 {
 	zval *dt;
-	long timestamp;
+	zend_long timestamp;
 	tc_timeval freezed_tv;
 
 	if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, ZEND_NUM_ARGS(), "O", &dt, TIMECOP_G(ce_DateTimeInterface)) != FAILURE) {
@@ -894,7 +890,7 @@ PHP_FUNCTION(timecop_freeze)
 PHP_FUNCTION(timecop_travel)
 {
 	zval *dt;
-	long timestamp;
+	zend_long timestamp;
 	tc_timeval now, mock_tv;
 
 	if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, ZEND_NUM_ARGS(), "O", &dt, TIMECOP_G(ce_DateTimeInterface)) != FAILURE) {
@@ -924,7 +920,7 @@ PHP_FUNCTION(timecop_travel)
    Time travel to specified timestamp */
 PHP_FUNCTION(timecop_scale)
 {
-	long scale;
+	zend_long scale;
 	tc_timeval now, mock_time;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS(), "l", &scale) == FAILURE) {
@@ -1051,7 +1047,7 @@ PHP_FUNCTION(timecop_gmstrftime)
 }
 /* }}} */
 
-static inline int get_mock_timestamp(long *fixed_timestamp)
+static inline int get_mock_timestamp(zend_long *fixed_timestamp)
 {
 	tc_timeval tv;
 	int ret;
@@ -1085,7 +1081,7 @@ static int get_mock_time(tc_timeval *fixed, const tc_timeval *now)
 		*fixed = TIMECOP_G(freezed_time);
 	} else if (TIMECOP_G(timecop_mode) == TIMECOP_MODE_TRAVEL) {
 		tc_timeval delta, origin = TIMECOP_G(travel_origin);
-		long scale = TIMECOP_G(scaling_factor);
+		zend_long scale = TIMECOP_G(scaling_factor);
 		if (now == NULL) {
 			get_current_time(&delta);
 		} else {
@@ -1167,7 +1163,7 @@ static void _timecop_gettimeofday(INTERNAL_FUNCTION_PARAMETERS, int mode)
 	}
 	if (mode) {
 		zval zv_offset, zv_dst, format, timestamp;
-		long offset = 0, is_dst = 0;
+		zend_long offset = 0, is_dst = 0;
 
 		ZVAL_LONG(&timestamp, fixed.sec);
 
@@ -1229,7 +1225,7 @@ PHP_FUNCTION(timecop_unixtojd)
 */
 PHP_FUNCTION(timecop_date_create)
 {
-	zval *params, *datetime_obj, *time = NULL;
+	zval *params;
 
 	params = (zval *) safe_emalloc(ZEND_NUM_ARGS(), sizeof(zval), 0);
 

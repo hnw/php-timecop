@@ -366,8 +366,6 @@ PHP_MSHUTDOWN_FUNCTION(timecop)
 /* {{{ PHP_RINIT_FUNCTION(timecop) */
 PHP_RINIT_FUNCTION(timecop)
 {
-	int ret;
-
 	if (TIMECOP_G(func_override)) {
 		if (SUCCESS != timecop_func_override(TSRMLS_C) ||
 			SUCCESS != timecop_class_override(TSRMLS_C)) {
@@ -799,8 +797,6 @@ static int get_formatted_mock_time(zval *time, zval *timezone_obj, zval **retval
 		zval null_val, u_str, format_str;
 		long fixed_usec;
 		char buf[64];
-		zval params[2];
-		int nparams = 1;
 
 		if (timezone_obj == NULL) {
 			INIT_ZVAL(null_val);
@@ -1299,7 +1295,7 @@ PHP_FUNCTION(timecop_unixtojd)
 */
 PHP_FUNCTION(timecop_date_create)
 {
-	zval ***params, *datetime_obj, *time = NULL;
+	zval ***params;
 
 	params = (zval ***) safe_emalloc(ZEND_NUM_ARGS(), sizeof(zval **), 0);
 
