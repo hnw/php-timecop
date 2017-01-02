@@ -33,7 +33,8 @@ extension=timecop.so
 
 - Freeze time to a specific point.
 - Travel back to a specific point in time, but allow time to continue moving forward from there.
-- Override the following PHP stock functions and class, which supports freezing or traveling time.
+- Scale time by a given scaling factor that will cause time to move at an accelerated pace.
+- Override the following PHP stock functions and methods, which supports freezing or traveling time.
   - `time()`
   - `mktime()`
   - `gmmktime()`
@@ -67,7 +68,7 @@ var_dump(strtotime("+100000 sec")); // int(100000)
 
 ### The difference between `timecop_freeze()` and `timecop_travel()`
 
-`timecop_freeze()` is used to statically mock the concept of now. As your program executes, `time()` will not change unless you make subsequent calls into the Timecop API. `timecop_travel()`, on the other hand, computes an offset between what we currently think time() is and the time passed in. It uses this offset to simulate the passage of time. To demonstrate, consider the following code snippets:
+`timecop_freeze()` is used to statically mock the concept of now. As your program executes, `time()` will not change unless you make subsequent calls to `timecop_freeze/travel/scale/return`. `timecop_travel()`, on the other hand, computes an offset between what we currently think `time()` is and the time passed in. It uses this offset to simulate the passage of time. To demonstrate, consider the following code snippets:
 
 ```php
 <?php
@@ -81,6 +82,18 @@ timecop_return(); // "turn off" php-timecop
 timecop_travel($new_time);
 sleep(10);
 var_dump($new_time == time()); // bool(false)
+```
+
+## Timecop Scale
+
+`timecop_scale($scaling_factor)` make time move at an accelerated pace. It is convenient because you can reduce execution time of time-dependent unit test.
+
+```php
+<?php
+Timecop::freeze(new DateTime("2017-01-01 00:00:00"));
+Timecop::scale(50); // time goes x50 faster
+usleep(100000); // 100ms
+var_dump((new DateTime())->format("c")); // string(25) "2017-01-01T00:00:05+00:00"
 ```
 
 ## CHANGELOG
@@ -149,7 +162,7 @@ var_dump($new_time == time()); // bool(false)
 #
 The MIT License
 
-Copyright (c) 2012-2016 Yoshio HANAWA
+Copyright (c) 2012-2017 Yoshio HANAWA
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
