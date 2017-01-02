@@ -42,9 +42,11 @@ static void timecop_globals_ctor(zend_timecop_globals *globals) {
 	globals->travel_offset.sec = 0;
 	globals->travel_offset.usec = 0;
 	globals->scaling_factor = 1;
-	globals->ce_DateTime = NULL;
 	globals->ce_DateTimeInterface = NULL;
+	globals->ce_DateTime = NULL;
 	globals->ce_TimecopDateTime = NULL;
+	globals->ce_DateTimeImmutable = NULL;
+	globals->ce_TimecopDateTimeImmutable = NULL;
 }
 
 static const struct timecop_override_func_entry timecop_override_func_table[] = {
@@ -66,11 +68,14 @@ static const struct timecop_override_func_entry timecop_override_func_table[] = 
 	TIMECOP_OFE("unixtojd"),
 	TIMECOP_OFE("date_create"),
 	TIMECOP_OFE("date_create_from_format"),
+	TIMECOP_OFE("date_create_immutable"),
+	TIMECOP_OFE("date_create_immutable_from_format"),
 	{NULL, NULL, NULL}
 };
 
 static const struct timecop_override_class_entry timecop_override_class_table[] = {
 	TIMECOP_OCE("datetime", "__construct"),
+	TIMECOP_OCE("datetimeimmutable", "__construct"),
 	{NULL, NULL, NULL, NULL}
 };
 
@@ -198,6 +203,8 @@ const zend_function_entry timecop_functions[] = {
 	PHP_FE(timecop_unixtojd, arginfo_timecop_unixtojd)
 	PHP_FE(timecop_date_create, arginfo_timecop_date_create)
 	PHP_FE(timecop_date_create_from_format, arginfo_timecop_date_create_from_format)
+	PHP_FE(timecop_date_create_immutable, arginfo_timecop_date_create)
+	PHP_FE(timecop_date_create_immutable_from_format, arginfo_timecop_date_create_from_format)
 	{NULL, NULL, NULL}
 };
 /* }}} */
@@ -205,7 +212,7 @@ const zend_function_entry timecop_functions[] = {
 /* declare method parameters, */
 
 /* each method can have its own parameters and visibility */
-static zend_function_entry timecop_class_functions[] = {
+static zend_function_entry timecop_funcs_timecop[] = {
 	PHP_ME_MAPPING(freeze, timecop_freeze, arginfo_timecop_travel, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
 	PHP_ME_MAPPING(travel, timecop_travel, arginfo_timecop_travel, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
 	PHP_ME_MAPPING(scale,  timecop_scale,  arginfo_timecop_scale,  ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
@@ -213,8 +220,7 @@ static zend_function_entry timecop_class_functions[] = {
 	{NULL, NULL, NULL}
 };
 
-/* each method can have its own parameters and visibility */
-static zend_function_entry timecop_datetime_class_functions[] = {
+static zend_function_entry timecop_funcs_date[] = {
 	PHP_ME(TimecopDateTime, __construct, arginfo_timecop_date_create,
 		   ZEND_ACC_CTOR | ZEND_ACC_PUBLIC)
 	PHP_ME_MAPPING(createFromFormat, timecop_date_create_from_format, arginfo_timecop_date_create_from_format,
@@ -222,8 +228,22 @@ static zend_function_entry timecop_datetime_class_functions[] = {
 	{NULL, NULL, NULL}
 };
 
-static zend_function_entry timecop_orig_datetime_class_functions[] = {
+static zend_function_entry timecop_funcs_orig_date[] = {
 	PHP_ME(TimecopOrigDateTime, __construct, arginfo_timecop_date_create,
+		   ZEND_ACC_CTOR | ZEND_ACC_PUBLIC)
+	{NULL, NULL, NULL}
+};
+
+static zend_function_entry timecop_funcs_immutable[] = {
+	PHP_ME(TimecopDateTimeImmutable, __construct, arginfo_timecop_date_create,
+		   ZEND_ACC_CTOR | ZEND_ACC_PUBLIC)
+	PHP_ME_MAPPING(createFromFormat, timecop_date_create_immutable_from_format, arginfo_timecop_date_create_from_format,
+				   ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+	{NULL, NULL, NULL}
+};
+
+static zend_function_entry timecop_funcs_orig_immutable[] = {
+	PHP_ME(TimecopOrigDateTimeImmutable, __construct, arginfo_timecop_date_create,
 		   ZEND_ACC_CTOR | ZEND_ACC_PUBLIC)
 	{NULL, NULL, NULL}
 };
@@ -377,33 +397,60 @@ PHP_MINFO_FUNCTION(timecop)
 static int register_timecop_classes()
 {
 	zend_class_entry ce;
-	zend_class_entry *self_ce, *parent_ce, *interface_ce;
+	zend_class_entry *tmp, *date_ce, *immutable_ce, *interface_ce;
 
-	INIT_CLASS_ENTRY(ce, "Timecop", timecop_class_functions);
-	zend_register_internal_class(&ce);
-
-	parent_ce = zend_hash_str_find_ptr(CG(class_table), "datetime", sizeof("datetime")-1);
-	if (parent_ce == NULL) {
-		return SUCCESS; /* DateTime must be initialized before */
+	date_ce = zend_hash_str_find_ptr(CG(class_table), "datetime", sizeof("datetime")-1);
+	if (date_ce == NULL) {
+		/* DateTime must be initialized before */
+		php_error_docref("https://github.com/hnw/php-timecop", E_WARNING,
+						 "timecop couldn't find class %s.", "DateTime");
+		return SUCCESS;
 	}
 
-	INIT_CLASS_ENTRY(ce, "TimecopDateTime", timecop_datetime_class_functions);
-	self_ce = zend_register_internal_class_ex(&ce, parent_ce);
-	self_ce->create_object = parent_ce->create_object;
-
-	TIMECOP_G(ce_DateTime) = parent_ce;
-	TIMECOP_G(ce_TimecopDateTime) = self_ce;
-
-	INIT_CLASS_ENTRY(ce, "TimecopOrigDateTime", timecop_orig_datetime_class_functions);
-	self_ce = zend_register_internal_class_ex(&ce, parent_ce);
-	self_ce->create_object = parent_ce->create_object;
+	immutable_ce = zend_hash_str_find_ptr(CG(class_table), "datetimeimmutable", sizeof("datetimeimmutable")-1);
+	if (immutable_ce == NULL) {
+		/* DateTimeImmutable must be initialized before */
+		php_error_docref("https://github.com/hnw/php-timecop", E_WARNING,
+						 "timecop couldn't find class %s.", "DateTimeImmutable");
+		return SUCCESS;
+	}
 
 	interface_ce = zend_hash_str_find_ptr(CG(class_table), "datetimeinterface", sizeof("datetimeinterface")-1);
-	if (interface_ce) {
-		TIMECOP_G(ce_DateTimeInterface) = interface_ce;
-	} else {
-		TIMECOP_G(ce_DateTimeInterface) = TIMECOP_G(ce_DateTime);
+	if (interface_ce == NULL) {
+		/* DateTimeInterface must be initialized before */
+		php_error_docref("https://github.com/hnw/php-timecop", E_WARNING,
+						 "timecop couldn't find interface %s.", "DateTimeInterface");
+		return SUCCESS;
 	}
+
+	INIT_CLASS_ENTRY(ce, "Timecop", timecop_funcs_timecop);
+	zend_register_internal_class(&ce);
+
+	TIMECOP_G(ce_DateTimeInterface) = interface_ce;
+
+	/* replace DateTime */
+	INIT_CLASS_ENTRY(ce, "TimecopDateTime", timecop_funcs_date);
+	tmp = zend_register_internal_class_ex(&ce, date_ce);
+	tmp->create_object = date_ce->create_object;
+
+	TIMECOP_G(ce_DateTime) = date_ce;
+	TIMECOP_G(ce_TimecopDateTime) = tmp;
+
+	INIT_CLASS_ENTRY(ce, "TimecopOrigDateTime", timecop_funcs_orig_date);
+	tmp = zend_register_internal_class_ex(&ce, date_ce);
+	tmp->create_object = date_ce->create_object;
+
+	/* replace DateTimeImmutable */
+	INIT_CLASS_ENTRY(ce, "TimecopDateTimeImmutable", timecop_funcs_immutable);
+	tmp = zend_register_internal_class_ex(&ce, immutable_ce);
+	tmp->create_object = immutable_ce->create_object;
+
+	TIMECOP_G(ce_DateTimeImmutable) = immutable_ce;
+	TIMECOP_G(ce_TimecopDateTimeImmutable) = tmp;
+
+	INIT_CLASS_ENTRY(ce, "TimecopOrigDateTimeImmutable", timecop_funcs_orig_immutable);
+	tmp = zend_register_internal_class_ex(&ce, immutable_ce);
+	tmp->create_object = immutable_ce->create_object;
 
 	return SUCCESS;
 }
@@ -417,7 +464,7 @@ static int timecop_func_override()
 	while (p->orig_func != NULL) {
 		zf_orig = zend_hash_str_find_ptr(EG(function_table), p->orig_func, strlen(p->orig_func));
 		if (zf_orig == NULL) {
-			// Do nothing. Because some functions are introduced by optional extensions.
+			/* Do nothing. Because some functions are introduced by optional extensions. */
 			p++;
 			continue;
 		}
@@ -535,7 +582,7 @@ static int timecop_class_override()
 	return SUCCESS;
 }
 
-/*  clear overrideed function. */
+/*  clear function overriding. */
 static int timecop_func_override_clear()
 {
 	const struct timecop_override_func_entry *p;
@@ -855,6 +902,7 @@ static void _timecop_call_mktime(INTERNAL_FUNCTION_PARAMETERS, const char *mktim
 	}
 	efree(params);
 }
+/* }}} */
 
 /* {{{ proto int timecop_freeze(long timestamp)
    Time travel to specified timestamp and freeze */
@@ -1220,9 +1268,8 @@ PHP_FUNCTION(timecop_unixtojd)
 }
 /* }}} */
 
-/* {{{ proto TimecopDateTime timecop_date_create([string time[, DateTimeZone object]])
-   Returns new TimecopDateTime object
-*/
+/* {{{ proto DateTime timecop_date_create([string time[, DateTimeZone object]])
+   Returns new DateTime object initialized with traveled time */
 PHP_FUNCTION(timecop_date_create)
 {
 	zval *params;
@@ -1243,9 +1290,8 @@ PHP_FUNCTION(timecop_date_create)
 }
 /* }}} */
 
-/* {{{ proto TimecopDateTime timecop_date_create_from_format(string format, string time[, DateTimeZone object])
- Returns new TimecopDateTime object
- */
+/* {{{ proto DateTime timecop_date_create_from_format(string format, string time[, DateTimeZone object])
+   Returns new DateTime object initialized with traveled time */
 PHP_FUNCTION(timecop_date_create_from_format)
 {
 	zval *timezone_object = NULL;
@@ -1256,7 +1302,49 @@ PHP_FUNCTION(timecop_date_create_from_format)
 		RETURN_FALSE;
 	}
 
-	object_init_ex(return_value, TIMECOP_G(ce_TimecopDateTime));
+	object_init_ex(return_value, TIMECOP_G(ce_DateTime));
+
+	if (!php_date_initialize(Z_PHPDATE_P(return_value), time_str, time_str_len, format_str, timezone_object, 0)) {
+		RETURN_FALSE;
+	}
+}
+/* }}} */
+
+/* {{{ proto DateTimeImmutable timecop_date_create_immutable([string time[, DateTimeZone object]])
+   Returns new DateTimeImmutable object initialized with traveled time */
+PHP_FUNCTION(timecop_date_create_immutable)
+{
+	zval *params;
+
+	params = (zval *) safe_emalloc(ZEND_NUM_ARGS(), sizeof(zval), 0);
+
+	if (zend_get_parameters_array_ex(ZEND_NUM_ARGS(), params) == FAILURE) {
+		efree(params);
+		RETURN_FALSE;
+	}
+
+	object_init_ex(return_value, TIMECOP_G(ce_DateTimeImmutable));
+
+	/* call TimecopDateTime::__construct() */
+	timecop_call_constructor(return_value, TIMECOP_G(ce_TimecopDateTimeImmutable), params, ZEND_NUM_ARGS());
+
+	efree(params);
+}
+/* }}} */
+
+/* {{{ proto DateTimeImmutable timecop_date_create_immutable_from_format(string format, string time[, DateTimeZone object])
+   Returns new DateTimeImmutable object initialized with traveled time */
+PHP_FUNCTION(timecop_date_create_immutable_from_format)
+{
+	zval *timezone_object = NULL;
+	char *time_str = NULL, *format_str = NULL;
+	size_t time_str_len = 0, format_str_len = 0;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), "ss|O", &format_str, &format_str_len, &time_str, &time_str_len, &timezone_object, php_date_get_timezone_ce()) == FAILURE) {
+		RETURN_FALSE;
+	}
+
+	object_init_ex(return_value, TIMECOP_G(ce_DateTimeImmutable));
 
 	if (!php_date_initialize(Z_PHPDATE_P(return_value), time_str, time_str_len, format_str, timezone_object, 0)) {
 		RETURN_FALSE;
@@ -1265,8 +1353,7 @@ PHP_FUNCTION(timecop_date_create_from_format)
 /* }}} */
 
 /* {{{ proto TimecopDateTime::__construct([string time[, DateTimeZone object]])
-   Creates new TimecopDateTime object
-*/
+   Creates new TimecopDateTime object */
 PHP_METHOD(TimecopDateTime, __construct)
 {
 	zval *params;
@@ -1307,10 +1394,10 @@ PHP_METHOD(TimecopDateTime, __construct)
 	zval_ptr_dtor(&fixed_timezone);
 	efree(params);
 }
+/* }}} */
 
 /* {{{ proto TimecopOrigDateTime::__construct([string time[, DateTimeZone object]])
-   Creates new TimecopOrigDateTime object
-*/
+   Creates new TimecopOrigDateTime object */
 PHP_METHOD(TimecopOrigDateTime, __construct)
 {
 	zval *params;
@@ -1329,6 +1416,74 @@ PHP_METHOD(TimecopOrigDateTime, __construct)
 
 	efree(params);
 }
+/* }}} */
+
+/* {{{ proto TimecopDateTimeImmutable::__construct([string time[, DateTimeZone object]])
+   Creates new TimecopDateTimeImmutable object */
+PHP_METHOD(TimecopDateTimeImmutable, __construct)
+{
+	zval *params;
+	int nparams;
+	zval fixed_time, fixed_timezone;
+	zval *obj = getThis();
+
+	nparams = ZEND_NUM_ARGS();
+	if (nparams < 2) {
+		nparams = 2;
+	}
+	params = (zval *)safe_emalloc(nparams, sizeof(zval), 0);
+
+	if (zend_get_parameters_array_ex(ZEND_NUM_ARGS(), params) == FAILURE) {
+		efree(params);
+		zend_throw_error(NULL, "Cannot get arguments for TimecopDateTimeImmutable::__construct");
+		RETURN_FALSE;
+	}
+
+	zval *time = NULL, *timezone_obj = NULL;
+	if (ZEND_NUM_ARGS() >= 1) {
+		time = &params[0];
+	}
+	if (ZEND_NUM_ARGS() >= 2) {
+		timezone_obj = &params[1];
+	}
+
+	nparams = ZEND_NUM_ARGS();
+	if (get_formatted_mock_time(time, timezone_obj, &fixed_time, &fixed_timezone) == 0) {
+		ZVAL_COPY_VALUE(&params[0], &fixed_time);
+		ZVAL_COPY_VALUE(&params[1], &fixed_timezone);
+		nparams = 2;
+	}
+
+	/* call original DateTimeImmutable::__construct() */
+	timecop_call_original_constructor(obj, TIMECOP_G(ce_DateTimeImmutable), params, nparams);
+
+	zval_ptr_dtor(&fixed_time);
+	zval_ptr_dtor(&fixed_timezone);
+	efree(params);
+}
+/* }}} */
+
+/* {{{ proto TimecopOrigDateTimeImmutable::__construct([string time[, DateTimeZone object]])
+   Creates new TimecopOrigDateTimeImmutable object */
+PHP_METHOD(TimecopOrigDateTimeImmutable, __construct)
+{
+	zval *params;
+	zval *obj = getThis();
+
+	params = (zval *)safe_emalloc(ZEND_NUM_ARGS(), sizeof(zval), 0);
+
+	if (zend_get_parameters_array_ex(ZEND_NUM_ARGS(), params) == FAILURE) {
+		efree(params);
+		zend_throw_error(NULL, "Cannot get arguments for TimecopOrigDateTimeImmutable::__construct");
+		RETURN_FALSE;
+	}
+
+	/* call original DateTimeImmutable::__construct() */
+	timecop_call_original_constructor(obj, TIMECOP_G(ce_DateTimeImmutable), params, ZEND_NUM_ARGS());
+
+	efree(params);
+}
+/* }}} */
 
 static inline void timecop_call_original_constructor(zval *obj, zend_class_entry *ce, zval *params, int param_count) {
 	timecop_call_constructor_ex(obj, ce, params, param_count, 1);

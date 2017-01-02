@@ -2,7 +2,8 @@
 Check for issue #14 (All PHPUnit assertions involving DateTime comparison fail with PHP 7.1)
 --SKIPIF--
 <?php
-extension_loaded('timecop') or die('skip timecop not available');
+$required_func = array("timecop_freeze");
+include(__DIR__."/../tests-skipcheck.inc.php");
 --INI--
 date.timezone=GMT
 timecop.func_override=1
@@ -23,8 +24,7 @@ timecop.func_override=1
     function test_invoice_void()
     {
         $now = new \DateTime();
-        //timecop_freeze($now->getTimestamp());
-        Timecop::freeze($now);
+        timecop_freeze($now);
 
         $invoice = new CustomerInvoice();
         $invoice->void();

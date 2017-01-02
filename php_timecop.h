@@ -15,7 +15,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 #ifndef PHP_TIMECOP_H
 #define PHP_TIMECOP_H
 
-#define PHP_TIMECOP_VERSION "1.2.1"
+#define PHP_TIMECOP_VERSION "1.2.2"
 
 extern zend_module_entry timecop_module_entry;
 #define phpext_timecop_ptr &timecop_module_entry
@@ -64,9 +64,18 @@ PHP_FUNCTION(timecop_gettimeofday);
 PHP_FUNCTION(timecop_unixtojd);
 PHP_FUNCTION(timecop_date_create);
 PHP_FUNCTION(timecop_date_create_from_format);
+#if PHP_VERSION_ID >= 50500
+PHP_FUNCTION(timecop_date_create_immutable);
+PHP_FUNCTION(timecop_date_create_immutable_from_format);
+#endif
 
 PHP_METHOD(TimecopDateTime, __construct);
 PHP_METHOD(TimecopOrigDateTime, __construct);
+
+#if PHP_VERSION_ID >= 50500
+PHP_METHOD(TimecopDateTimeImmutable, __construct);
+PHP_METHOD(TimecopOrigDateTimeImmutable, __construct);
+#endif
 
 PHP_METHOD(Timecop, freeze);
 PHP_METHOD(Timecop, travel);
@@ -95,9 +104,11 @@ ZEND_BEGIN_MODULE_GLOBALS(timecop)
 	tc_timeval travel_origin;
 	tc_timeval travel_offset;
 	tc_timeval_long scaling_factor;
-	zend_class_entry *ce_DateTime;
 	zend_class_entry *ce_DateTimeInterface;
+	zend_class_entry *ce_DateTime;
 	zend_class_entry *ce_TimecopDateTime;
+	zend_class_entry *ce_DateTimeImmutable;
+	zend_class_entry *ce_TimecopDateTimeImmutable;
 ZEND_END_MODULE_GLOBALS(timecop)
 
 #if ZEND_DEBUG

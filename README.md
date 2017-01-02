@@ -86,7 +86,7 @@ var_dump($new_time == time()); // bool(false)
 
 ## Timecop Scale
 
-`timecop_scale($scaling_factor)` make time move at an accelerated pace. It is convenient because you can reduce execution time of time-dependent unit test.
+`timecop_scale($scaling_factor)` make time move at an accelerated pace. With this function, you can emulate long-span integration test and reduce execution time of time-dependent unit test.
 
 ```php
 <?php
@@ -97,6 +97,10 @@ var_dump((new DateTime())->format("c")); // string(25) "2017-01-01T00:00:05+00:0
 ```
 
 ## CHANGELOG
+
+### version 1.2.2(alpha), 2017/1/4
+- Implement Implement `TimecopDateTimeImmutable` class and `timecop_date_create_immutable()`, `timecop_date_create_immutable_from_format()` functions.
+- Now `timecop_date_create_from_format()` returns DateTime instance
 
 ### version 1.2.1(alpha), 2016/12/30
 - Fix the year 2038 problem for PHP 7.x on 64bit Windows.

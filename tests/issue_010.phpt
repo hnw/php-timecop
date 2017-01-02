@@ -2,7 +2,7 @@
 Check for issue #10 (Timecop segfaults when set_error_handler throws an exception)
 --SKIPIF--
 <?php
-extension_loaded('timecop') or die('skip timecop not available');
+include(__DIR__."/../tests-skipcheck.inc.php");
 --INI--
 date.timezone=GMT
 timecop.func_override=1

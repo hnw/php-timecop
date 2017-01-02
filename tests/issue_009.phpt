@@ -2,10 +2,10 @@
 Check for issue #9 (Issue with using timecop constructor)
 --SKIPIF--
 <?php
-extension_loaded('timecop') or die('skip timecop not available');
-if (version_compare(PHP_VERSION, '5.3.0') < 0) {
-    die("skip requires PHP >= 5.3.0");
-}
+$required_version = "5.3";
+$required_func = array("timecop_freeze");
+$required_class = array("TimecopDateTime");
+include(__DIR__."/../tests-skipcheck.inc.php");
 --INI--
 date.timezone=GMT
 timecop.func_override=1

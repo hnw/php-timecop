@@ -2,7 +2,7 @@
 Check for issue #13 (Exception: Failed to parse time string ... giving up time traveling)
 --SKIPIF--
 <?php
-extension_loaded('timecop') or die('skip timecop not available');
+include(__DIR__."/../tests-skipcheck.inc.php");
 --INI--
 date.timezone=GMT
 timecop.func_override=1
