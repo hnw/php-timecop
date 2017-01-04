@@ -15,7 +15,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 #ifndef PHP_TIMECOP_H
 #define PHP_TIMECOP_H
 
-#define PHP_TIMECOP_VERSION "1.2.2"
+#define PHP_TIMECOP_VERSION "1.2.3"
 
 extern zend_module_entry timecop_module_entry;
 #define phpext_timecop_ptr &timecop_module_entry
@@ -68,6 +68,10 @@ PHP_FUNCTION(timecop_date_create_from_format);
 PHP_FUNCTION(timecop_date_create_immutable);
 PHP_FUNCTION(timecop_date_create_immutable_from_format);
 #endif
+#if !defined(PHP_VERSION_ID) || PHP_VERSION_ID < 50300
+PHP_FUNCTION(date_timestamp_set);
+PHP_FUNCTION(date_timestamp_get);
+#endif
 
 PHP_METHOD(TimecopDateTime, __construct);
 PHP_METHOD(TimecopOrigDateTime, __construct);
@@ -79,11 +83,6 @@ PHP_METHOD(TimecopOrigDateTimeImmutable, __construct);
 
 PHP_METHOD(Timecop, freeze);
 PHP_METHOD(Timecop, travel);
-
-#if !defined(PHP_VERSION_ID) || PHP_VERSION_ID < 50300
-PHP_METHOD(TimecopDateTime, getTimestamp);
-PHP_METHOD(TimecopDateTime, setTimestamp);
-#endif
 
 typedef enum timecop_mode_t {
 	TIMECOP_MODE_REALTIME,
@@ -104,6 +103,7 @@ ZEND_BEGIN_MODULE_GLOBALS(timecop)
 	tc_timeval travel_origin;
 	tc_timeval travel_offset;
 	tc_timeval_long scaling_factor;
+	zend_class_entry *ce_DateTimeZone;
 	zend_class_entry *ce_DateTimeInterface;
 	zend_class_entry *ce_DateTime;
 	zend_class_entry *ce_TimecopDateTime;
@@ -125,9 +125,6 @@ ZEND_END_MODULE_GLOBALS(timecop)
 #define ORIG_FUNC_NAME(fname) \
 	(TIMECOP_G(func_override) ? (SAVE_FUNC_PREFIX fname) : fname)
 
-#define ORIG_FUNC_NAME_SIZEOF(fname) \
-	(TIMECOP_G(func_override) ? sizeof(SAVE_FUNC_PREFIX fname) : sizeof(fname))
-
 #define TIMECOP_OFE(fname) {fname, OVRD_FUNC_PREFIX fname, SAVE_FUNC_PREFIX fname}
 #define TIMECOP_OCE(cname, mname) \
 	{cname, mname, OVRD_CLASS_PREFIX cname, SAVE_FUNC_PREFIX mname}
@@ -145,14 +142,29 @@ struct timecop_override_class_entry {
 	char *save_method;
 };
 
-#define timecop_call_orig_method_with_0_params(obj, obj_ce, fn_proxy, function_name, retval) \
-	zend_call_method(obj, obj_ce, fn_proxy, ORIG_FUNC_NAME(function_name), ORIG_FUNC_NAME_SIZEOF(function_name)-1, retval, 0, NULL, NULL TSRMLS_CC)
+#define call_php_method_with_0_params(obj, ce, method_name, retval) \
+	_call_php_method_with_0_params(obj, ce, method_name, retval TSRMLS_CC)
 
-#define timecop_call_orig_method_with_1_params(obj, obj_ce, fn_proxy, function_name, retval, arg1) \
-	zend_call_method(obj, obj_ce, fn_proxy, ORIG_FUNC_NAME(function_name), ORIG_FUNC_NAME_SIZEOF(function_name)-1, retval, 1, arg1, NULL TSRMLS_CC)
+#define call_php_method_with_1_params(obj, ce, method_name, retval, arg1)	\
+	_call_php_method_with_1_params(obj, ce, method_name, retval, arg1 TSRMLS_CC)
 
-#define timecop_call_orig_method_with_2_params(obj, obj_ce, fn_proxy, function_name, retval, arg1, arg2) \
-	zend_call_method(obj, obj_ce, fn_proxy, ORIG_FUNC_NAME(function_name), ORIG_FUNC_NAME_SIZEOF(function_name)-1, retval, 2, arg1, arg2 TSRMLS_CC)
+#define call_php_method_with_2_params(obj, ce, method_name, retval, arg1, arg2) \
+	_call_php_method_with_2_params(obj, ce, method_name, retval, arg1, arg2 TSRMLS_CC)
+
+#define call_php_function_with_0_params(function_name, retval) \
+	_call_php_function_with_0_params(function_name, retval TSRMLS_CC)
+
+#define call_php_function_with_1_params(function_name, retval, arg1) \
+	_call_php_function_with_1_params(function_name, retval, arg1 TSRMLS_CC)
+
+#define call_php_function_with_2_params(function_name, retval, arg1, arg2) \
+	_call_php_function_with_2_params(function_name, retval, arg1, arg2 TSRMLS_CC)
+
+#define call_php_function_with_3_params(function_name, retval, arg1, arg2, arg3) \
+	_call_php_function_with_3_params(function_name, retval, arg1, arg2, arg3 TSRMLS_CC)
+
+#define call_php_function_with_params(function_name, retval, param_count, params) \
+	_call_php_function_with_params(function_name, retval, param_count, params TSRMLS_CC)
 
 /* In every utility function you add that needs to use variables 
    in php_timecop_globals, call TSRMLS_FETCH(); after declaring other 

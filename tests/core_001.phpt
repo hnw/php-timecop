@@ -37,18 +37,18 @@ if (PHP_INT_SIZE === 8) {
 timecop_freeze(1);
 $dt7 =new TimecopDateTime();
 
-var_dump($dt2->format("Y-m-d H:i:s.u"));
-var_dump($dt4->format("Y-m-d H:i:s.u"));
-var_dump($dt6->format("Y-m-d H:i:s.u"));
+var_dump($dt2->format("Y-m-d H:i:s.uP"));
+var_dump($dt4->format("Y-m-d H:i:s.uP"));
+var_dump($dt6->format("Y-m-d H:i:s.uP"));
 var_dump($dt1 == $dt2);
 var_dump($dt3 == $dt4);
 var_dump($dt5 == $dt6);
-var_dump($dt7->format("Y-m-d H:i:s.u"));
+var_dump($dt7->format("Y-m-d H:i:s.uP"));
 --EXPECT--
-string(26) "1969-12-31 16:00:00.000000"
-string(26) "1970-01-01 01:00:00.000000"
-string(26) "2039-12-31 16:00:00.000000"
+string(32) "1969-12-31 16:00:00.000000-08:00"
+string(32) "1970-01-01 01:00:00.000000-08:00"
+string(32) "2039-12-31 16:00:00.000000-08:00"
 bool(true)
 bool(true)
 bool(true)
-string(26) "1969-12-31 16:00:01.000000"
+string(32) "1969-12-31 16:00:01.000000-08:00"

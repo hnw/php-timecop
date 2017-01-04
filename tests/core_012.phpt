@@ -1,15 +1,9 @@
 --TEST--
-Check for timecop.sync_request_time=0 and $_SERVER['REQUEST_TIME']
+Test for $_SERVER['REQUEST_TIME'] when timecop.sync_request_time=0
 --SKIPIF--
 <?php
-	extension_loaded('timecop') or die('skip timecop not available');
-	$required_func = array("timecop_freeze", "timecop_travel", "timecop_return");
-	foreach ($required_func as $func_name) {
-		if (!function_exists($func_name)) {
-			die("skip $func_name() function is not available.");
-		}
-	}
-?>
+$required_func = array("timecop_freeze", "timecop_travel", "timecop_return");
+include(__DIR__."/../tests-skipcheck.inc.php");
 --INI--
 date.timezone=UTC
 timecop.sync_request_time=0

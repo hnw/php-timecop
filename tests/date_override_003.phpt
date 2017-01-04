@@ -2,6 +2,7 @@
 Test for serialize/unserialize overridden DateTime instance
 --SKIPIF--
 <?php
+$required_version = "5.3"; // See bug #39821 (Unable to Serialize and then Unserialize a PHP DateTime Object)
 include(__DIR__."/../tests-skipcheck.inc.php");
 --INI--
 date.timezone=America/Los_Angeles

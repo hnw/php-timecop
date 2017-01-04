@@ -1,23 +1,24 @@
 --TEST--
-Test for DateTime/TimecopDateTime/TimecopOrigDateTime inheritance when function override is enabled
+Test for DateTimeImmutable/TimecopDateTimeImmutable/TimecopOrigDateTimeImmutable inheritance when function override is enabled
 --SKIPIF--
 <?php
-$required_func = array("timecop_freeze", "timecop_orig_strtotime");
-$required_class = array("TimecopDateTime", "TimecopOrigDateTime");
+$required_version = "5.5";
+$required_func = array("timecop_freeze");
+$required_class = array("TimecopOrigDateTime", "TimecopDateTimeImmutable", "TimecopOrigDateTimeImmutable");
 include(__DIR__."/../tests-skipcheck.inc.php");
 --INI--
 date.timezone=America/Los_Angeles
 timecop.func_override=1
 --FILE--
 <?php
-$freezed_time = "2017-01-03T20:05:06-08:00";
-timecop_freeze(strtotime($freezed_time));
+$dt0 = new TimecopOrigDateTime("2012-02-29 01:23:45");
+timecop_freeze($dt0);
 
-$dt1 = new DateTime();
+$dt1 = new DateTimeImmutable();
 var_dump(get_class($dt1));
-$dt2 = new TimecopDateTime();
+$dt2 = new TimecopDateTimeImmutable();
 var_dump(get_class($dt2));
-$dt3 = new TimecopOrigDateTime();
+$dt3 = new TimecopOrigDateTimeImmutable();
 var_dump(get_class($dt3));
 var_dump($dt2 instanceof $dt1);
 var_dump($dt3 instanceof $dt1);
@@ -37,13 +38,13 @@ if (version_compare(PHP_VERSION, '5.5.0') >= 0) {
     var_dump(true);
 }
 echo "===\n";
-var_dump($dt1->format("c") === $freezed_time);
-var_dump($dt2->format("c") === $freezed_time);
-var_dump($dt3->format("c") === $freezed_time);
+var_dump($dt1->format("c") === $dt0->format("c"));
+var_dump($dt2->format("c") === $dt0->format("c"));
+var_dump($dt3->format("c") === $dt0->format("c"));
 --EXPECT--
-string(8) "DateTime"
-string(15) "TimecopDateTime"
-string(19) "TimecopOrigDateTime"
+string(17) "DateTimeImmutable"
+string(24) "TimecopDateTimeImmutable"
+string(28) "TimecopOrigDateTimeImmutable"
 bool(true)
 bool(true)
 bool(false)

@@ -2,6 +2,7 @@
 Check for issue #14 (All PHPUnit assertions involving DateTime comparison fail with PHP 7.1)
 --SKIPIF--
 <?php
+$required_version = "5.3";
 $required_func = array("timecop_freeze");
 include(__DIR__."/../tests-skipcheck.inc.php");
 --INI--

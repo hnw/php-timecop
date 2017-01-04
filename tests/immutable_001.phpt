@@ -1,5 +1,5 @@
 --TEST--
-Check for DateTimeImmutable/TimecopDateTimeImmutable/TimecopOrigDateTimeImmutable inheritance
+Test for DateTimeImmutable/TimecopDateTimeImmutable/TimecopOrigDateTimeImmutable inheritance
 --SKIPIF--
 <?php
 $required_version = "5.5";
@@ -22,8 +22,10 @@ $dt3 = new TimecopOrigDateTimeImmutable();
 var_dump(get_class($dt3));
 var_dump($dt2 instanceof $dt1);
 var_dump($dt3 instanceof $dt1);
-var_dump($dt2 instanceof $dt3);
+var_dump($dt1 instanceof $dt2);
 var_dump($dt3 instanceof $dt2);
+var_dump($dt1 instanceof $dt3);
+var_dump($dt2 instanceof $dt3);
 echo "===\n";
 if (version_compare(PHP_VERSION, '5.5.0') >= 0) {
     var_dump($dt1 instanceof DateTimeInterface);
@@ -45,6 +47,8 @@ string(24) "TimecopDateTimeImmutable"
 string(28) "TimecopOrigDateTimeImmutable"
 bool(true)
 bool(true)
+bool(false)
+bool(false)
 bool(false)
 bool(false)
 ===

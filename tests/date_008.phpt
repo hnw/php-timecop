@@ -1,9 +1,10 @@
 --TEST--
-Test for timecop_date_create_from_format()
+Test for TimecopDateTime::createFromFormat()
 --SKIPIF--
 <?php
 $required_version = "5.3.1";
-$required_func = array("timecop_freeze", "timecop_date_create_from_format");
+$required_func = array("timecop_freeze");
+$required_method = array(array("TimecopDateTime", "createFromFormat"));
 include(__DIR__."/../tests-skipcheck.inc.php");
 --INI--
 date.timezone=America/Los_Angeles
@@ -26,22 +27,22 @@ $tests_args = array(
     array("Y-m-d H:i:s", "2012-04-01 00:00:00", new DateTimezone("Asia/Tokyo")),
 );
 
-$dt0 = timecop_date_create_from_format("Y-m-d H:i:s.u", "2010-01-02 03:04:05.678000");
+$dt0 = TimecopDateTime::createFromFormat("Y-m-d H:i:s.u", "2010-01-02 03:04:05.678000");
 var_dump(get_class($dt0));
 var_dump($dt0->format("Y-m-d H:i:s.uP"));
 foreach ($tests_args as $args) {
     timecop_freeze($dt0);
-    $dt1 = call_user_func_array("timecop_date_create_from_format", $args);
+    $dt1 = call_user_func_array(array("TimecopDateTime","createFromFormat"), $args);
     var_dump($dt1->format("Y-m-d H:i:s.uP"));
     while (true) {
         /* test for equality between timecop_date_create_from_format() and date_create_from_format() */
         $start_time = time();
         timecop_freeze(new DateTime());
-        $dt2 = call_user_func_array("timecop_date_create_from_format", $args);
-        $dt3 = call_user_func_array("date_create_from_format", $args);
+        $dt2 = call_user_func_array(array("TimecopDateTime","createFromFormat"), $args);
+        $dt3 = call_user_func_array(array("DateTime","createFromFormat"), $args);
         if ($start_time === time()) {
             if ($dt2 && $dt3 && ($dt2->format("c") !== $dt3->format("c"))) {
-                printf("timecop_date_create_from_format('%s', '%s') is differ from date_create_from_format() : %s !== %s\n",
+                printf("TimecopDateTime::createFromFormat('%s', '%s') is differ from DateTime::createFromFormat() : %s !== %s\n",
                        $args[0], $args[1], $dt2->format("c"), $dt3->format("c"));
             }
             break;

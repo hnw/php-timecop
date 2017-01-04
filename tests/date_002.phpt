@@ -50,9 +50,11 @@ foreach ($strs as $str) {
             printf("TimecopDatetime::format is differ from Datetime::format for str=%s: %s !== %s\n",
                 $str, $dt1->format("c"), $dt2->format("c"));
         }
-        if ($dt1->format("U") != $dt2->getTimestamp()) {
-            printf("TimecopDatetime::getTimestamp is differ from Datetime::getTimestamp for str=%s: %s !== %s\n",
-                $str, $dt1->format("U"), $dt2->getTimestamp());
+        if (version_compare(PHP_VERSION, '5.3.0') >= 0) {
+            if ($dt1->format("U") != $dt2->getTimestamp()) {
+                printf("TimecopDatetime::getTimestamp is differ from Datetime::getTimestamp for str=%s: %s !== %s\n",
+                       $str, $dt1->format("U"), $dt2->getTimestamp());
+            }
         }
     }
 }
