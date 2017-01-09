@@ -269,8 +269,6 @@ static int timecop_class_override_clear();
 static int update_request_time(zend_long unixtime);
 static int restore_request_time();
 
-static zend_long mocked_timestamp();
-
 static int fill_mktime_params(zval *fill_params, const char *date_function_name, int from);
 static int get_formatted_mock_time(zval *time, zval *timezone_obj, zval *retval_time, zval *retval_timezone);
 static long get_mock_fraction(zval *time, zval *timezone_obj);
@@ -279,7 +277,7 @@ static void _timecop_call_function(INTERNAL_FUNCTION_PARAMETERS, const char *fun
 static void _timecop_call_mktime(INTERNAL_FUNCTION_PARAMETERS, const char *mktime_function_name, const char *date_function_name);
 
 static int get_mock_timeval(tc_timeval *fixed, const tc_timeval *now);
-static inline int get_mock_timestamp(zend_long *fixed_timestamp);
+static inline zend_long mock_timestamp();
 
 static int get_timeval_from_datetime(tc_timeval *tp, zval *dt);
 static int get_current_time(tc_timeval *now);
@@ -708,25 +706,18 @@ static int restore_request_time()
 	return SUCCESS;
 }
 
-static zend_long mocked_timestamp()
-{
-	zend_long ts;
-	get_mock_timestamp(&ts);
-	return ts;
-}
-
 static int fill_mktime_params(zval *fill_params, const char *date_function_name, int from)
 {
 	char *formats[MKTIME_NUM_ARGS] = {"H", "i", "s", "n", "j", "Y"};
-	zval params[2];
+	zval format, timestamp;
 	int i;
 
-	ZVAL_LONG(&params[1], mocked_timestamp());
+	ZVAL_LONG(&timestamp, mock_timestamp());
 
 	for (i = from; i < MKTIME_NUM_ARGS; i++) {
-		ZVAL_STRING(&params[0], formats[i]);
-		call_php_function_with_params(date_function_name, &fill_params[i], 2, params);
-		zval_ptr_dtor(&params[0]);
+		ZVAL_STRING(&format, formats[i]);
+		call_php_function_with_2_params(date_function_name, &fill_params[i], &format, &timestamp);
+		zval_ptr_dtor(&format);
 	}
 
 	return MKTIME_NUM_ARGS;
@@ -912,7 +903,7 @@ static void _timecop_call_function(INTERNAL_FUNCTION_PARAMETERS, const char *fun
 
 	param_count = ZEND_NUM_ARGS();
 	if (param_count == index_to_fill_timestamp) {
-		ZVAL_LONG(&params[param_count], mocked_timestamp());
+		ZVAL_LONG(&params[param_count], mock_timestamp());
 		param_count++;
 	}
 
@@ -1063,7 +1054,7 @@ PHP_FUNCTION(timecop_return)
    Return virtual timestamp */
 PHP_FUNCTION(timecop_time)
 {
-	RETURN_LONG(mocked_timestamp());
+	RETURN_LONG(mock_timestamp());
 }
 /* }}} */
 
@@ -1191,15 +1182,11 @@ static int get_mock_timeval(tc_timeval *fixed, const tc_timeval *now)
 	return 0;
 }
 
-static inline int get_mock_timestamp(zend_long *fixed_timestamp)
+static zend_long mock_timestamp()
 {
 	tc_timeval tv;
-	int ret;
-	ret = get_mock_timeval(&tv, NULL);
-	if (ret == 0) {
-		*fixed_timestamp = tv.sec;
-	}
-	return ret;
+	get_mock_timeval(&tv, NULL);
+	return tv.sec;
 }
 
 static int get_timeval_from_datetime(tc_timeval *tp, zval *dt)
