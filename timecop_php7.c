@@ -1410,6 +1410,12 @@ static void _timecop_date_create_from_format(INTERNAL_FUNCTION_PARAMETERS, int i
 		RETURN_FALSE;
 	}
 
+	if (memchr(orig_format_str, '|', orig_format_len)) {
+		zval_ptr_dtor(&orig_format);
+		zval_ptr_dtor(&orig_time);
+		RETURN_ZVAL(&dt, 1, 1);
+	}
+
 	get_mock_timeval(&now, NULL);
 
 	ZVAL_LONG(&now_timestamp, now.sec);
