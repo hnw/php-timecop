@@ -24,18 +24,15 @@ ubuntu-32bit:
   box: 32bit/ubuntu:16.04
   steps:
     - script:
-        name: apt-get update
+        name: Install required software
         code: |-
           apt-get -y update
+          DEBIAN_FRONTEND=noninteractive apt-get -y upgrade build-essential php-dev --no-install-recommends
     - script:
-        name: apt-get upgrade
-        code: |-
-          apt-get -y upgrade build-essential php-dev
-    - script:
-        name: phpize && ./configure && make
+        name: Build test targets
         code: |-
           phpize && ./configure && make
     - script:
-        name: make test
+        name: Run test
         code: |-
           make test REPORT_EXIT_STATUS=1 NO_INTERACTION=1 TESTS="--show-all" | tee tests-output.txt && if grep -q 'TEST SUMMARY$' tests-output.txt ; then exit 1 ; fi
