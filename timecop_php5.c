@@ -787,7 +787,7 @@ static int fill_mktime_params(zval ***params, const char *date_function_name, in
  *     $now = get_mock_timeval();
  *     if ($timezone_obj) {
  *         // save default timezone
- *         $zonename = $timezone_obj->getName()
+ *         $zonename = $timezone_obj->getName();
  *         $orig_zonename = date_default_timezone_get();
  *         date_default_timezone_set($zonename);
  *     }
@@ -804,7 +804,11 @@ static int fill_mktime_params(zval ***params, const char *date_function_name, in
  *         $fixed_usec = $now->usec;
  *     }
  *     $dt = date_create($time, $timezone_obj);
- *     $dt->setTimestamp($fixed_sec);
+ *     $orig_sec = $dt->getTimestamp();
+ *     if ($orig_sec != $fixed_sec) {
+ *         // workaround against PHP Bug #62896
+ *         $dt->setTimestamp($fixed_sec);
+ *     }
  *     $format = sprintf("Y-m-d H:i:s.%06d", $fixed_usec);
  *     $formatted_time = $dt->format($format);
  *     return $formatted_time;
@@ -812,7 +816,7 @@ static int fill_mktime_params(zval ***params, const char *date_function_name, in
  */
 static int get_formatted_mock_time(zval *time, zval *timezone_obj, zval **retval_time, zval **retval_timezone TSRMLS_DC)
 {
-	zval *fixed_sec, *orig_zonename;
+	zval *fixed_sec, *orig_sec, *orig_zonename;
 	zval str_now, now_timestamp;
 	tc_timeval now;
 	long fixed_usec;
@@ -887,7 +891,13 @@ static int get_formatted_mock_time(zval *time, zval *timezone_obj, zval **retval
 		sprintf(buf, "Y-m-d H:i:s.%06ld", fixed_usec);
 		INIT_ZVAL(format_str);
 		ZVAL_STRING(&format_str, buf, 0);
-		call_php_function_with_2_params("date_timestamp_set", NULL, dt, fixed_sec);
+		call_php_function_with_1_params("date_timestamp_get", &orig_sec, dt);
+		if (Z_TYPE_P(orig_sec) == IS_LONG &&
+			Z_TYPE_P(fixed_sec) == IS_LONG &&
+			Z_LVAL_P(orig_sec) != Z_LVAL_P(fixed_sec)) {
+			call_php_function_with_2_params("date_timestamp_set", NULL, dt, fixed_sec);
+		}
+
 		call_php_method_with_0_params(&dt, TIMECOP_G(ce_DateTime), "gettimezone", retval_timezone);
 		call_php_method_with_1_params(&dt, TIMECOP_G(ce_DateTime), "format", retval_time, &format_str);
 
