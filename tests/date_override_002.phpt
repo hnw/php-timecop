@@ -56,7 +56,7 @@ $dts = array(
     new DateTime("@86400"),
 
     // constuctor with 2 argument
-    new DateTime("now", new DateTimezone("Asia/Tokyo")),
+    new DateTime("now", new DateTimeZone("Asia/Tokyo")),
 );
 
 foreach ($dts as $dt) {

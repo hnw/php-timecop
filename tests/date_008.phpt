@@ -17,14 +17,14 @@ $tests_args = array(
     array("Y", 1990.0),
     array("m", "09"),
     array("jS of F", "24th of December"),
-    array("H", "05", new DateTimezone("Asia/Tokyo")),
+    array("H", "05", new DateTimeZone("Asia/Tokyo")),
     array("s", 59),
     array("u", 654321),
     array("Y-m-d H:i:s", "2012-03-31 12:34:56"),
     array("Y-m-d !H:i:s", "2012-03-31 12:34:56"),
     array("Y-m-d H:i:s T", "1970-01-01 19:00:00 EST"),
     array("U", "86400"),
-    array("Y-m-d H:i:s", "2012-04-01 00:00:00", new DateTimezone("Asia/Tokyo")),
+    array("Y-m-d H:i:s", "2012-04-01 00:00:00", new DateTimeZone("Asia/Tokyo")),
 );
 
 $dt0 = TimecopDateTime::createFromFormat("Y-m-d H:i:s.u", "2010-01-02 03:04:05.678000");

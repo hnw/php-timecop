@@ -31,7 +31,7 @@ if (PHP_INT_SIZE === 8) {
 } else {
     // force pass the test on 32bit environment
     $dt6 = $dt5;
-    $dt6->setTimeZone(new DateTimezone("America/Los_Angeles"));
+    $dt6->setTimeZone(new DateTimeZone("America/Los_Angeles"));
 }
 
 timecop_freeze(1);

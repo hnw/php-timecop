@@ -38,7 +38,7 @@ $dts = array(
     date_create("@86400"),
 
     // constuctor with 2 argument
-    date_create("now", new DateTimezone("Asia/Tokyo")),
+    date_create("now", new DateTimeZone("Asia/Tokyo")),
 );
 
 foreach ($dts as $dt) {

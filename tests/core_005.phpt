@@ -32,7 +32,7 @@ if (PHP_INT_SIZE === 8) {
 } else {
     // force pass the test on 32bit environment
     $dt6 = $dt5;
-    $dt6->setTimeZone(new DateTimezone("Pacific/Honolulu"));
+    $dt6->setTimeZone(new DateTimeZone("Pacific/Honolulu"));
 }
 
 Timecop::freeze(7);

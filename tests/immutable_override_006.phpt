@@ -39,7 +39,7 @@ $dts = array(
     date_create_immutable("@86400"),
 
     // constuctor with 2 argument
-    date_create_immutable("now", new DateTimezone("Asia/Tokyo")),
+    date_create_immutable("now", new DateTimeZone("Asia/Tokyo")),
 );
 
 foreach ($dts as $dt) {

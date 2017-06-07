@@ -34,7 +34,7 @@ if (PHP_INT_SIZE === 8) {
     // always pass the test on 32bit environment
     $dt6 = clone $dt5;
     $dt6->modify("+1second");
-    $dt6->setTimeZone(new DateTimezone("America/Los_Angeles"));
+    $dt6->setTimeZone(new DateTimeZone("America/Los_Angeles"));
 }
 
 Timecop::travel(1);
