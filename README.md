@@ -102,6 +102,11 @@ var_dump((new DateTime())->format("c")); // string(25) "2017-01-01T00:00:05+00:0
 
 ## CHANGELOG
 
+### version 1.2.4(beta), 2017/6/8
+
+- Fix [#18](https://github.com/hnw/php-timecop/issues/18) (Fix date_create_from_format when using `|` char)
+- Fix timecop_date_create(): The previous version of timecop_date_create("@<unix timestamp>") returns +1 hour time on PHP 5.3.9 - 5.4.7 only during the DST.
+
 ### version 1.2.3(beta), 2017/1/8
 - Fix `timecop_date_create_from_format()`: support time travelling
   - Now portions of the generated time not provided in `format` will be set to the travelled time
