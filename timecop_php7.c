@@ -856,6 +856,7 @@ static int get_formatted_mock_time(zval *time, zval *timezone_obj, zval *retval_
  *
  * function get_mock_fraction($time, $timezone_obj) {
  *     $dt1 = date_create($time, $timezone_obj);
+ *     usleep(1);
  *     $dt2 = date_create($time, $timezone_obj);
  *     $usec1 = $dt1->format("u");
  *     $usec2 = $dt2->format("u");
@@ -871,12 +872,15 @@ static long get_mock_fraction(zval *time, zval *timezone_obj TSRMLS_DC)
 {
 	zval dt1, dt2, usec1, usec2;
 	long fixed_usec;
-	zval u_str;
+	zval u_str, sleep_usec;
 
 	call_php_function_with_2_params(ORIG_FUNC_NAME("date_create"), &dt1, time, timezone_obj);
 	if (Z_TYPE(dt1) == IS_FALSE) {
 		return -1;
 	}
+
+	ZVAL_LONG(&sleep_usec, 1);
+	call_php_function_with_1_params("usleep", NULL, &sleep_usec);
 
 	call_php_function_with_2_params(ORIG_FUNC_NAME("date_create"), &dt2, time, timezone_obj);
 	if (Z_TYPE(dt2) == IS_FALSE) {
