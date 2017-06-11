@@ -188,7 +188,11 @@ ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_INFO_EX(arginfo_timecop_date_create_from_format, 0, 0, 2)
 	ZEND_ARG_INFO(0, format)
 	ZEND_ARG_INFO(0, time)
+#if PHP_VERSION_ID >= 70200
+    ZEND_ARG_OBJ_INFO(0, object, DateTimeZone, 1)
+#else
 	ZEND_ARG_INFO(0, object)
+#endif
 ZEND_END_ARG_INFO()
 
 /* {{{ timecop_functions[] */
