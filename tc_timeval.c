@@ -26,7 +26,11 @@ SOFTWARE.
 
 int tc_timeval_add(tc_timeval *ret, const tc_timeval *arg1, const tc_timeval *arg2)
 {
-	tc_timeval_long sec, usec;
+#if PHP_MAJOR_VERSION >= 7
+	zend_long sec, usec;
+#else
+	long sec, usec;
+#endif
 	usec = arg1->usec + arg2->usec;
 	sec  = arg1->sec + arg2->sec;
 	if (usec < 0) {
@@ -47,7 +51,11 @@ int tc_timeval_add(tc_timeval *ret, const tc_timeval *arg1, const tc_timeval *ar
 }
 int tc_timeval_sub(tc_timeval *ret, const tc_timeval *arg1, const tc_timeval *arg2)
 {
-	tc_timeval_long sec, usec;
+#if PHP_MAJOR_VERSION >= 7
+	zend_long sec, usec;
+#else
+	long sec, usec;
+#endif
 	usec = arg1->usec - arg2->usec;
 	sec  = arg1->sec - arg2->sec;
 	if (usec < 0) {
@@ -66,9 +74,18 @@ int tc_timeval_sub(tc_timeval *ret, const tc_timeval *arg1, const tc_timeval *ar
 
 	return 0;
 }
-int tc_timeval_mul(tc_timeval *ret, const tc_timeval *arg1, const tc_timeval_long arg2)
+
+#if PHP_MAJOR_VERSION >= 7
+int tc_timeval_mul(tc_timeval *ret, const tc_timeval *arg1, const zend_long arg2)
+#else
+int tc_timeval_mul(tc_timeval *ret, const tc_timeval *arg1, const long arg2)
+#endif
 {
-	tc_timeval_long sec, usec;
+#if PHP_MAJOR_VERSION >= 7
+	zend_long sec, usec;
+#else
+	long sec, usec;
+#endif
 	usec = arg1->usec * arg2;
 	sec  = arg1->sec * arg2;
 	if (usec < 0) {

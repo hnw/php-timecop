@@ -1323,7 +1323,7 @@ static int get_current_time(tc_timeval *now TSRMLS_DC)
 	if (ts == -1) {
 		ret = -1;
 	} else {
-		now->sec  = ts;
+		now->sec  = (long)ts;
 		now->usec = 0;
 	}
 #endif

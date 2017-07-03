@@ -112,7 +112,11 @@ ZEND_BEGIN_MODULE_GLOBALS(timecop)
 	tc_timeval freezed_time;
 	tc_timeval travel_origin;
 	tc_timeval travel_offset;
-	tc_timeval_long scaling_factor;
+#if PHP_VERSION_ID >= 70000
+	zend_long scaling_factor;
+#else
+	long scaling_factor;
+#endif
 	zend_class_entry *ce_DateTimeZone;
 	zend_class_entry *ce_DateTimeInterface;
 	zend_class_entry *ce_DateTime;

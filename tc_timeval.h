@@ -29,20 +29,24 @@ SOFTWARE.
 #  define USEC_PER_SEC 1000000
 #endif
 
-#if PHP_MAJOR_VERSION >= 7
-typedef zend_long tc_timeval_long;
-#else
-typedef long tc_timeval_long;
-#endif
-
 typedef struct _tc_timeval {
-	tc_timeval_long sec;
-	tc_timeval_long usec;
+#if PHP_MAJOR_VERSION >= 7
+	zend_long sec;
+	zend_long usec;
+#else
+	long sec;
+	long usec;
+#endif
 } tc_timeval;
+
 
 int tc_timeval_add(tc_timeval *ret, const tc_timeval *arg1, const tc_timeval *arg2);
 int tc_timeval_sub(tc_timeval *ret, const tc_timeval *arg1, const tc_timeval *arg2);
+#if PHP_MAJOR_VERSION >= 7
+int tc_timeval_mul(tc_timeval *ret, const tc_timeval *arg1, const zend_long arg2);
+#else
 int tc_timeval_mul(tc_timeval *ret, const tc_timeval *arg1, const long arg2);
+#endif
 
 #endif	/* TC_TIMEVAL_H */
 

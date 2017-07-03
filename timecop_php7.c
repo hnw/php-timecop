@@ -1231,15 +1231,15 @@ static int get_current_time(tc_timeval *now)
 	struct timeval tv;
 	ret = gettimeofday(&tv, NULL);
 	if (ret == 0) {
-		now->sec  = (long)tv.tv_sec;
-		now->usec = (long)tv.tv_usec;
+		now->sec  = (zend_long)tv.tv_sec;
+		now->usec = (zend_long)tv.tv_usec;
 	}
 #else
 	time_t ts = time(NULL);
 	if (ts == -1) {
 		ret = -1;
 	} else {
-		now->sec  = ts;
+		now->sec  = (zend_long)ts;
 		now->usec = 0;
 	}
 #endif
