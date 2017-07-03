@@ -954,7 +954,7 @@ static void _timecop_call_mktime(INTERNAL_FUNCTION_PARAMETERS, const char *mktim
 	}
 
 	if (ZEND_NUM_ARGS() == 0) {
-		php_error_docref(NULL, E_STRICT, "You should be using the time() function instead");
+		php_error_docref(NULL, E_DEPRECATED, "You should be using the time() function instead");
 	}
 
 	call_php_function_with_params(mktime_function_name, return_value, param_count, params);
