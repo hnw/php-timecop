@@ -102,6 +102,11 @@ var_dump((new DateTime())->format("c")); // string(25) "2017-01-01T00:00:05+00:0
 
 ## CHANGELOG
 
+### version 1.2.6(beta), 2017/7/4
+
+- Bug fixed: Calling timecop_freeze() on a fast machine sometimes fails to stop the microsecond part of current time.
+- Support PHP 7.2.0+
+
 ### version 1.2.4(beta), 2017/6/8
 
 - Fix [#18](https://github.com/hnw/php-timecop/issues/18) (Fix date_create_from_format when using `|` char)
