@@ -4,7 +4,7 @@ Function overrideing test for gettimeofday
 <?php
 $required_func = array("timecop_freeze", "timecop_travel", "timecop_return");
 $required_class = array("TimecopOrigDateTime");
-include(__DIR__."/../tests-skipcheck.inc.php");
+include(__DIR__."/tests-skipcheck.inc.php");
 --INI--
 date.timezone=America/Los_Angeles
 timecop.func_override=1

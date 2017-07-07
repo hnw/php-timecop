@@ -3,7 +3,7 @@ Test for timecop_unixtojd
 --SKIPIF--
 <?php
 $required_func = array("timecop_freeze", "unixtojd", "timecop_unixtojd");
-include(__DIR__."/../tests-skipcheck.inc.php");
+include(__DIR__."/tests-skipcheck.inc.php");
 --ENV--
 TZ=UTC
 --INI--

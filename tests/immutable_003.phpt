@@ -4,7 +4,7 @@ Check for serialize/unserialize TimecopDateTimeImmutable instance
 <?php
 $required_version = "5.5";
 $required_class = array("TimecopDateTimeImmutable");
-include(__DIR__."/../tests-skipcheck.inc.php");
+include(__DIR__."/tests-skipcheck.inc.php");
 --INI--
 date.timezone=America/Los_Angeles
 timecop.func_override=0

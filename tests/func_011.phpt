@@ -3,7 +3,7 @@ Test for timecop_gmstrftime
 --SKIPIF--
 <?php
 $required_func = array("timecop_strtotime", "timecop_freeze", "timecop_gmstrftime");
-include(__DIR__."/../tests-skipcheck.inc.php");
+include(__DIR__."/tests-skipcheck.inc.php");
 --INI--
 date.timezone=America/Los_Angeles
 timecop.func_override=0

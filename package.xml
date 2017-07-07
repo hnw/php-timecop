@@ -111,6 +111,7 @@
         <file role="test" name="issue_010.phpt"/>
         <file role="test" name="issue_013.phpt"/>
         <file role="test" name="issue_014.phpt"/>
+        <file role="test" name="tests-skipcheck.inc.php"/>
       </dir>
  </dir>
  </contents>

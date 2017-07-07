@@ -2,7 +2,7 @@
 Test for phpinfo()
 --SKIPIF--
 <?php
-include(__DIR__."/../tests-skipcheck.inc.php");
+include(__DIR__."/tests-skipcheck.inc.php");
 --INI--
 timecop.func_override=1
 timecop.sync_request_time=1

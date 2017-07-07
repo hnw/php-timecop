@@ -4,7 +4,7 @@ Test for serialize/unserialize TimecopDateTime instance
 <?php
 $required_version = "5.3"; // See bug #39821 (Unable to Serialize and then Unserialize a PHP DateTime Object)
 $required_class = array("TimecopDateTime");
-include(__DIR__."/../tests-skipcheck.inc.php");
+include(__DIR__."/tests-skipcheck.inc.php");
 --INI--
 date.timezone=America/Los_Angeles
 timecop.func_override=0

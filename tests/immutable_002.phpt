@@ -4,7 +4,7 @@ Check for TimecopDateTimeImmutable::__construct
 <?php
 $required_version = "5.5";
 $required_class = array("TimecopDateTimeImmutable");
-require(__DIR__."/../tests-skipcheck.inc.php");
+require(__DIR__."/tests-skipcheck.inc.php");
 --INI--
 date.timezone=America/Los_Angeles
 timecop.func_override=0

@@ -3,7 +3,7 @@ Function overrideing test for unixtojd
 --SKIPIF--
 <?php
 $required_func = array("timecop_strtotime", "timecop_freeze", "unixtojd");
-include(__DIR__."/../tests-skipcheck.inc.php");
+include(__DIR__."/tests-skipcheck.inc.php");
 --ENV--
 TZ=UTC
 --INI--

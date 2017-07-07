@@ -5,7 +5,7 @@ Check for issue #9 (Issue with using timecop constructor)
 $required_version = "5.3";
 $required_func = array("timecop_freeze");
 $required_class = array("TimecopDateTime");
-include(__DIR__."/../tests-skipcheck.inc.php");
+include(__DIR__."/tests-skipcheck.inc.php");
 --INI--
 date.timezone=GMT
 timecop.func_override=1

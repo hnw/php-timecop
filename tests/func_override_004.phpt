@@ -4,7 +4,7 @@ Function overrideing test for date()
 <?php
 $required_func = array("timecop_freeze", "timecop_orig_time", "timecop_orig_date");
 $required_class = array("TimecopOrigDateTime");
-include(__DIR__."/../tests-skipcheck.inc.php");
+include(__DIR__."/tests-skipcheck.inc.php");
 --INI--
 date.timezone=America/Los_Angeles
 timecop.func_override=1

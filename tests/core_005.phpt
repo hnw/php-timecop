@@ -4,7 +4,7 @@ Test for Timecop::freeze()
 <?php
 $required_class = array("TimecopDateTime");
 $required_method = array(array("Timecop", "freeze"));
-include(__DIR__."/../tests-skipcheck.inc.php");
+include(__DIR__."/tests-skipcheck.inc.php");
 --INI--
 date.timezone=Pacific/Honolulu
 ; Pacific/Honolulu=UTC-10

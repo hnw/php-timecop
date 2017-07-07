@@ -5,7 +5,7 @@ Check for Timecop::travel()
 $required_func = array();
 $required_class = array("TimecopDateTime");
 $required_method = array(array("Timecop", "travel"));
-include(__DIR__."/../tests-skipcheck.inc.php");
+include(__DIR__."/tests-skipcheck.inc.php");
 --INI--
 date.timezone=America/Los_Angeles
 --FILE--
