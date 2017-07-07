@@ -25,7 +25,7 @@ SOFTWARE.
 #ifndef PHP_TIMECOP_H
 #define PHP_TIMECOP_H
 
-#define PHP_TIMECOP_VERSION "1.2.6"
+#define PHP_TIMECOP_VERSION "1.2.7"
 
 extern zend_module_entry timecop_module_entry;
 #define phpext_timecop_ptr &timecop_module_entry

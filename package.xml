@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<package version="2.1" xmlns="http://pear.php.net/dtd/package-2.1" xmlns:tasks="http://pear.php.net/dtd/tasks-1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://pear.php.net/dtd/tasks-1.0     http://pear.php.net/dtd/tasks-1.0.xsd     http://pear.php.net/dtd/package-2.1     http://pear.php.net/dtd/package-2.1.xsd">
+  <name>timecop</name>
+  <channel>pecl.php.net</channel>
+  <summary>
+    A PHP extension providing "time travel" capabilities.
+  </summary>
+  <description>
+    A PHP extension providing "time travel" and "time freezing" capabilities, inspired by ruby timecop gem.
+  </description>
+  <lead>
+    <name>Yoshio HANAWA</name>
+    <user>hnw</user>
+    <email>y@hnw.jp</email>
+    <active>yes</active>
+  </lead>
+  <date>2017-07-07</date>
+  <version>
+    <release>1.2.7</release>
+    <api>1.2.7</api>
+  </version>
+  <stability>
+    <release>beta</release>
+    <api>beta</api>
+  </stability>
+  <license uri="https://github.com/hnw/php-timecop/blob/master/LICENSE">MIT License</license>
+  <notes>Publish on PECL
+  </notes>
+  <contents>
+    <dir name="/">
+      <file role="src" name="LICENSE"/>
+      <file role="src" name="README.md"/>
+      <file role="src" name="config.h.in"/>
+      <file role="src" name="config.m4"/>
+      <file role="src" name="config.w32"/>
+      <file role="src" name="configure.in"/>
+      <file role="src" name="php_timecop.h"/>
+      <file role="src" name="tc_timeval.c"/>
+      <file role="src" name="tc_timeval.h"/>
+      <file role="src" name="timecop_php5.c"/>
+      <file role="src" name="timecop_php7.c"/>
+      <dir name="tests">
+        <file role="test" name="core_001.phpt"/>
+        <file role="test" name="core_002.phpt"/>
+        <file role="test" name="core_003.phpt"/>
+        <file role="test" name="core_004.phpt"/>
+        <file role="test" name="core_005.phpt"/>
+        <file role="test" name="core_006.phpt"/>
+        <file role="test" name="core_007.phpt"/>
+        <file role="test" name="core_008.phpt"/>
+        <file role="test" name="core_009.phpt"/>
+        <file role="test" name="core_010.phpt"/>
+        <file role="test" name="core_011.phpt"/>
+        <file role="test" name="core_012.phpt"/>
+        <file role="test" name="core_013.phpt"/>
+        <file role="test" name="date_001.phpt"/>
+        <file role="test" name="date_002.phpt"/>
+        <file role="test" name="date_003.phpt"/>
+        <file role="test" name="date_004.phpt"/>
+        <file role="test" name="date_005.phpt"/>
+        <file role="test" name="date_006.phpt"/>
+        <file role="test" name="date_007.phpt"/>
+        <file role="test" name="date_008.phpt"/>
+        <file role="test" name="date_override_001.phpt"/>
+        <file role="test" name="date_override_002.phpt"/>
+        <file role="test" name="date_override_003.phpt"/>
+        <file role="test" name="date_override_006.phpt"/>
+        <file role="test" name="date_override_007.phpt"/>
+        <file role="test" name="date_override_008.phpt"/>
+        <file role="test" name="func_001.phpt"/>
+        <file role="test" name="func_002.phpt"/>
+        <file role="test" name="func_003.phpt"/>
+        <file role="test" name="func_004.phpt"/>
+        <file role="test" name="func_005.phpt"/>
+        <file role="test" name="func_006.phpt"/>
+        <file role="test" name="func_007.phpt"/>
+        <file role="test" name="func_008.phpt"/>
+        <file role="test" name="func_009.phpt"/>
+        <file role="test" name="func_010.phpt"/>
+        <file role="test" name="func_011.phpt"/>
+        <file role="test" name="func_012.phpt"/>
+        <file role="test" name="func_013.phpt"/>
+        <file role="test" name="func_014.phpt"/>
+        <file role="test" name="func_override_001.phpt"/>
+        <file role="test" name="func_override_002.phpt"/>
+        <file role="test" name="func_override_003.phpt"/>
+        <file role="test" name="func_override_004.phpt"/>
+        <file role="test" name="func_override_005.phpt"/>
+        <file role="test" name="func_override_006.phpt"/>
+        <file role="test" name="func_override_007.phpt"/>
+        <file role="test" name="func_override_008.phpt"/>
+        <file role="test" name="func_override_009.phpt"/>
+        <file role="test" name="func_override_010.phpt"/>
+        <file role="test" name="func_override_011.phpt"/>
+        <file role="test" name="func_override_012.phpt"/>
+        <file role="test" name="func_override_013.phpt"/>
+        <file role="test" name="func_override_014.phpt"/>
+        <file role="test" name="immutable_001.phpt"/>
+        <file role="test" name="immutable_002.phpt"/>
+        <file role="test" name="immutable_003.phpt"/>
+        <file role="test" name="immutable_004.phpt"/>
+        <file role="test" name="immutable_005.phpt"/>
+        <file role="test" name="immutable_006.phpt"/>
+        <file role="test" name="immutable_007.phpt"/>
+        <file role="test" name="immutable_008.phpt"/>
+        <file role="test" name="immutable_override_001.phpt"/>
+        <file role="test" name="immutable_override_006.phpt"/>
+        <file role="test" name="immutable_override_007.phpt"/>
+        <file role="test" name="immutable_override_008.phpt"/>
+        <file role="test" name="issue_009.phpt"/>
+        <file role="test" name="issue_010.phpt"/>
+        <file role="test" name="issue_013.phpt"/>
+        <file role="test" name="issue_014.phpt"/>
+      </dir>
+ </dir>
+ </contents>
+ <dependencies>
+  <required>
+   <php>
+    <min>5.3.1</min>
+   </php>
+   <pearinstaller>
+    <min>1.4.8</min>
+   </pearinstaller>
+  </required>
+ </dependencies>
+ <providesextension>timecop</providesextension>
+ <extsrcrelease/>
+</package>
