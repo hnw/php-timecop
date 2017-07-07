@@ -5,7 +5,7 @@ Test for TimecopDateTime::createFromFormat()
 $required_version = "5.3.1";
 $required_func = array("timecop_freeze");
 $required_method = array(array("TimecopDateTime", "createFromFormat"));
-include(__DIR__."/../tests-skipcheck.inc.php");
+include(__DIR__."/tests-skipcheck.inc.php");
 --INI--
 date.timezone=America/Los_Angeles
 timecop.func_override=0

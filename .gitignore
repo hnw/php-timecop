@@ -21,10 +21,14 @@ configure.in
 install-sh
 libtool
 ltmain.sh
+ltmain.sh.backup
 missing
 mkinstalldirs
 modules
 run-tests.php
+
+# Ignore generated tarball
+timecop-*.tgz
 
 # Ignore test-related temporary files
 tmp-php.ini

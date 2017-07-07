@@ -3,7 +3,7 @@ Function overrideing test for gmmktime()
 --SKIPIF--
 <?php
 $required_func = array("timecop_freeze");
-include(__DIR__."/../tests-skipcheck.inc.php");
+include(__DIR__."/tests-skipcheck.inc.php");
 --INI--
 timecop.func_override=1
 --FILE--

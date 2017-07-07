@@ -6,7 +6,7 @@ $required_version = "5.5";
 $required_func = array("timecop_freeze");
 $required_class = array("TimecopOrigDateTimeImmutable");
 $required_method = array(array("TimecopOrigDateTimeImmutable", "createFromFormat"));
-include(__DIR__."/../tests-skipcheck.inc.php");
+include(__DIR__."/tests-skipcheck.inc.php");
 --INI--
 date.timezone=America/Los_Angeles
 timecop.func_override=1

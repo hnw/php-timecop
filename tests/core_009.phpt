@@ -6,7 +6,7 @@ if (version_compare(PHP_VERSION, '5.3.0') >= 0) {
     die("skip this test is for PHP 5.2.x");
 }
 $required_class = array("timecopdatetime");
-include(__DIR__."/../tests-skipcheck.inc.php");
+include(__DIR__."/tests-skipcheck.inc.php");
 --INI--
 date.timezone=America/Los_Angeles
 --FILE--
