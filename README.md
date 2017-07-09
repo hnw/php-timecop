@@ -4,7 +4,30 @@
 
 A PHP extension providing "time travel" and "time freezing" capabilities, inspired by [ruby timecop gem](https://github.com/travisjeffery/timecop).
 
-## INSTALL
+## INSTALL (with package manager)
+
+If you are using macOS, you can install php-timecop with [Homebrew](https://brew.sh/) .
+
+```
+brew install homebrew/php/php71-timecop
+```
+
+In RHEL/CentOS/Fedora, you can install php-timecop from [Remi's RPM repository](https://rpms.remirepo.net/) .
+
+```
+sudo yum install http://rpms.famillecollet.com/enterprise/remi-release-7.rpm
+sudo yum install yum-utils
+sudo yum-config-manager --enable remi-php71
+sudo yum install php php-timecop
+```
+
+Otherwise, you can use pecl command to install php-timecop.
+
+```
+pecl install timecop-beta
+```
+
+## INSTALL (with phpize)
 
 ```
 git clone https://github.com/hnw/php-timecop.git
@@ -15,15 +38,27 @@ make
 make install
 ```
 
-After install, add these lines to your php.ini
+After install, add these lines to your `php.ini` .
 
 ```ini
 extension=timecop.so
 ```
 
+## INSTALL (on Windows, experimental)
+
+You can download the extension DLL from [PECL :: Package :: timecop](https://pecl.php.net/package/timecop)
+
+To install the extension, extract zip and copy 'php_timecop.dll' to the extension directory.
+
+After install, add these lines to your `php.ini` .
+
+```ini
+extension=php_timecop.dll
+```
+
 ## SYSTEM REQUIREMENTS
 
-- OS: Linux, macOS
+- OS: Windows(experimental), Linux, macOS
 - PHP: 5.3.1 - 7.2.x (might work on 5.2.x and 5.3.0, but not tested enough)
 - SAPI: Apache, CLI
   - Other SAPIs are not tested, but there is no SAPI-dependent code.
@@ -105,7 +140,7 @@ var_dump((new DateTime())->format("c")); // string(25) "2017-01-01T00:00:05+00:0
 ### version 1.2.8(beta), 2017/7/7
 
 - Publish on PECL
-- Support Windows
+- Support Windows (experimental)
 
 ### version 1.2.6(beta), 2017/7/4
 
