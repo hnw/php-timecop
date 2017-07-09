@@ -48,7 +48,7 @@ extension=timecop.so
 
 You can download the extension DLL from [PECL :: Package :: timecop](https://pecl.php.net/package/timecop)
 
-To install the extension, extract zip and copy 'php_timecop.dll' to the extension directory.
+To install the extension, extract zip and copy `php_timecop.dll` to the extension directory.
 
 After install, add these lines to your `php.ini` .
 
