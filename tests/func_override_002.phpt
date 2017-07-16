@@ -18,7 +18,7 @@ var_dump(mktime(4,6,41,1));
 var_dump(mktime(4,6,41,1,1));
 var_dump(mktime(12,33,20,5,3,1976));
 --EXPECTREGEX--
-(Strict Standards|Deprecated): timecop_mktime\(\): You should be using the time\(\) function instead in [^ ]+\/tests\/func_override_002\.php on line 3
+(Strict Standards|Deprecated): timecop_mktime\(\): You should be using the time\(\) function instead in .+[\/\\]tests[\/\\]func_override_002\.php on line 3
 int\(172840\)
 int\(129640\)
 int\(130000\)
