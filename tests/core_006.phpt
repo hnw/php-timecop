@@ -12,13 +12,13 @@ date.timezone=America/Los_Angeles
 <?php
 $dt1 = new DateTime("1970-01-01 00:00:00.900 GMT");
 Timecop::travel($dt1);
-usleep(100000);
+usleep(101000); // 1ms margin
 $dt2 =new TimecopDateTime();
 
 if (class_exists("DateTimeImmutable")) {
     $dt3 = new DateTimeImmutable("1970-01-01 09:00:00.900 GMT");
     Timecop::travel($dt3);
-    usleep(100000);
+    usleep(101000); // 1ms margin
     $dt4 =new TimecopDateTime();
 } else {
     $dt3 = new DateTime("1970-01-01 01:00:00.900");
@@ -27,7 +27,7 @@ if (class_exists("DateTimeImmutable")) {
 
 $dt5 = new TimecopDateTime("2040-01-01 00:00:00.900 GMT");
 Timecop::travel($dt5);
-usleep(100000);
+usleep(101000); // 1ms margin
 if (PHP_INT_SIZE === 8) {
     $dt6 =new TimecopDateTime();
 } else {
