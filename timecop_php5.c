@@ -689,7 +689,7 @@ static int timecop_class_override_clear(TSRMLS_D)
 {
 	const struct timecop_override_class_entry *p;
 	zend_class_entry **pce_orig, *ce_orig;
-	zend_function *zf_orig, *zf_ovrd, *zf_save;
+	zend_function *zf_orig;
 
 	p = &(timecop_override_class_table[0]);
 	while (p->orig_class != NULL) {

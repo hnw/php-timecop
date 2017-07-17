@@ -13,10 +13,12 @@ date.timezone=America/Los_Angeles
 $dt1 = new TimecopDateTime("1970-01-01 00:00:00.900 GMT");
 Timecop::travel($dt1);
 Timecop::scale(10);
-usleep(111000); // 1ms margin
+usleep(130000); // 20ms margin
 $dt2 =new TimecopDateTime();
+
+Timecop::travel(new TimecopDateTime("1970-01-01 00:00:02 GMT"));
 Timecop::scale(20);
-usleep(101000); // 1ms margin
+usleep(120000); // 20ms margin
 $dt3 =new TimecopDateTime();
 var_dump($dt2->format("Y-m-d H:i:s"));
 var_dump($dt3->format("Y-m-d H:i:s"));

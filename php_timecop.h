@@ -42,7 +42,12 @@ extern zend_module_entry timecop_module_entry;
 #include "TSRM.h"
 #endif
 
+#ifndef PHP_WIN32
 #include <time.h>
+#else
+#include "win32/time.h"
+#endif
+
 #include "Zend/zend_interfaces.h"
 #include "tc_timeval.h"
 

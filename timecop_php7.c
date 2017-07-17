@@ -646,7 +646,7 @@ static int timecop_class_override_clear()
 {
 	const struct timecop_override_class_entry *p;
 	zend_class_entry *ce_orig;
-	zend_function *zf_orig, *zf_ovrd, *zf_save;
+	zend_function *zf_orig;
 
 	p = &(timecop_override_class_table[0]);
 	while (p->orig_class != NULL) {
@@ -706,7 +706,7 @@ static int update_request_time(zend_long unixtime)
 
 static int restore_request_time()
 {
-	zval *server_vars, *request_time, orig_request_time;
+	zval *server_vars;
 
 	server_vars = zend_hash_str_find(&EG(symbol_table), "_SERVER", sizeof("_SERVER")-1);
 	if (Z_TYPE(TIMECOP_G(orig_request_time)) != IS_NULL &&
@@ -777,7 +777,7 @@ static int get_formatted_mock_time(zval *time, zval *timezone_obj, zval *retval_
 	zval fixed_sec, orig_zonename;
 	zval now_timestamp, str_now;
 	tc_timeval now;
-	long fixed_usec;
+	zend_long fixed_usec;
 
 	if (TIMECOP_G(timecop_mode) == TIMECOP_MODE_REALTIME) {
 		ZVAL_FALSE(retval_time);
@@ -871,7 +871,7 @@ static int get_formatted_mock_time(zval *time, zval *timezone_obj, zval *retval_
 static long get_mock_fraction(zval *time, zval *timezone_obj TSRMLS_DC)
 {
 	zval dt1, dt2, usec1, usec2;
-	long fixed_usec;
+	zend_long fixed_usec;
 	zval u_str, sleep_usec;
 
 	call_php_function_with_2_params(ORIG_FUNC_NAME("date_create"), &dt1, time, timezone_obj);
@@ -1357,7 +1357,7 @@ static inline void _timecop_date_create(INTERNAL_FUNCTION_PARAMETERS, int immuta
 static void _timecop_datetime_constructor_ex(INTERNAL_FUNCTION_PARAMETERS, zval *obj, int immutable)
 {
 	zval orig_time, *orig_timezone = NULL;
-	zval fixed_time, fixed_timezone, dt, *arg1, *arg2;
+	zval fixed_time, fixed_timezone, *arg1, *arg2;
 	char *orig_time_str = NULL;
 	size_t orig_time_len = 0;
 	const char *real_func;

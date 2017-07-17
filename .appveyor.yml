@@ -1,0 +1,62 @@
+version: '{branch}.{build}'
+
+install:
+- cmd: choco feature enable -n=allowGlobalConfirmation
+- cmd: cinst wget
+- cmd: mkdir C:\projects\php-timecop\bin
+
+environment:
+  PROJECT_NAME: php-timecop
+  PROJECT_DIR: C:\projects\php-timecop
+  PHP_SRC_DIR: C:\projects\php-src
+  TEST_PHP_EXECUTABLE: C:\projects\php-timecop\bin\php.exe
+  REPORT_EXIT_STATUS: 1
+  NO_INTERACTION: 1
+
+build_script:
+- cmd: >-
+    "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\bin\vcvars32.bat"
+
+    git clone https://github.com/php/php-src %PHP_SRC_DIR%
+
+    cd %PHP_SRC_DIR%
+
+    git checkout PHP-7.1
+
+    wget http://windows.php.net/downloads/php-sdk/php-sdk-binary-tools-20110915.zip
+
+    7z x -y php-sdk-binary-tools-20110915.zip -oC:\projects\php-sdk
+
+    C:\projects\php-sdk\bin\phpsdk_setvars.bat
+
+    mkdir %PHP_SRC_DIR%\ext\%PROJECT_NAME%
+
+    xcopy %PROJECT_DIR% %PHP_SRC_DIR%\ext\%PROJECT_NAME% /s /e /y
+
+    wget http://windows.php.net/downloads/php-sdk/deps-7.1-vc14-x86.7z
+
+    7z x -y deps-7.1-vc14-x86.7z -o%PHP_SRC_DIR%
+
+    buildconf.bat
+
+    configure.bat --disable-all --enable-phar --enable-json --enable-hash --enable-ctype --enable-filter --enable-tokenizer --enable-zip --with-iconv --with-openssl --with-dom --with-libxml --enable-cli --enable-zts --enable-timecop=shared --with-config-file-scan-dir=%PROJECT_DIR%\bin\modules.d --with-prefix=%PROJECT_DIR%\bin --with-php-build=deps
+
+    nmake
+
+    nmake install
+
+    copy php.ini-development %PROJECT_DIR%\bin\php.ini
+
+    mkdir %PROJECT_DIR%\bin\modules.d
+
+    echo extension=php_timecop.dll >> %PROJECT_DIR%\bin\modules.d\php.ini
+
+test_script:
+- cmd: >-
+    cd %PROJECT_DIR%
+
+    dir bin\ext
+
+    %PROJECT_DIR%\bin\php.exe %PHP_SRC_DIR%\run-tests.php --show-diff
+
+    exit /b %errorlevel%
