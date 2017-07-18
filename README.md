@@ -1,4 +1,4 @@
-# php-timecop [![Travis CI build status](https://travis-ci.org/hnw/php-timecop.svg?branch=master)](https://travis-ci.org/hnw/php-timecop) [![CircleCI build status](https://circleci.com/gh/hnw/php-timecop.svg?style=shield)](https://circleci.com/gh/hnw/php-timecop) [![Wercker build status](https://app.wercker.com/status/bb9856dda9b2ced0bbfa44d50d7fc034/s/master "wercker status")](https://app.wercker.com/project/bykey/bb9856dda9b2ced0bbfa44d50d7fc034)
+# php-timecop [![Travis CI build status](https://travis-ci.org/hnw/php-timecop.svg?branch=master)](https://travis-ci.org/hnw/php-timecop) [![CircleCI build status](https://circleci.com/gh/hnw/php-timecop.svg?style=shield)](https://circleci.com/gh/hnw/php-timecop) [![Wercker build status](https://app.wercker.com/status/bb9856dda9b2ced0bbfa44d50d7fc034/s/master "wercker status")](https://app.wercker.com/project/bykey/bb9856dda9b2ced0bbfa44d50d7fc034)[![Build status](https://ci.appveyor.com/api/projects/status/1q7c9bwera4cmv5g/branch/master?svg=true)](https://ci.appveyor.com/project/hnw/php-timecop/branch/master)
 
 ## DESCRIPTION
 
