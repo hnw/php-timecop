@@ -6,15 +6,15 @@ environment:
   REPORT_EXIT_STATUS: 1
   NO_INTERACTION: 1
   matrix:
-    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
-      PHP_PACKAGE: 'https://downloads.php.net/~remi/php-7.2.0alpha3.tar.bz2'
-      MSVS_DIR: 'C:\Program Files (x86)\Microsoft Visual Studio\2017\Community'
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
       PHP_PACKAGE: 'https://secure.php.net/distributions/php-5.6.29.tar.bz2'
-      MSVS_DIR: 'C:\Program Files (x86)\Microsoft Visual Studio 11.0'
+      VCVARS32_PATH: 'C:\Program Files (x86)\Microsoft Visual Studio 11.0\VC\bin\vcvars32.bat'
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
       PHP_PACKAGE: 'https://secure.php.net/distributions/php-7.1.7.tar.bz2'
-      MSVS_DIR: 'C:\Program Files (x86)\Microsoft Visual Studio 14.0'
+      VCVARS32_PATH: 'C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\bin\vcvars32.bat'
+    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+      PHP_PACKAGE: 'https://downloads.php.net/~remi/php-7.2.0alpha3.tar.bz2'
+      VCVARS32_PATH: 'C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvars32.bat'
 
 install:
 - cmd: >-
@@ -46,13 +46,15 @@ build_script:
 
     echo %PHP_SRC_DIR2%
     
-    dir "C:\Program Files (x86)"
+    %VCVARS32_PATH%
 
-    dir "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community"
+    wget %PHP_PACKAGE%
 
-    dir "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC"
+    7z x -y %PHP_PACKAGE_FILENAME% -oC:\projects\
 
-    "%MSVS_DIR%\VC\bin\vcvars32.bat"
+    dir C:\projects\
+
+    dir %PHP_SRC_DIR2%
 
     git clone https://github.com/php/php-src %PHP_SRC_DIR%
 
