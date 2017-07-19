@@ -7,14 +7,14 @@ environment:
   NO_INTERACTION: 1
   matrix:
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
-      PHP_PACKAGE: "https://secure.php.net/distributions/php-5.6.29.tar.bz2"
-      MSVS_DIR: "C:\Program Files (x86)\Microsoft Visual Studio 11.0"
+      PHP_PACKAGE: 'https://secure.php.net/distributions/php-5.6.29.tar.bz2'
+      MSVS_DIR: 'C:\Program Files (x86)\Microsoft Visual Studio 11.0'
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
-      PHP_PACKAGE: "https://secure.php.net/distributions/php-7.1.7.tar.bz2"
-      MSVS_DIR: "C:\Program Files (x86)\Microsoft Visual Studio 14.0"
+      PHP_PACKAGE: 'https://secure.php.net/distributions/php-7.1.7.tar.bz2'
+      MSVS_DIR: 'C:\Program Files (x86)\Microsoft Visual Studio 14.0'
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
-      PHP_PACKAGE: "https://downloads.php.net/~remi/php-7.2.0alpha3.tar.bz2"
-      MSVS_DIR: "C:\Program Files (x86)\Microsoft Visual Studio 15.0"
+      PHP_PACKAGE: 'https://downloads.php.net/~remi/php-7.2.0alpha3.tar.bz2'
+      MSVS_DIR: 'C:\Program Files (x86)\Microsoft Visual Studio 15.0'
 
 install:
 - cmd: set PROJECT_DIR="C:\projects\%PROJECT_NAME%"
