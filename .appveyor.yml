@@ -46,7 +46,7 @@ build_script:
 
     echo %PHP_SRC_DIR2%
     
-    %VCVARS32_PATH%
+    "%VCVARS32_PATH%"
 
     wget %PHP_PACKAGE%
 
