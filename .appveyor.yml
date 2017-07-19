@@ -48,7 +48,9 @@ build_script:
     
     dir "C:\Program Files (x86)"
 
-    dir "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\bin"
+    dir "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community"
+
+    dir "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC"
 
     "%MSVS_DIR%\VC\bin\vcvars32.bat"
 
