@@ -7,9 +7,9 @@ install:
 
 environment:
   PROJECT_NAME: php-timecop
-  PROJECT_DIR: C:\projects\!PROJECT_NAME!
+  PROJECT_DIR: 'C:\projects\!PROJECT_NAME!'
   PHP_SRC_DIR: C:\projects\php-src
-  TEST_PHP_EXECUTABLE: !PROJECT_DIR!\bin\php.exe
+  TEST_PHP_EXECUTABLE: '!PROJECT_DIR!\bin\php.exe'
   REPORT_EXIT_STATUS: 1
   NO_INTERACTION: 1
   matrix:
