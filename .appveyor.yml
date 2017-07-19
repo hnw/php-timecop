@@ -21,10 +21,14 @@ install:
 - cmd: set TEST_PHP_EXECUTABLE="%PROJECT_DIR%\bin\php.exe"
 - cmd: choco feature enable -n=allowGlobalConfirmation
 - cmd: cinst wget
-- cmd: mkdir C:\projects\php-timecop\bin
+- cmd: mkdir %PROJECT_DIR%\bin
       
 build_script:
 - cmd: >-
+    echo %PROJECT_DIR%
+
+    echo %TEST_PHP_EXECUTABLE%
+    
     dir "C:\Program Files (x86)"
 
     "%MSVS_DIR%\VC\bin\vcvars32.bat"
@@ -65,10 +69,14 @@ build_script:
 
 test_script:
 - cmd: >-
+    echo %PROJECT_DIR%
+
+    echo %TEST_PHP_EXECUTABLE%
+    
     cd %PROJECT_DIR%
 
     dir bin\ext
 
-    %TEST_PHP_EXECUTABLE% %PHP_SRC_DIR%\run-tests.php --show-diff
+    "%TEST_PHP_EXECUTABLE%" %PHP_SRC_DIR%\run-tests.php --show-diff
 
     exit /b %errorlevel%
