@@ -17,8 +17,8 @@ environment:
       MSVS_DIR: 'C:\Program Files (x86)\Microsoft Visual Studio 15.0'
 
 install:
-- cmd: set PROJECT_DIR="C:\projects\%PROJECT_NAME%"
-- cmd: set TEST_PHP_EXECUTABLE="%PROJECT_DIR%\bin\php.exe"
+- cmd: set PROJECT_DIR=C:\projects\%PROJECT_NAME%
+- cmd: set TEST_PHP_EXECUTABLE=%PROJECT_DIR%\bin\php.exe
 - cmd: choco feature enable -n=allowGlobalConfirmation
 - cmd: cinst wget
 - cmd: mkdir %PROJECT_DIR%\bin
