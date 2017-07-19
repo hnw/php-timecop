@@ -24,7 +24,7 @@ install:
 
     for /f %%F in ("%PHP_PACKAGE%") do set PHP_PACKAGE_FILENAME=%%~nxF
 
-    for /f %%F in ("%PHP_PACKAGE%") do set PHP_SRC_DIR2=C:\projects\%%~nF
+    set PHP_SRC_DIR2=C:\projects\%PHP_PACKAGE_FILENAME:.tar.bz2=%
 
     set TEST_PHP_EXECUTABLE=%PROJECT_DIR%\bin\php.exe
 
