@@ -1,15 +1,8 @@
 version: '{branch}.{build}'
 
-install:
-- cmd: choco feature enable -n=allowGlobalConfirmation
-- cmd: cinst wget
-- cmd: mkdir C:\projects\php-timecop\bin
-
 environment:
   PROJECT_NAME: php-timecop
-  PROJECT_DIR: 'C:\projects\!PROJECT_NAME!'
   PHP_SRC_DIR: C:\projects\php-src
-  TEST_PHP_EXECUTABLE: '!PROJECT_DIR!\bin\php.exe'
   REPORT_EXIT_STATUS: 1
   NO_INTERACTION: 1
   matrix:
@@ -18,6 +11,13 @@ environment:
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
       PHP_PACKAGE: "https://downloads.php.net/~remi/php-7.2.0alpha3.tar.bz2"
 
+install:
+- cmd: SET PROJECT_DIR="C:\projects\%PROJECT_NAME%"
+- cmd: TEST_PHP_EXECUTABLE="%PROJECT_DIR%\bin\php.exe"
+- cmd: choco feature enable -n=allowGlobalConfirmation
+- cmd: cinst wget
+- cmd: mkdir C:\projects\php-timecop\bin
+      
 build_script:
 - cmd: >-
     dir "C:\Program Files (x86)"
