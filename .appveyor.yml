@@ -4,20 +4,22 @@ environment:
   PROJECT_NAME: php-timecop
   REPORT_EXIT_STATUS: 1
   NO_INTERACTION: 1
-  PHP_SDK_TOOLS_URL: 'http://windows.php.net/downloads/php-sdk/php-sdk-binary-tools-20110915.zip'
   matrix:
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
       PHP_PACKAGE_URL: 'https://secure.php.net/distributions/php-5.6.29.tar.bz2'
+      PHP_SDK_TOOLS_URL: 'http://windows.php.net/downloads/php-sdk/php-sdk-binary-tools-20110915.zip'
       PHP_SDK_DEPS_URL: 'http://windows.php.net/downloads/php-sdk/deps-5.6-vc11-x86.7z'
       VCVARS32_PATH: 'C:\Program Files (x86)\Microsoft Visual Studio 11.0\VC\bin\vcvars32.bat'
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
       PHP_PACKAGE_URL: 'https://secure.php.net/distributions/php-7.1.7.tar.bz2'
+      PHP_SDK_TOOLS_URL: 'http://windows.php.net/downloads/php-sdk/php-sdk-binary-tools-20110915.zip'
       PHP_SDK_DEPS_URL: 'http://windows.php.net/downloads/php-sdk/deps-7.1-vc14-x86.7z'
       VCVARS32_PATH: 'C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\bin\vcvars32.bat'
-#    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
-#      PHP_PACKAGE_URL: 'https://downloads.php.net/~remi/php-7.2.0alpha3.tar.bz2'
-#      PHP_SDK_DEPS_URL: 'http://windows.php.net/downloads/php-sdk/deps-master-vc15-x86.7z'
-#      VCVARS32_PATH: 'C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvars32.bat'
+    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+      PHP_PACKAGE_URL: 'https://downloads.php.net/~remi/php-7.2.0alpha3.tar.bz2'
+      PHP_SDK_TOOLS_URL: 'https://github.com/OSTC/php-sdk-binary-tools/archive/php-sdk-2.0.7.zip'
+      PHP_SDK_DEPS_URL: 'http://windows.php.net/downloads/php-sdk/deps-master-vc15-x86.7z'
+      VCVARS32_PATH: 'C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvars32.bat'
 
 install:
 - cmd: >-
