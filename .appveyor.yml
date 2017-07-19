@@ -22,7 +22,7 @@ install:
 
     set TEST_PHP_EXECUTABLE=%PROJECT_DIR%\bin\php.exe
 
-    for /f %F in ("%PHP_PACKAGE%") do set PHP_PACKAGE_BASENAME=%~nxF
+    for /f %%F in ("%PHP_PACKAGE%") do set PHP_PACKAGE_BASENAME=%%~nxF
 
     set TEST_PHP_EXECUTABLE=%PROJECT_DIR%\bin\php.exe
 
