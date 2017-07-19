@@ -38,6 +38,8 @@ build_script:
     
     dir "C:\Program Files (x86)"
 
+    dir "C:\Program Files"
+
     "%MSVS_DIR%\VC\bin\vcvars32.bat"
 
     git clone https://github.com/php/php-src %PHP_SRC_DIR%
