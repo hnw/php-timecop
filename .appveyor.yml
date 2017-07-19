@@ -50,7 +50,7 @@ build_script:
 
     wget %PHP_PACKAGE%
 
-    7z x -y %PHP_PACKAGE_FILENAME% -oC:\projects\
+    7z x -so %PHP_PACKAGE_FILENAME% | 7z x -si -ttar -oC:\projects\
 
     dir C:\projects\
 
