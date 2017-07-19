@@ -12,8 +12,8 @@ environment:
       PHP_PACKAGE: "https://downloads.php.net/~remi/php-7.2.0alpha3.tar.bz2"
 
 install:
-- cmd: SET PROJECT_DIR="C:\projects\%PROJECT_NAME%"
-- cmd: TEST_PHP_EXECUTABLE="%PROJECT_DIR%\bin\php.exe"
+- cmd: set PROJECT_DIR="C:\projects\%PROJECT_NAME%"
+- cmd: set TEST_PHP_EXECUTABLE="%PROJECT_DIR%\bin\php.exe"
 - cmd: choco feature enable -n=allowGlobalConfirmation
 - cmd: cinst wget
 - cmd: mkdir C:\projects\php-timecop\bin
