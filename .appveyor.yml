@@ -17,14 +17,21 @@ environment:
       MSVS_DIR: 'C:\Program Files (x86)\Microsoft Visual Studio 15.0'
 
 install:
-- cmd: set PROJECT_DIR=C:\projects\%PROJECT_NAME%
-- cmd: set TEST_PHP_EXECUTABLE=%PROJECT_DIR%\bin\php.exe
-- cmd: choco feature enable -n=allowGlobalConfirmation
-- cmd: cinst wget
-- cmd: mkdir %PROJECT_DIR%\bin
-      
+- cmd: >-
+    set PROJECT_DIR=C:\projects\%PROJECT_NAME%
+
+    set TEST_PHP_EXECUTABLE=%PROJECT_DIR%\bin\php.exe
+
+    choco feature enable -n=allowGlobalConfirmation
+
+    cinst wget
+
+    mkdir %PROJECT_DIR%\bin
+
 build_script:
 - cmd: >-
+    echo %APPVEYOR_BUILD_WORKER_IMAGE%
+
     echo %PROJECT_DIR%
 
     echo %TEST_PHP_EXECUTABLE%
