@@ -1,45 +1,95 @@
 version: '{branch}.{build}'
 
-install:
-- cmd: choco feature enable -n=allowGlobalConfirmation
-- cmd: cinst wget
-- cmd: mkdir C:\projects\php-timecop\bin
-
 environment:
   PROJECT_NAME: php-timecop
-  PROJECT_DIR: C:\projects\php-timecop
-  PHP_SRC_DIR: C:\projects\php-src
-  TEST_PHP_EXECUTABLE: C:\projects\php-timecop\bin\php.exe
   REPORT_EXIT_STATUS: 1
   NO_INTERACTION: 1
+  PHP_SDK_DIR: 'C:\projects\php-sdk'
+  matrix:
+    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
+      PHP_PACKAGE_URL: 'https://secure.php.net/distributions/php-5.4.45.tar.bz2'
+      PHP_SDK_TOOLS_URL: 'http://windows.php.net/downloads/php-sdk/php-sdk-binary-tools-20110915.zip'
+      PHP_SDK_DEPS_URL: 'http://windows.php.net/downloads/php-sdk/archives/deps-5.4-vc9-x86_2015-05.7z'
+      VCVARS32_PATH: 'C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\bin\vcvars32.bat'
+    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
+      PHP_PACKAGE_URL: 'https://secure.php.net/distributions/php-5.6.29.tar.bz2'
+      PHP_SDK_TOOLS_URL: 'http://windows.php.net/downloads/php-sdk/php-sdk-binary-tools-20110915.zip'
+      PHP_SDK_DEPS_URL: 'http://windows.php.net/downloads/php-sdk/deps-5.6-vc11-x86.7z'
+      VCVARS32_PATH: 'C:\Program Files (x86)\Microsoft Visual Studio 11.0\VC\bin\vcvars32.bat'
+    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
+      PHP_PACKAGE_URL: 'https://secure.php.net/distributions/php-7.1.7.tar.bz2'
+      PHP_SDK_TOOLS_URL: 'http://windows.php.net/downloads/php-sdk/php-sdk-binary-tools-20110915.zip'
+      PHP_SDK_DEPS_URL: 'http://windows.php.net/downloads/php-sdk/deps-7.1-vc14-x86.7z'
+      VCVARS32_PATH: 'C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\bin\vcvars32.bat'
+#    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+#      PHP_PACKAGE_URL: 'https://downloads.php.net/~pollita/php-7.2.0beta1.tar.bz2'
+#      PHP_SDK_TOOLS_URL: 'https://github.com/OSTC/php-sdk-binary-tools/archive/php-sdk-2.0.7.zip'
+#      PHP_SDK_DEPS_URL: 'http://windows.php.net/downloads/php-sdk/deps-master-vc15-x86.7z'
+#      VCVARS32_PATH: 'C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvars32.bat'
+
+install:
+- cmd: >-
+    set PROJECT_DIR=C:\projects\%PROJECT_NAME%
+
+    set TEST_PHP_EXECUTABLE=%PROJECT_DIR%\bin\php.exe
+
+    for /f %%F in ("%PHP_PACKAGE_URL%") do set PHP_PACKAGE_FILENAME=%%~nxF
+
+    set PHP_SRC_DIR=C:\projects\%PHP_PACKAGE_FILENAME:.tar.bz2=%
+
+    for /f %%F in ("%PHP_SDK_TOOLS_URL%") do set PHP_SDK_TOOLS_FILENAME=%%~nxF
+
+    set PHP_SDK_TOOLS_SUBDIR=php-sdk-binary-tools-%PHP_SDK_TOOLS_FILENAME:.zip=%
+
+    for /f %%F in ("%PHP_SDK_DEPS_URL%") do set PHP_SDK_DEPS_FILENAME=%%~nxF
+
+    set TEST_PHP_EXECUTABLE=%PROJECT_DIR%\bin\php.exe
+
+    choco feature enable -n=allowGlobalConfirmation
+
+    cinst wget
+
+    mkdir %PROJECT_DIR%\bin
 
 build_script:
 - cmd: >-
-    "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\bin\vcvars32.bat"
+    echo %APPVEYOR_BUILD_WORKER_IMAGE%
 
-    git clone https://github.com/php/php-src %PHP_SRC_DIR%
+    echo %PROJECT_DIR%
 
-    cd %PHP_SRC_DIR%
+    echo %TEST_PHP_EXECUTABLE%
 
-    git checkout PHP-7.1
+    "%VCVARS32_PATH%"
 
-    wget http://windows.php.net/downloads/php-sdk/php-sdk-binary-tools-20110915.zip
+    wget %PHP_PACKAGE_URL%
 
-    7z x -y php-sdk-binary-tools-20110915.zip -oC:\projects\php-sdk
+    7z x -so %PHP_PACKAGE_FILENAME% | 7z x -si -ttar -oC:\projects\
 
-    C:\projects\php-sdk\bin\phpsdk_setvars.bat
+    wget %PHP_SDK_TOOLS_URL%
+
+    7z x -y  %PHP_SDK_TOOLS_FILENAME% -o%PHP_SDK_DIR%
+
+    if exist %PHP_SDK_DIR%\%PHP_SDK_TOOLS_SUBDIR% ( cd %PHP_SDK_DIR%\%PHP_SDK_TOOLS_SUBDIR% ) else ( cd %PHP_SDK_DIR% )
+
+    dir
+
+    bin\phpsdk_setvars.bat
 
     mkdir %PHP_SRC_DIR%\ext\%PROJECT_NAME%
 
     xcopy %PROJECT_DIR% %PHP_SRC_DIR%\ext\%PROJECT_NAME% /s /e /y
 
-    wget http://windows.php.net/downloads/php-sdk/deps-7.1-vc14-x86.7z
+    wget %PHP_SDK_DEPS_URL%
 
-    7z x -y deps-7.1-vc14-x86.7z -o%PHP_SRC_DIR%
+    7z x -y %PHP_SDK_DEPS_FILENAME% -o%PHP_SRC_DIR%
+
+    cd %PHP_SRC_DIR%
 
     buildconf.bat
 
-    configure.bat --disable-all --enable-phar --enable-json --enable-hash --enable-ctype --enable-filter --enable-tokenizer --enable-zip --with-iconv --with-openssl --with-dom --with-libxml --enable-cli --enable-zts --enable-timecop=shared --with-config-file-scan-dir=%PROJECT_DIR%\bin\modules.d --with-prefix=%PROJECT_DIR%\bin --with-php-build=deps
+    rem "Build failed with '--enable-zip' on PHP 7.2.0 beta1"
+
+    configure.bat --disable-all --enable-phar --enable-json --enable-hash --enable-ctype --enable-filter --enable-tokenizer --with-iconv --with-openssl --with-dom --with-libxml --enable-zip --enable-timecop=shared --enable-cli --enable-zts --with-config-file-scan-dir=%PROJECT_DIR%\bin\modules.d --with-prefix=%PROJECT_DIR%\bin --with-php-build=deps
 
     nmake
 
@@ -53,10 +103,18 @@ build_script:
 
 test_script:
 - cmd: >-
+    echo %PROJECT_DIR%
+
+    echo %TEST_PHP_EXECUTABLE%
+
     cd %PROJECT_DIR%
 
-    dir bin\ext
+    if exist bin dir bin
 
-    %PROJECT_DIR%\bin\php.exe %PHP_SRC_DIR%\run-tests.php --show-diff
+    if exist bin\ext dir bin\ext
+
+    if exist bin\modules.d dir bin\modules.d
+
+    "%TEST_PHP_EXECUTABLE%" -dextension=php_timecop.dll %PHP_SRC_DIR%\run-tests.php --show-diff
 
     exit /b %errorlevel%
