@@ -41,10 +41,6 @@ build_script:
 
     echo %TEST_PHP_EXECUTABLE%
 
-    echo %PHP_PACKAGE_BASENAME%
-
-    echo %PHP_SRC_DIR2%
-
     "%VCVARS32_PATH%"
 
     wget %PHP_PACKAGE%
@@ -64,6 +60,8 @@ build_script:
     wget http://windows.php.net/downloads/php-sdk/deps-7.1-vc14-x86.7z
 
     7z x -y deps-7.1-vc14-x86.7z -o%PHP_SRC_DIR%
+
+    cd %PHP_SRC_DIR%
 
     buildconf.bat
 
