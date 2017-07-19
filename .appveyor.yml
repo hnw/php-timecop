@@ -2,7 +2,6 @@ version: '{branch}.{build}'
 
 environment:
   PROJECT_NAME: php-timecop
-  PHP_SRC_DIR: C:\projects\php-src
   REPORT_EXIT_STATUS: 1
   NO_INTERACTION: 1
   matrix:
@@ -24,7 +23,7 @@ install:
 
     for /f %%F in ("%PHP_PACKAGE%") do set PHP_PACKAGE_FILENAME=%%~nxF
 
-    set PHP_SRC_DIR2=C:\projects\%PHP_PACKAGE_FILENAME:.tar.bz2=%
+    set PHP_SRC_DIR=C:\projects\%PHP_PACKAGE_FILENAME:.tar.bz2=%
 
     set TEST_PHP_EXECUTABLE=%PROJECT_DIR%\bin\php.exe
 
@@ -45,22 +44,12 @@ build_script:
     echo %PHP_PACKAGE_BASENAME%
 
     echo %PHP_SRC_DIR2%
-    
+
     "%VCVARS32_PATH%"
 
     wget %PHP_PACKAGE%
 
     7z x -so %PHP_PACKAGE_FILENAME% | 7z x -si -ttar -oC:\projects\
-
-    dir C:\projects\
-
-    dir %PHP_SRC_DIR2%
-
-    git clone https://github.com/php/php-src %PHP_SRC_DIR%
-
-    cd %PHP_SRC_DIR%
-
-    git checkout PHP-7.1
 
     wget http://windows.php.net/downloads/php-sdk/php-sdk-binary-tools-20110915.zip
 
@@ -95,7 +84,7 @@ test_script:
     echo %PROJECT_DIR%
 
     echo %TEST_PHP_EXECUTABLE%
-    
+
     cd %PROJECT_DIR%
 
     dir bin\ext
