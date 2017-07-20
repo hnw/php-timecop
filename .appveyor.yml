@@ -85,6 +85,8 @@ build_script:
 
     cd %PHP_SRC_DIR%
 
+    dir
+
     buildconf.bat
 
     configure.bat --disable-all --enable-phar --enable-json --enable-hash --enable-ctype --enable-filter --enable-tokenizer --enable-zip --with-iconv --with-openssl --with-dom --with-libxml --enable-cli --enable-zts --enable-timecop=shared --with-config-file-scan-dir=%PROJECT_DIR%\bin\modules.d --with-prefix=%PROJECT_DIR%\bin --with-php-build=deps
