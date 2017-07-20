@@ -4,6 +4,7 @@ environment:
   PROJECT_NAME: php-timecop
   REPORT_EXIT_STATUS: 1
   NO_INTERACTION: 1
+  PHP_SDK_DIR: 'C:\projects\php-sdk'
   matrix:
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
       PHP_PACKAGE_URL: 'https://secure.php.net/distributions/php-5.4.45.tar.bz2'
@@ -38,6 +39,8 @@ install:
 
     for /f %%F in ("%PHP_SDK_TOOLS_URL%") do set PHP_SDK_TOOLS_FILENAME=%%~nxF
 
+    set PHP_SDK_TOOLS_SUBDIR=php-sdk-binary-tools-%PHP_SDK_TOOLS_FILENAME:.zip=%
+
     for /f %%F in ("%PHP_SDK_DEPS_URL%") do set PHP_SDK_DEPS_FILENAME=%%~nxF
 
     set TEST_PHP_EXECUTABLE=%PROJECT_DIR%\bin\php.exe
@@ -64,9 +67,14 @@ build_script:
 
     wget %PHP_SDK_TOOLS_URL%
 
-    7z x -y  %PHP_SDK_TOOLS_FILENAME% -oC:\projects\php-sdk
+    7z x -y  %PHP_SDK_TOOLS_FILENAME% -o%PHP_SDK_DIR%
 
-    C:\projects\php-sdk\bin\phpsdk_setvars.bat
+    if exist %PHP_SDK_DIR%\%PHP_SDK_TOOLS_SUBDIR%
+        set PHP_SDK_TOOLS_DIR=%PHP_SDK_DIR%\%PHP_SDK_TOOLS_SUBDIR%
+    else
+        set PHP_SDK_TOOLS_DIR=%PHP_SDK_DIR%
+
+    %PHP_SDK_TOOLS_DIR%\bin\phpsdk_setvars.bat
 
     mkdir %PHP_SRC_DIR%\ext\%PROJECT_NAME%
 
