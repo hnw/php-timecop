@@ -88,6 +88,7 @@ build_script:
     buildconf.bat
 
     # MEMO: Build failed with '--enable-zip' on PHP 7.2.0 beta1
+
     configure.bat --disable-all --enable-phar --enable-json --enable-hash --enable-ctype --enable-filter --enable-tokenizer --with-iconv --with-openssl --with-dom --with-libxml --enable-cli --enable-zts --enable-timecop=shared --with-config-file-scan-dir=%PROJECT_DIR%\bin\modules.d --with-prefix=%PROJECT_DIR%\bin --with-php-build=deps
 
     nmake
