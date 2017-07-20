@@ -100,7 +100,9 @@ test_script:
 
     cd %PROJECT_DIR%
 
-    dir bin\ext
+    dir bin
+
+#    dir bin\ext
 
     "%TEST_PHP_EXECUTABLE%" %PHP_SRC_DIR%\run-tests.php --show-diff
 
