@@ -71,13 +71,7 @@ build_script:
 
     7z x -y  %PHP_SDK_TOOLS_FILENAME% -o%PHP_SDK_DIR%
 
-    if exist %PHP_SDK_DIR%\%PHP_SDK_TOOLS_SUBDIR% (
-        echo %PHP_SDK_DIR%\%PHP_SDK_TOOLS_SUBDIR%
-        cd %PHP_SDK_DIR%\%PHP_SDK_TOOLS_SUBDIR%
-    ) else (
-        echo %PHP_SDK_DIR%
-        cd %PHP_SDK_DIR%
-    )
+    if exist %PHP_SDK_DIR%\%PHP_SDK_TOOLS_SUBDIR% ( echo %PHP_SDK_DIR%\%PHP_SDK_TOOLS_SUBDIR%; cd %PHP_SDK_DIR%\%PHP_SDK_TOOLS_SUBDIR% ) else ( echo %PHP_SDK_DIR%; cd %PHP_SDK_DIR% )
 
     dir
 
