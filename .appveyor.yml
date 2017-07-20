@@ -53,6 +53,8 @@ install:
 
 build_script:
 - cmd: >-
+    @setlocal enabledelayedexpansion
+
     echo %APPVEYOR_BUILD_WORKER_IMAGE%
 
     echo %PROJECT_DIR%
@@ -71,9 +73,9 @@ build_script:
 
     if exist %PHP_SDK_DIR%\%PHP_SDK_TOOLS_SUBDIR% set PHP_SDK_TOOLS_DIR=%PHP_SDK_DIR%\%PHP_SDK_TOOLS_SUBDIR% else set PHP_SDK_TOOLS_DIR=%PHP_SDK_DIR%
 
-    echo %PHP_SDK_TOOLS_DIR%
+    echo !PHP_SDK_TOOLS_DIR!
 
-    %PHP_SDK_TOOLS_DIR%\bin\phpsdk_setvars.bat
+    !PHP_SDK_TOOLS_DIR!\bin\phpsdk_setvars.bat
 
     mkdir %PHP_SRC_DIR%\ext\%PROJECT_NAME%
 
