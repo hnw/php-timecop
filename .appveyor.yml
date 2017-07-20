@@ -115,6 +115,6 @@ test_script:
 
     if exist bin\modules.d dir bin\modules.d
 
-    "%TEST_PHP_EXECUTABLE%" -dextension=php_timecop.dll %PHP_SRC_DIR%\run-tests.php --show-diff
+    "%TEST_PHP_EXECUTABLE%" %PHP_SRC_DIR%\run-tests.php --show-diff
 
     exit /b %errorlevel%
