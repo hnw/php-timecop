@@ -102,7 +102,7 @@ test_script:
 
     if exist bin dir bin
 
-    if exist bin/ext dir bin/ext
+    if exist bin\ext dir bin\ext
 
     "%TEST_PHP_EXECUTABLE%" %PHP_SRC_DIR%\run-tests.php --show-diff
 
