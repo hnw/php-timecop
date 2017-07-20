@@ -6,6 +6,11 @@ environment:
   NO_INTERACTION: 1
   matrix:
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
+      PHP_PACKAGE_URL: 'https://secure.php.net/distributions/php-5.4.45.tar.bz2'
+      PHP_SDK_TOOLS_URL: 'http://windows.php.net/downloads/php-sdk/php-sdk-binary-tools-20110915.zip'
+      PHP_SDK_DEPS_URL: 'http://windows.php.net/downloads/php-sdk/archives/deps-5.4-vc9-x86_2015-05.7z'
+      VCVARS32_PATH: 'C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\bin\vcvars32.bat'
+    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
       PHP_PACKAGE_URL: 'https://secure.php.net/distributions/php-5.6.29.tar.bz2'
       PHP_SDK_TOOLS_URL: 'http://windows.php.net/downloads/php-sdk/php-sdk-binary-tools-20110915.zip'
       PHP_SDK_DEPS_URL: 'http://windows.php.net/downloads/php-sdk/deps-5.6-vc11-x86.7z'
