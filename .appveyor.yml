@@ -73,6 +73,8 @@ build_script:
 
     if exist %PHP_SDK_DIR%\%PHP_SDK_TOOLS_SUBDIR% cd %PHP_SDK_DIR%\%PHP_SDK_TOOLS_SUBDIR% else cd %PHP_SDK_DIR%
 
+    dir
+
     bin\phpsdk_setvars.bat
 
     mkdir %PHP_SRC_DIR%\ext\%PROJECT_NAME%
@@ -84,8 +86,6 @@ build_script:
     7z x -y %PHP_SDK_DEPS_FILENAME% -o%PHP_SRC_DIR%
 
     cd %PHP_SRC_DIR%
-
-    dir
 
     buildconf.bat
 
