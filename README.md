@@ -12,13 +12,18 @@ If you are using macOS, you can install php-timecop with [Homebrew](https://brew
 brew install homebrew/php/php71-timecop
 ```
 
-In RHEL/CentOS/Fedora, you can install php-timecop from [Remi's RPM repository](https://rpms.remirepo.net/) .
+In Fedora, you can install php-timecop from official repository as php-pecl-timecop
+```
+sudo dnf install php-pecl-timecop
+```
+
+In RHEL/CentOS, you can install php-timecop from [Remi's RPM repository](https://rpms.remirepo.net/).
 
 ```
 sudo yum install http://rpms.famillecollet.com/enterprise/remi-release-7.rpm
 sudo yum install yum-utils
 sudo yum-config-manager --enable remi-php71
-sudo yum install php php-timecop
+sudo yum install php-pecl-timecop
 ```
 
 Otherwise, you can use pecl command to install php-timecop.
