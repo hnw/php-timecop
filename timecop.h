@@ -203,23 +203,13 @@ static inline void _timecop_datetime_constructor(INTERNAL_FUNCTION_PARAMETERS, i
 static void _timecop_datetime_constructor_ex(INTERNAL_FUNCTION_PARAMETERS, zval *obj, int immutable);
 
 #if PHP_MAJOR_VERSION >= 7
-static inline zval* _call_php_method_with_0_params(zval *object_pp, zend_class_entry *obj_ce, const char *method_name, zval *retval_ptr);
-static inline zval* _call_php_method_with_1_params(zval *object_pp, zend_class_entry *obj_ce, const char *method_name, zval *retval_ptr, zval *arg1);
-static inline zval* _call_php_method_with_2_params(zval *object_pp, zend_class_entry *obj_ce, const char *method_name, zval *retval_ptr, zval *arg1, zval *arg2);
-static inline zval* _call_php_method(zval *object_pp, zend_class_entry *obj_ce, const char *method_name, zval *retval_ptr, int param_count, zval* arg1, zval* arg2);
-static inline void _call_php_function_with_0_params(const char *function_name, zval *retval_ptr);
-static inline void _call_php_function_with_1_params(const char *function_name, zval *retval_ptr, zval *arg1);
-static inline void _call_php_function_with_2_params(const char *function_name, zval *retval_ptr, zval *arg1, zval *arg2);
+static inline zval* _call_php_method(zval *object_pp, zend_class_entry *obj_ce, const char *method_name, zval *retval_ptr, zval* arg1, zval* arg2);
+static inline void _call_php_function(const char *function_name, zval *retval_ptr, zval* arg1, zval* arg2);
 static void _call_php_function_with_3_params(const char *function_name, zval *retval_ptr, zval *arg1, zval *arg2, zval *arg3);
 static inline void _call_php_function_with_params(const char *function_name, zval *retval_ptr, uint32_t param_count, zval params[]);
 #else
-static inline zval* _call_php_method_with_0_params(zval **object_pp, zend_class_entry *obj_ce, const char *method_name, zval **retval_ptr_ptr TSRMLS_DC);
-static inline zval* _call_php_method_with_1_params(zval **object_pp, zend_class_entry *obj_ce, const char *method_name, zval **retval_ptr_ptr, zval *arg1 TSRMLS_DC);
-static inline zval* _call_php_method_with_2_params(zval **object_pp, zend_class_entry *obj_ce, const char *method_name, zval **retval_ptr_ptr, zval *arg1, zval *arg2 TSRMLS_DC);
-static inline zval* _call_php_method(zval **object_pp, zend_class_entry *obj_ce, const char *method_name, zval **retval_ptr_ptr, int param_count, zval* arg1, zval* arg2 TSRMLS_DC);
-static inline void _call_php_function_with_0_params(const char *function_name, zval **retval_ptr_ptr TSRMLS_DC);
-static inline void _call_php_function_with_1_params(const char *function_name, zval **retval_ptr_ptr, zval *arg1 TSRMLS_DC);
-static inline void _call_php_function_with_2_params(const char *function_name, zval **retval_ptr_ptr, zval *arg1, zval *arg2 TSRMLS_DC);
+static inline zval* _call_php_function(const char *method_name, zval **retval_ptr_ptr, zval* arg1, zval* arg2 TSRMLS_DC);
+static inline zval* _call_php_method(zval **object_pp, zend_class_entry *obj_ce, const char *method_name, zval **retval_ptr_ptr, zval* arg1, zval* arg2 TSRMLS_DC);
 static void _call_php_function_with_3_params(const char *function_name, zval **retval_ptr_ptr, zval *arg1, zval *arg2, zval *arg3 TSRMLS_DC);
 static inline void _call_php_function_with_params(const char *function_name, zval **retval_ptr_ptr, zend_uint param_count, zval **params[] TSRMLS_DC);
 #endif
@@ -233,22 +223,22 @@ static inline void _call_php_function_with_params(const char *function_name, zva
 #endif
 
 #define call_php_method_with_0_params(obj, ce, method_name, retval) \
-	_call_php_method_with_0_params(obj, ce, method_name, retval TSRMLS_CC)
+	_call_php_method(obj, ce, method_name, retval, NULL, NULL TSRMLS_CC)
 
 #define call_php_method_with_1_params(obj, ce, method_name, retval, arg1)	\
-	_call_php_method_with_1_params(obj, ce, method_name, retval, arg1 TSRMLS_CC)
+	_call_php_method(obj, ce, method_name, retval, arg1, NULL TSRMLS_CC)
 
 #define call_php_method_with_2_params(obj, ce, method_name, retval, arg1, arg2) \
-	_call_php_method_with_2_params(obj, ce, method_name, retval, arg1, arg2 TSRMLS_CC)
+	_call_php_method(obj, ce, method_name, retval, arg1, arg2 TSRMLS_CC)
 
 #define call_php_function_with_0_params(function_name, retval) \
-	_call_php_function_with_0_params(function_name, retval TSRMLS_CC)
+	_call_php_function(function_name, retval, NULL, NULL TSRMLS_CC)
 
 #define call_php_function_with_1_params(function_name, retval, arg1) \
-	_call_php_function_with_1_params(function_name, retval, arg1 TSRMLS_CC)
+	_call_php_function(function_name, retval, arg1, NULL TSRMLS_CC)
 
 #define call_php_function_with_2_params(function_name, retval, arg1, arg2) \
-	_call_php_function_with_2_params(function_name, retval, arg1, arg2 TSRMLS_CC)
+	_call_php_function(function_name, retval, arg1, arg2 TSRMLS_CC)
 
 #define call_php_function_with_3_params(function_name, retval, arg1, arg2, arg3) \
 	_call_php_function_with_3_params(function_name, retval, arg1, arg2, arg3 TSRMLS_CC)
