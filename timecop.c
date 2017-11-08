@@ -332,8 +332,8 @@ zend_module_entry timecop_module_entry = {
 };
 /* }}} */
 
-#if defined(COMPILE_DL_TIMECOP) && PHP_MAJOR_VERSION >= 7
-#  ifdef ZTS
+#if defined(COMPILE_DL_TIMECOP)
+#  if defined(ZTS) && PHP_MAJOR_VERSION >= 7
    ZEND_TSRMLS_CACHE_DEFINE();
 #  endif
 ZEND_GET_MODULE(timecop)
@@ -993,13 +993,15 @@ static int get_formatted_mock_time(zval *time, zval *timezone_obj, zval *retval_
 static int get_formatted_mock_time(zval *time, zval *timezone_obj, zval **retval_time, zval **retval_timezone TSRMLS_DC)
 #endif
 {
-	zval str_now, now_timestamp;
+	zval str_now, now_timestamp, format_str;
 	tc_timeval now;
 	zend_long fixed_usec;
+	char buf[64];
+
 #if PHP_MAJOR_VERSION >= 7
-	zval fixed_sec, orig_zonename;
+	zval fixed_sec, orig_zonename, dt;
 #else
-	zval *fixed_sec, *orig_sec, *orig_zonename;
+	zval *fixed_sec, *orig_sec, *orig_zonename, *dt;
 #endif
 
 	if (TIMECOP_G(timecop_mode) == TIMECOP_MODE_REALTIME) {
@@ -1091,15 +1093,6 @@ static int get_formatted_mock_time(zval *time, zval *timezone_obj, zval **retval
 	if (fixed_usec == -1) {
 		fixed_usec = now.usec;
 	}
-
-#if PHP_MAJOR_VERSION >= 7
-	zval dt;
-#else
-	zval *dt;
-#endif
-	zval format_str;
-
-	char buf[64];
 
 	call_php_function_with_2_params(ORIG_FUNC_NAME("date_create"), &dt, time, timezone_obj);
 
