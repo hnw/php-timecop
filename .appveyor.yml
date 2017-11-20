@@ -1,5 +1,9 @@
 version: '{branch}.{build}'
 
+# see: https://www.appveyor.com/docs/how-to/rdp-to-build-worker/
+init:
+  - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+
 environment:
   PROJECT_NAME: php-timecop
   REPORT_EXIT_STATUS: 1
@@ -118,3 +122,7 @@ test_script:
     "%TEST_PHP_EXECUTABLE%" %PHP_SRC_DIR%\run-tests.php --show-diff
 
     exit /b %errorlevel%
+
+# see: https://www.appveyor.com/docs/how-to/rdp-to-build-worker/
+on_finish:
+  - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
