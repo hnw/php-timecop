@@ -26,7 +26,7 @@ environment:
 #      PHP_SDK_DEPS_URL: 'http://windows.php.net/downloads/php-sdk/deps-7.1-vc14-x86.7z'
 #      VCVARS32_PATH: 'C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\bin\vcvars32.bat'
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
-      PHP_PACKAGE_URL: 'http://windows.php.net/downloads/qa/php-7.2.0RC6-src.zip'
+      PHP_PACKAGE_URL: 'https://downloads.php.net/~pollita/php-7.2.0RC6.tar.bz2'
       PHP_SDK_TOOLS_URL: 'https://github.com/Microsoft/php-sdk-binary-tools/archive/php-sdk-2.0.13.zip'
       PHP_SDK_DEPS_URL: ''
       VCVARS32_PATH: 'C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvars32.bat'
@@ -79,13 +79,11 @@ build_script:
 
     dir
 
-    phpsdk-vc15-x64.bat
-
-    bin/phpsdk_deps.bat -u -b 7.2
-
     mkdir %PHP_SRC_DIR%\ext\%PROJECT_NAME%
 
     xcopy %PROJECT_DIR% %PHP_SRC_DIR%\ext\%PROJECT_NAME% /s /e /y
+
+    bin/phpsdk_deps.bat -u -b 7.2 -d %PHP_SRC_DIR%
 
     cd %PHP_SRC_DIR%
 
