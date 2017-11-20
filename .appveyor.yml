@@ -83,6 +83,8 @@ build_script:
 
     xcopy %PROJECT_DIR% %PHP_SRC_DIR%\ext\%PROJECT_NAME% /s /e /y
 
+    dir %PHP_SRC_DIR%
+
     bin/phpsdk_deps.bat -u -d %PHP_SRC_DIR%
 
     cd %PHP_SRC_DIR%
