@@ -29,6 +29,7 @@ environment:
       PHP_PACKAGE_URL: 'https://downloads.php.net/~pollita/php-7.2.0RC6.tar.bz2'
       PHP_SDK_TOOLS_URL: 'https://github.com/Microsoft/php-sdk-binary-tools/archive/php-sdk-2.0.13.zip'
       PHP_SDK_DEPS_URL: ''
+      PHP_SDK_VC: 'vc15'		
       VCVARS32_PATH: 'C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvars32.bat'
 
 
