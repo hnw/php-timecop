@@ -85,9 +85,9 @@ build_script:
 
     dir %PHP_SRC_DIR%
 
-    bin/phpsdk_deps.bat -u -d %PHP_SRC_DIR%
-
     cd %PHP_SRC_DIR%
+
+    %PHP_SDK_DIR%\%PHP_SDK_TOOLS_SUBDIR%\bin\phpsdk_deps.bat -u
 
     buildconf.bat
 
