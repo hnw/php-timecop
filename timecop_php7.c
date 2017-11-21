@@ -189,7 +189,7 @@ ZEND_BEGIN_ARG_INFO_EX(arginfo_timecop_date_create_from_format, 0, 0, 2)
 	ZEND_ARG_INFO(0, format)
 	ZEND_ARG_INFO(0, time)
 #if PHP_VERSION_ID >= 70200
-    ZEND_ARG_OBJ_INFO(0, object, DateTimeZone, 1)
+	ZEND_ARG_OBJ_INFO(0, object, DateTimeZone, 1)
 #else
 	ZEND_ARG_INFO(0, object)
 #endif
@@ -527,8 +527,10 @@ static int timecop_func_override()
 							  zf_orig, sizeof(zend_internal_function));
 		function_add_ref(zf_orig);
 
+		GUARD_FUNCTION_ARG_INFO_BEGIN(zf_orig);
 		zend_hash_str_update_mem(EG(function_table), p->orig_func, strlen(p->orig_func),
 								 zf_ovrd, sizeof(zend_internal_function));
+		GUARD_FUNCTION_ARG_INFO_END();
 		function_add_ref(zf_ovrd);
 
 		p++;
@@ -620,22 +622,28 @@ static int timecop_class_override()
 static int timecop_func_override_clear()
 {
 	const struct timecop_override_func_entry *p;
-	zend_function *zf_orig;
+	zend_function *zf_orig, *zf_ovld;
 
 	p = &(timecop_override_func_table[0]);
 	while (p->orig_func != NULL) {
 		zf_orig = zend_hash_str_find_ptr(EG(function_table),
 										 p->save_func, strlen(p->save_func));
-		if (zf_orig == NULL) {
+		zf_ovld = zend_hash_str_find_ptr(EG(function_table),
+										 p->orig_func, strlen(p->orig_func));
+		if (zf_orig == NULL || zf_ovld == NULL) {
 			p++;
 			continue;
 		}
 
+		GUARD_FUNCTION_ARG_INFO_BEGIN(zf_ovld);
 		zend_hash_str_update_mem(EG(function_table), p->orig_func, strlen(p->orig_func),
 								 zf_orig, sizeof(zend_internal_function));
+		GUARD_FUNCTION_ARG_INFO_END();
 		function_add_ref(zf_orig);
 
+		GUARD_FUNCTION_ARG_INFO_BEGIN(zf_orig);
 		zend_hash_str_del(EG(function_table), p->save_func, strlen(p->save_func));
+		GUARD_FUNCTION_ARG_INFO_END();
 
 		p++;
 	}
