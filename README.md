@@ -142,6 +142,10 @@ var_dump((new DateTime())->format("c")); // string(25) "2017-01-01T00:00:05+00:0
 
 ## CHANGELOG
 
+### version 1.2.9(beta), 2017/11/22
+
+- Fix "double free" bug on PHP 7.2.0 ([#32](https://github.com/hnw/php-timecop/issues/32))
+
 ### version 1.2.8(beta), 2017/7/7
 
 - Publish on PECL
