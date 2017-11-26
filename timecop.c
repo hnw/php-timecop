@@ -603,8 +603,10 @@ static int timecop_func_override(TSRMLS_D)
 		function_add_ref(zf_orig);
 
 #if PHP_MAJOR_VERSION >= 7
+		GUARD_FUNCTION_ARG_INFO_BEGIN(zf_orig);
 		zend_hash_str_update_mem(EG(function_table), p->orig_func, strlen(p->orig_func),
 								 zf_ovrd, sizeof(zend_internal_function));
+		GUARD_FUNCTION_ARG_INFO_END();
 #else
 		zend_hash_update(EG(function_table), p->orig_func, strlen(p->orig_func)+1,
 						 zf_ovrd, sizeof(zend_function), NULL);
@@ -764,23 +766,29 @@ static int timecop_class_override(TSRMLS_D)
 static int timecop_func_override_clear(TSRMLS_D)
 {
 	const struct timecop_override_func_entry *p;
-	zend_function *zf_orig;
+	zend_function *zf_orig, *zf_ovld;
 
 	p = &(timecop_override_func_table[0]);
 	while (p->orig_func != NULL) {
 #if PHP_MAJOR_VERSION >= 7
 		zf_orig = zend_hash_str_find_ptr(EG(function_table),
 										 p->save_func, strlen(p->save_func));
-		if (zf_orig == NULL) {
+		zf_ovld = zend_hash_str_find_ptr(EG(function_table),
+										 p->orig_func, strlen(p->orig_func));
+
+		if (zf_orig == NULL || zf_ovld == NULL) {
 			p++;
 			continue;
 		}
 
+		GUARD_FUNCTION_ARG_INFO_BEGIN(zf_ovld);
 		zend_hash_str_update_mem(EG(function_table), p->orig_func, strlen(p->orig_func),
 								 zf_orig, sizeof(zend_internal_function));
+	 	GUARD_FUNCTION_ARG_INFO_END();
 		function_add_ref(zf_orig);
-
+		GUARD_FUNCTION_ARG_INFO_BEGIN(zf_orig);
 		zend_hash_str_del(EG(function_table), p->save_func, strlen(p->save_func));
+		GUARD_FUNCTION_ARG_INFO_END();
 #else
 		if (zend_hash_find(EG(function_table), p->save_func, strlen(p->save_func)+1,
 						   (void **)&zf_orig) != SUCCESS) {

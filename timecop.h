@@ -153,6 +153,7 @@ ZEND_END_MODULE_GLOBALS(timecop)
 #define TIMECOP_OCE(cname, mname) \
 	{cname, mname, OVRD_CLASS_PREFIX cname, SAVE_FUNC_PREFIX mname}
 
+#if PHP_MAJOR_VERSION >= 7
 /*
  * Trick for guarding the multi-referenced internal function from function destructor on PHP 7.2.0+
  * See: https://github.com/hnw/php-timecop/issues/29#issuecomment-332171527
@@ -170,6 +171,7 @@ ZEND_END_MODULE_GLOBALS(timecop)
         zf->common.arg_info = orig_arg_info; \
     } \
 }
+#endif
 
 struct timecop_override_func_entry {
 	char *orig_func;
