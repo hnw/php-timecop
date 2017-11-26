@@ -14,17 +14,17 @@
     <email>y@hnw.jp</email>
     <active>yes</active>
   </lead>
-  <date>2017-07-07</date>
+  <date>2017-11-23</date>
   <version>
-    <release>1.2.8</release>
-    <api>1.2.8</api>
+    <release>1.2.10</release>
+    <api>1.2.10</api>
   </version>
   <stability>
     <release>beta</release>
     <api>beta</api>
   </stability>
   <license uri="https://github.com/hnw/php-timecop/blob/master/LICENSE">MIT License</license>
-  <notes>Publish on PECL
+  <notes>Fix "double free" bug on PHP 7.2.0
   </notes>
   <contents>
     <dir name="/">
