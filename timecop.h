@@ -27,8 +27,13 @@ SOFTWARE.
 
 #define PHP_TIMECOP_VERSION "1.2.10"
 
-extern zend_module_entry timecop_module_entry;
-#define phpext_timecop_ptr &timecop_module_entry
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#include "php.h"
+#include "php_ini.h"
+#include "ext/standard/info.h"
 
 #ifdef PHP_WIN32
 #	define PHP_TIMECOP_API __declspec(dllexport)
@@ -50,6 +55,10 @@ extern zend_module_entry timecop_module_entry;
 
 #include "Zend/zend_interfaces.h"
 #include "tc_timeval.h"
+
+
+extern zend_module_entry timecop_module_entry;
+#define phpext_timecop_ptr &timecop_module_entry
 
 PHP_MINIT_FUNCTION(timecop);
 PHP_MSHUTDOWN_FUNCTION(timecop);
@@ -108,7 +117,7 @@ typedef enum timecop_mode_t {
 ZEND_BEGIN_MODULE_GLOBALS(timecop)
 	long func_override;
 	long sync_request_time;
-#if PHP_VERSION_ID >= 70000
+#if PHP_MAJOR_VERSION >= 7
 	zval orig_request_time;
 #else
 	zval *orig_request_time;
@@ -117,11 +126,7 @@ ZEND_BEGIN_MODULE_GLOBALS(timecop)
 	tc_timeval freezed_time;
 	tc_timeval travel_origin;
 	tc_timeval travel_offset;
-#if PHP_VERSION_ID >= 70000
 	zend_long scaling_factor;
-#else
-	long scaling_factor;
-#endif
 	zend_class_entry *ce_DateTimeZone;
 	zend_class_entry *ce_DateTimeInterface;
 	zend_class_entry *ce_DateTime;
@@ -148,6 +153,7 @@ ZEND_END_MODULE_GLOBALS(timecop)
 #define TIMECOP_OCE(cname, mname) \
 	{cname, mname, OVRD_CLASS_PREFIX cname, SAVE_FUNC_PREFIX mname}
 
+#if PHP_MAJOR_VERSION >= 7
 /*
  * Trick for guarding the multi-referenced internal function from function destructor on PHP 7.2.0+
  * See: https://github.com/hnw/php-timecop/issues/29#issuecomment-332171527
@@ -165,6 +171,7 @@ ZEND_END_MODULE_GLOBALS(timecop)
         zf->common.arg_info = orig_arg_info; \
     } \
 }
+#endif
 
 struct timecop_override_func_entry {
 	char *orig_func;
@@ -179,23 +186,75 @@ struct timecop_override_class_entry {
 	char *save_method;
 };
 
+static void timecop_globals_ctor(zend_timecop_globals *globals TSRMLS_DC);
+
+static int register_timecop_classes(TSRMLS_D);
+static int timecop_func_override(TSRMLS_D);
+static int timecop_class_override(TSRMLS_D);
+static int timecop_func_override_clear(TSRMLS_D);
+static int timecop_class_override_clear(TSRMLS_D);
+
+static int update_request_time(zend_long unixtime TSRMLS_DC);
+static int restore_request_time(TSRMLS_D);
+
+static long get_mock_fraction(zval *time, zval *timezone_obj TSRMLS_DC);
+
+static void _timecop_call_function(INTERNAL_FUNCTION_PARAMETERS, const char *function_name, int index_to_fill_timestamp);
+static void _timecop_call_mktime(INTERNAL_FUNCTION_PARAMETERS, const char *mktime_function_name, const char *date_function_name);
+
+static int get_mock_timeval(tc_timeval *fixed, const tc_timeval *now TSRMLS_DC);
+
+static inline zend_long mock_timestamp();
+
+static int get_timeval_from_datetime(tc_timeval *tp, zval *dt TSRMLS_DC);
+static int get_current_time(tc_timeval *now TSRMLS_DC);
+
+static void _timecop_orig_datetime_constructor(INTERNAL_FUNCTION_PARAMETERS, int immutable);
+static inline void _timecop_date_create(INTERNAL_FUNCTION_PARAMETERS, int immutable);
+static inline void _timecop_datetime_constructor(INTERNAL_FUNCTION_PARAMETERS, int immutable);
+static void _timecop_datetime_constructor_ex(INTERNAL_FUNCTION_PARAMETERS, zval *obj, int immutable);
+
+#if PHP_MAJOR_VERSION >= 7
+static int fill_mktime_params(zval *fill_params, const char *date_function_name, int from);
+static int get_formatted_mock_time(zval *time, zval *timezone_obj, zval *retval_time, zval *retval_timezone);
+
+static inline zval* _call_php_method(zval *object_pp, zend_class_entry *obj_ce, const char *method_name, zval *retval_ptr, zval* arg1, zval* arg2);
+static inline void _call_php_function(const char *function_name, zval *retval_ptr, zval* arg1, zval* arg2);
+static void _call_php_function_with_3_params(const char *function_name, zval *retval_ptr, zval *arg1, zval *arg2, zval *arg3);
+static inline void _call_php_function_with_params(const char *function_name, zval *retval_ptr, uint32_t param_count, zval params[]);
+
+#define register_internal_class_ex(class_entry, parent_ce) \
+	zend_register_internal_class_ex(class_entry, parent_ce)
+#else
+static int fill_mktime_params(zval ***params, const char *date_function_name, int from TSRMLS_DC);
+static int get_formatted_mock_time(zval *time, zval *timezone_obj, zval **retval_time, zval **retval_timezone TSRMLS_DC);
+
+static inline zval* _call_php_function(const char *method_name, zval **retval_ptr_ptr, zval* arg1, zval* arg2 TSRMLS_DC);
+static inline zval* _call_php_method(zval **object_pp, zend_class_entry *obj_ce, const char *method_name, zval **retval_ptr_ptr, zval* arg1, zval* arg2 TSRMLS_DC);
+static void _call_php_function_with_3_params(const char *function_name, zval **retval_ptr_ptr, zval *arg1, zval *arg2, zval *arg3 TSRMLS_DC);
+static inline void _call_php_function_with_params(const char *function_name, zval **retval_ptr_ptr, zend_uint param_count, zval **params[] TSRMLS_DC);
+
+#define register_internal_class_ex(class_entry, parent_ce) \
+	zend_register_internal_class_ex(class_entry, parent_ce, NULL TSRMLS_CC)
+#endif
+
 #define call_php_method_with_0_params(obj, ce, method_name, retval) \
-	_call_php_method_with_0_params(obj, ce, method_name, retval TSRMLS_CC)
+	_call_php_method(obj, ce, method_name, retval, NULL, NULL TSRMLS_CC)
 
 #define call_php_method_with_1_params(obj, ce, method_name, retval, arg1)	\
-	_call_php_method_with_1_params(obj, ce, method_name, retval, arg1 TSRMLS_CC)
+	_call_php_method(obj, ce, method_name, retval, arg1, NULL TSRMLS_CC)
 
 #define call_php_method_with_2_params(obj, ce, method_name, retval, arg1, arg2) \
-	_call_php_method_with_2_params(obj, ce, method_name, retval, arg1, arg2 TSRMLS_CC)
+	_call_php_method(obj, ce, method_name, retval, arg1, arg2 TSRMLS_CC)
 
 #define call_php_function_with_0_params(function_name, retval) \
-	_call_php_function_with_0_params(function_name, retval TSRMLS_CC)
+	_call_php_function(function_name, retval, NULL, NULL TSRMLS_CC)
 
 #define call_php_function_with_1_params(function_name, retval, arg1) \
-	_call_php_function_with_1_params(function_name, retval, arg1 TSRMLS_CC)
+	_call_php_function(function_name, retval, arg1, NULL TSRMLS_CC)
 
 #define call_php_function_with_2_params(function_name, retval, arg1, arg2) \
-	_call_php_function_with_2_params(function_name, retval, arg1, arg2 TSRMLS_CC)
+	_call_php_function(function_name, retval, arg1, arg2 TSRMLS_CC)
 
 #define call_php_function_with_3_params(function_name, retval, arg1, arg2, arg3) \
 	_call_php_function_with_3_params(function_name, retval, arg1, arg2, arg3 TSRMLS_CC)
@@ -213,7 +272,7 @@ struct timecop_override_class_entry {
    examples in any other php module directory.
 */
 
-#if PHP_VERSION_ID >= 70000
+#if PHP_MAJOR_VERSION >= 7
 #  define TIMECOP_G(v) ZEND_MODULE_GLOBALS_ACCESSOR(timecop, v)
 #  if defined(ZTS) && defined(COMPILE_DL_TIMECOP)
      ZEND_TSRMLS_CACHE_EXTERN();
