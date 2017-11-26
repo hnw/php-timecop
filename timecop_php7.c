@@ -424,6 +424,9 @@ static int register_timecop_classes()
 	zend_class_entry ce;
 	zend_class_entry *tmp, *date_ce, *timezone_ce, *immutable_ce, *interface_ce;
 
+	php_error_docref("https://github.com/hnw/php-timecop", E_WARNING,
+					 "001");
+	
 	date_ce = zend_hash_str_find_ptr(CG(class_table), "datetime", sizeof("datetime")-1);
 	if (date_ce == NULL) {
 		/* DateTime must be initialized before */
@@ -431,6 +434,9 @@ static int register_timecop_classes()
 						 "timecop couldn't find class %s.", "DateTime");
 		return SUCCESS;
 	}
+
+	php_error_docref("https://github.com/hnw/php-timecop", E_WARNING,
+					 "002");
 
 	timezone_ce = zend_hash_str_find_ptr(CG(class_table), "datetimezone", sizeof("datetimezone")-1);
 	if (timezone_ce == NULL) {
@@ -486,6 +492,9 @@ static int register_timecop_classes()
 	tmp = zend_register_internal_class_ex(&ce, immutable_ce);
 	tmp->create_object = immutable_ce->create_object;
 
+	php_error_docref("https://github.com/hnw/php-timecop", E_WARNING,
+					 "003");
+	
 	return SUCCESS;
 }
 
