@@ -197,14 +197,6 @@ static int timecop_class_override_clear(TSRMLS_D);
 static int update_request_time(zend_long unixtime TSRMLS_DC);
 static int restore_request_time(TSRMLS_D);
 
-#if PHP_MAJOR_VERSION >= 7
-static int fill_mktime_params(zval *fill_params, const char *date_function_name, int from);
-static int get_formatted_mock_time(zval *time, zval *timezone_obj, zval *retval_time, zval *retval_timezone);
-#else
-static int fill_mktime_params(zval ***params, const char *date_function_name, int from TSRMLS_DC);
-static int get_formatted_mock_time(zval *time, zval *timezone_obj, zval **retval_time, zval **retval_timezone TSRMLS_DC);
-#endif
-
 static long get_mock_fraction(zval *time, zval *timezone_obj TSRMLS_DC);
 
 static void _timecop_call_function(INTERNAL_FUNCTION_PARAMETERS, const char *function_name, int index_to_fill_timestamp);
@@ -223,21 +215,25 @@ static inline void _timecop_datetime_constructor(INTERNAL_FUNCTION_PARAMETERS, i
 static void _timecop_datetime_constructor_ex(INTERNAL_FUNCTION_PARAMETERS, zval *obj, int immutable);
 
 #if PHP_MAJOR_VERSION >= 7
+static int fill_mktime_params(zval *fill_params, const char *date_function_name, int from);
+static int get_formatted_mock_time(zval *time, zval *timezone_obj, zval *retval_time, zval *retval_timezone);
+
 static inline zval* _call_php_method(zval *object_pp, zend_class_entry *obj_ce, const char *method_name, zval *retval_ptr, zval* arg1, zval* arg2);
 static inline void _call_php_function(const char *function_name, zval *retval_ptr, zval* arg1, zval* arg2);
 static void _call_php_function_with_3_params(const char *function_name, zval *retval_ptr, zval *arg1, zval *arg2, zval *arg3);
 static inline void _call_php_function_with_params(const char *function_name, zval *retval_ptr, uint32_t param_count, zval params[]);
+
+#define register_internal_class_ex(class_entry, parent_ce) \
+	zend_register_internal_class_ex(class_entry, parent_ce)
 #else
+static int fill_mktime_params(zval ***params, const char *date_function_name, int from TSRMLS_DC);
+static int get_formatted_mock_time(zval *time, zval *timezone_obj, zval **retval_time, zval **retval_timezone TSRMLS_DC);
+
 static inline zval* _call_php_function(const char *method_name, zval **retval_ptr_ptr, zval* arg1, zval* arg2 TSRMLS_DC);
 static inline zval* _call_php_method(zval **object_pp, zend_class_entry *obj_ce, const char *method_name, zval **retval_ptr_ptr, zval* arg1, zval* arg2 TSRMLS_DC);
 static void _call_php_function_with_3_params(const char *function_name, zval **retval_ptr_ptr, zval *arg1, zval *arg2, zval *arg3 TSRMLS_DC);
 static inline void _call_php_function_with_params(const char *function_name, zval **retval_ptr_ptr, zend_uint param_count, zval **params[] TSRMLS_DC);
-#endif
 
-#if PHP_MAJOR_VERSION >= 7
-#define register_internal_class_ex(class_entry, parent_ce) \
-	zend_register_internal_class_ex(class_entry, parent_ce)
-#else
 #define register_internal_class_ex(class_entry, parent_ce) \
 	zend_register_internal_class_ex(class_entry, parent_ce, NULL TSRMLS_CC)
 #endif
