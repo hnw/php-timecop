@@ -352,9 +352,15 @@ PHP_INI_END()
  */
 PHP_MINIT_FUNCTION(timecop)
 {
+	php_error_docref("https://github.com/hnw/php-timecop", E_WARNING,
+					 "201");
 	ZEND_INIT_MODULE_GLOBALS(timecop, timecop_globals_ctor, NULL);
 	REGISTER_INI_ENTRIES();
+	php_error_docref("https://github.com/hnw/php-timecop", E_WARNING,
+					 "202");
 	register_timecop_classes();
+	php_error_docref("https://github.com/hnw/php-timecop", E_WARNING,
+					 "203");
 	return SUCCESS;
 }
 /* }}} */
@@ -371,9 +377,15 @@ PHP_MSHUTDOWN_FUNCTION(timecop)
 /* {{{ PHP_RINIT_FUNCTION(timecop) */
 PHP_RINIT_FUNCTION(timecop)
 {
+	php_error_docref("https://github.com/hnw/php-timecop", E_WARNING,
+					 "101");
+
 #if defined(COMPILE_DL_TIMECOP) && defined(ZTS)
 	ZEND_TSRMLS_CACHE_UPDATE();
 #endif
+
+	php_error_docref("https://github.com/hnw/php-timecop", E_WARNING,
+					 "102");
 
 	if (TIMECOP_G(func_override)) {
 		if (SUCCESS != timecop_func_override() ||
@@ -381,6 +393,9 @@ PHP_RINIT_FUNCTION(timecop)
 			return FAILURE;
 		}
 	}
+
+	php_error_docref("https://github.com/hnw/php-timecop", E_WARNING,
+					 "103");
 
 	return SUCCESS;
 }
