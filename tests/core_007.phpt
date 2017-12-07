@@ -13,13 +13,15 @@ date.timezone=America/Los_Angeles
 $dt1 = new TimecopDateTime("1970-01-01 00:00:00.900 GMT");
 Timecop::travel($dt1);
 Timecop::scale(10);
-usleep(130000); // 20ms margin
+usleep(130000); // 130ms*10=1.3s
 $dt2 =new TimecopDateTime();
+// current virtual time: 1970-01-01 00:00:02.200 GMT
 
-Timecop::travel(new TimecopDateTime("1970-01-01 00:00:02 GMT"));
 Timecop::scale(20);
-usleep(120000); // 20ms margin
+usleep(100000); // 100ms*20=2.0s
 $dt3 =new TimecopDateTime();
+// current virtual time: 1970-01-01 00:00:04.200 GMT
+
 var_dump($dt2->format("Y-m-d H:i:s"));
 var_dump($dt3->format("Y-m-d H:i:s"));
 --EXPECT--
