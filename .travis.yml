@@ -20,15 +20,19 @@ matrix:
         - php: 7.2
         - php: master
         - os: osx
+          osx_image: xcode9.2
           language: generic
           env: PHP_VERSION=php56
         - os: osx
+          osx_image: xcode9.2
           language: generic
           env: PHP_VERSION=php70
         - os: osx
+          osx_image: xcode9.2
           language: generic
           env: PHP_VERSION=php71
         - os: osx
+          osx_image: xcode9.2
           language: generic
           env: PHP_VERSION=php72
 
