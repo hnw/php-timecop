@@ -39,6 +39,7 @@ matrix:
 before_script:
   - phpize && ./configure && make
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew tap homebrew/homebrew-php; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install $PHP_VERSION; fi
 
 script:
