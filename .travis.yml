@@ -1,6 +1,10 @@
 sudo: false
 language: php
 
+os:
+  - linux
+  - osx
+
 branches:
   except:
     - gh-pages
