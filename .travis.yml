@@ -35,11 +35,11 @@ matrix:
           env: PHP_VERSION=php72
 
 before_script:
-  - phpize && ./configure && make
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew tap homebrew/homebrew-php; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install $PHP_VERSION; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export PATH="$(brew --prefix homebrew/php/$PHP_VERSION)/bin:$PATH" ; fi
+  - phpize && ./configure && make
 
 script:
   - make test TRAVIS=0 REPORT_EXIT_STATUS=1 NO_INTERACTION=1 TESTS="--show-all" | tee tests-output.txt && if grep -q 'TEST SUMMARY$' tests-output.txt ; then exit 1 ; fi
