@@ -11,8 +11,10 @@ if not exist "%PHP_SDK_DIR%" (
 )
 
 wget %PHP_SDK_TOOLS_URL%
+if %errorlevel% neq 0 exit /b 3
 
 7z x -y %PHP_SDK_TOOLS_FILENAME% -o%PHP_SDK_DIR%
+if %errorlevel% neq 0 exit /b 3
 
 if not exist "%SDK_RUNNER%" (
 	echo "%SDK_RUNNER%" doesn't exist
