@@ -20,7 +20,7 @@ set PHP_SRC_DIRNAME=%PHP_SRC_FILENAME:.tar.bz2=%
 wget %PHP_SRC_URL%
 if %errorlevel% neq 0 exit /b 3
 
-7z x -so %PHP_SRC_BASENAME% | 7z x -si -ttar -o%PHP_BUILD_ROOT%\..
+7z x -so %PHP_SRC_FILENAME% | 7z x -si -ttar -o%PHP_BUILD_ROOT%\..
 if %errorlevel% neq 0 exit /b 3
 
 set DEPS_DIR=%PHP_SDK_DIR%\deps-%PHP_SRC_DIRNAME%-%PHP_SDK_VC%-%PHP_SDK_ARCH%
