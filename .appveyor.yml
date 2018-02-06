@@ -58,15 +58,9 @@ build_script:
 
     dir
 
-#    bin\phpsdk_setvars.bat
-
     mkdir %PHP_SRC_DIR%\ext\%PROJECT_NAME%
 
     xcopy %PROJECT_DIR% %PHP_SRC_DIR%\ext\%PROJECT_NAME% /s /e /y
-
-#    wget %PHP_SDK_DEPS_URL%
-
-#    7z x -y %PHP_SDK_DEPS_FILENAME% -o%PHP_SRC_DIR%
 
     cd %PHP_SRC_DIR%
 
