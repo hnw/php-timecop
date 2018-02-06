@@ -4,72 +4,63 @@ environment:
   PROJECT_NAME: php-timecop
   REPORT_EXIT_STATUS: 1
   NO_INTERACTION: 1
-  PHP_SDK_DIR: 'C:\projects\php-sdk'
+  PHP_SDK_DIR: 'C:\php-sdk'
   matrix:
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
-      PHP_PACKAGE_URL: 'https://secure.php.net/distributions/php-7.2.2.tar.bz2'
+      PHP_SRC_URL: 'https://secure.php.net/distributions/php-7.2.2.tar.bz2'
       PHP_SDK_TOOLS_URL: 'https://github.com/OSTC/php-sdk-binary-tools/archive/php-sdk-2.1.0.zip'
-      PHP_SDK_DEPS_URL: 'http://windows.php.net/downloads/php-sdk/deps-master-vc15-x86.7z'
-      VCVARS32_PATH: 'C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvars32.bat'
-      PHP_SDK_VC: 'vc15'
+      COMPILER_VERSION: 'vc15'
+      ARCH: 'x86'
 
 install:
 - cmd: >-
-    set PROJECT_DIR=C:\projects\%PROJECT_NAME%
-
-    set TEST_PHP_EXECUTABLE=%PROJECT_DIR%\bin\php.exe
-
-    for /f %%F in ("%PHP_PACKAGE_URL%") do set PHP_PACKAGE_FILENAME=%%~nxF
-
-    set PHP_SRC_DIR=C:\projects\%PHP_PACKAGE_FILENAME:.tar.bz2=%
-
-    for /f %%F in ("%PHP_SDK_TOOLS_URL%") do set PHP_SDK_TOOLS_FILENAME=%%~nxF
-
-    set PHP_SDK_TOOLS_SUBDIR=php-sdk-binary-tools-%PHP_SDK_TOOLS_FILENAME:.zip=%
-
-    for /f %%F in ("%PHP_SDK_DEPS_URL%") do set PHP_SDK_DEPS_FILENAME=%%~nxF
-
-    set TEST_PHP_EXECUTABLE=%PROJECT_DIR%\bin\php.exe
-
     choco feature enable -n=allowGlobalConfirmation
 
     cinst wget
 
-    mkdir %PROJECT_DIR%\bin
-
-build_script:
+before_build:
 - cmd: >-
-    echo %APPVEYOR_BUILD_WORKER_IMAGE%
+    mkdir %PHP_SDK_DIR%
 
-    echo %PROJECT_DIR%
+    set PROJECT_DIR=C:\projects\%PROJECT_NAME%    
 
-    echo %TEST_PHP_EXECUTABLE%
+    for /f %%F in ("%PHP_SRC_URL%") do set PHP_SRC_FILENAME=%%~nxF
 
-    "%VCVARS32_PATH%"
+    set PHP_SRC_DIRNAME=C:\projects\%PHP_SRC_FILENAME:.tar.bz2=%
 
-    wget %PHP_PACKAGE_URL%
+    for /f %%F in ("%PHP_SDK_TOOLS_URL%") do set PHP_SDK_TOOLS_FILENAME=%%~nxF
 
-    7z x -so %PHP_PACKAGE_FILENAME% | 7z x -si -ttar -oC:\projects\
+    set PHP_SDK_TOOLS_DIRNAME=php-sdk-binary-tools-%PHP_SDK_TOOLS_FILENAME:.zip=%
+
+    set PHP_SDK_STARTER_SCRIPT=phpsdk-%COMPILER_VERSION%-%ARCH%.bat
+
+    set PHP_BUILD_ROOT=%PHP_SDK_DIR%\phpdev\%COMPILER_VERSION%\%ARCH%\%PHP_SRC_DIRNAME%
 
     wget %PHP_SDK_TOOLS_URL%
 
     7z x -y  %PHP_SDK_TOOLS_FILENAME% -o%PHP_SDK_DIR%
 
-    if exist %PHP_SDK_DIR%\%PHP_SDK_TOOLS_SUBDIR% ( cd %PHP_SDK_DIR%\%PHP_SDK_TOOLS_SUBDIR% ) else ( cd %PHP_SDK_DIR% )
+    if exist %PHP_SDK_DIR%\%PHP_SDK_TOOLS_DIRNAME ( cd %PHP_SDK_DIR%\%PHP_SDK_TOOLS_SUBDIR% ) else ( cd %PHP_SDK_DIR% )
 
-    dir
+    cd bin
 
-    mkdir %PHP_SRC_DIR%\ext\%PROJECT_NAME%
+    %PHP_SDK_STARTER_SCRIPT%
 
-    xcopy %PROJECT_DIR% %PHP_SRC_DIR%\ext\%PROJECT_NAME% /s /e /y
+    phpsdk_buildtree.bat phpdev
+    
+    wget %PHP_SRC_URL%
 
-    cd %PHP_SRC_DIR%
+    7z x -so %PHP_SRC_BASENAME% | 7z x -si -ttar -o%PHP_BUILD_ROOT%\..
 
-    %PHP_SDK_DIR%\%PHP_SDK_TOOLS_SUBDIR%\bin\phpsdk_deps.bat -u
+    mkdir %PHP_BUILD_ROOT%\ext\%PROJECT_NAME%
 
+    xcopy %PROJECT_DIR%  %PHP_BUILD_ROOT%\ext\%PROJECT_NAME% /s /e /y
+
+    phpsdk_deps.bat -u
+
+build_script:
+- cmd: >-
     buildconf.bat
-
-    rem "Build failed with '--enable-zip' on PHP 7.2.0 beta1"
 
     configure.bat --disable-all --enable-phar --enable-json --enable-hash --enable-ctype --enable-filter --enable-tokenizer --with-iconv --with-openssl --with-dom --with-libxml --enable-zip --enable-timecop=shared --enable-cli --enable-zts --with-config-file-scan-dir=%PROJECT_DIR%\bin\modules.d --with-prefix=%PROJECT_DIR%\bin --with-php-build=deps
 
@@ -77,6 +68,8 @@ build_script:
 
     nmake install
 
+after_build:
+- cmd: >-
     copy php.ini-development %PROJECT_DIR%\bin\php.ini
 
     mkdir %PROJECT_DIR%\bin\modules.d
