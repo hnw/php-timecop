@@ -41,7 +41,7 @@ before_build:
 
     7z x -y  %PHP_SDK_TOOLS_FILENAME% -o%PHP_SDK_DIR%
 
-    if exist %PHP_SDK_DIR%\%PHP_SDK_TOOLS_DIRNAME ( cd %PHP_SDK_DIR%\%PHP_SDK_TOOLS_SUBDIR% ) else ( cd %PHP_SDK_DIR% )
+    if exist %PHP_SDK_DIR%\%PHP_SDK_TOOLS_DIRNAME% ( cd %PHP_SDK_DIR%\%PHP_SDK_TOOLS_DIRNAME% ) else ( cd %PHP_SDK_DIR% )
 
     cd bin
 
