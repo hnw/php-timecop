@@ -41,13 +41,13 @@ before_build:
 
     7z x -y  %PHP_SDK_TOOLS_FILENAME% -o%PHP_SDK_DIR%
 
-    if exist %PHP_SDK_DIR%\%PHP_SDK_TOOLS_DIRNAME% ( cd %PHP_SDK_DIR%\%PHP_SDK_TOOLS_DIRNAME% ) else ( cd %PHP_SDK_DIR% )
+    cd %PHP_SDK_DIR%
 
-    cd bin
+    if exist %PHP_SDK_TOOLS_DIRNAME% ( cd %PHP_SDK_TOOLS_DIRNAME% )
 
     %PHP_SDK_STARTER_SCRIPT%
 
-    phpsdk_buildtree.bat phpdev
+    bin\phpsdk_buildtree.bat phpdev
     
     wget %PHP_SRC_URL%
 
@@ -57,7 +57,7 @@ before_build:
 
     xcopy %PROJECT_DIR%  %PHP_BUILD_ROOT%\ext\%PROJECT_NAME% /s /e /y
 
-    phpsdk_deps.bat -u
+    bin\phpsdk_deps.bat -u
 
 
 build_script:
