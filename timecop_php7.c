@@ -285,7 +285,7 @@ static int restore_request_time();
 
 static int fill_mktime_params(zval *fill_params, const char *date_function_name, int from);
 static int get_formatted_mock_time(zval *time, zval *timezone_obj, zval *retval_time, zval *retval_timezone);
-static long get_mock_fraction(zval *time, zval *timezone_obj);
+static zend_long get_mock_fraction(zval *time, zval *timezone_obj);
 
 static void _timecop_call_function(INTERNAL_FUNCTION_PARAMETERS, const char *function_name, int index_to_fill_timestamp);
 static void _timecop_call_mktime(INTERNAL_FUNCTION_PARAMETERS, const char *mktime_function_name, const char *date_function_name);
@@ -841,7 +841,7 @@ static int get_formatted_mock_time(zval *time, zval *timezone_obj, zval *retval_
 			ZVAL_NULL(retval_timezone);
 			return -1;
 		}
-		sprintf(buf, "Y-m-d H:i:s.%06ld", fixed_usec);
+		sprintf(buf, "Y-m-d H:i:s.%06ld", (long)fixed_usec);
 		ZVAL_STRING(&format_str, buf);
 		call_php_method_with_1_params(&dt, TIMECOP_G(ce_DateTime), "settimestamp", NULL, &fixed_sec);
 		call_php_method_with_0_params(&dt, TIMECOP_G(ce_DateTime), "gettimezone", retval_timezone);
@@ -876,7 +876,7 @@ static int get_formatted_mock_time(zval *time, zval *timezone_obj, zval *retval_
  *     return $fixed_usec;
  * }
  */
-static long get_mock_fraction(zval *time, zval *timezone_obj TSRMLS_DC)
+static zend_long get_mock_fraction(zval *time, zval *timezone_obj TSRMLS_DC)
 {
 	zval dt1, dt2, usec1, usec2;
 	zend_long fixed_usec;
@@ -1447,7 +1447,7 @@ static void _timecop_date_create_from_format(INTERNAL_FUNCTION_PARAMETERS, int i
 
 	ZVAL_LONG(&now_timestamp, now.sec);
 	call_php_method_with_1_params(&dt, TIMECOP_G(ce_DateTime), "settimestamp", NULL, &now_timestamp);
-	sprintf(buf, "Y-m-d H:i:s.%06ld ", now.usec);
+	sprintf(buf, "Y-m-d H:i:s.%06ld ", (long)now.usec);
 	ZVAL_STRING(&tmp, buf);
 	call_php_method_with_1_params(&dt, TIMECOP_G(ce_DateTime), "format", &fixed_time, &tmp);
 	zval_ptr_dtor(&tmp);
