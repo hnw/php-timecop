@@ -18,6 +18,7 @@ install:
 
     cinst wget
 
+
 before_build:
 - cmd: >-
     mkdir %PHP_SDK_DIR%
@@ -58,6 +59,7 @@ before_build:
 
     phpsdk_deps.bat -u
 
+
 build_script:
 - cmd: >-
     buildconf.bat
@@ -68,6 +70,7 @@ build_script:
 
     nmake install
 
+
 after_build:
 - cmd: >-
     copy php.ini-development %PROJECT_DIR%\bin\php.ini
@@ -75,6 +78,7 @@ after_build:
     mkdir %PROJECT_DIR%\bin\modules.d
 
     echo extension=php_timecop.dll >> %PROJECT_DIR%\bin\modules.d\php.ini
+
 
 test_script:
 - cmd: >-
