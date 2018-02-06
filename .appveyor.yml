@@ -21,57 +21,59 @@ install:
 
     cinst wget
 
-
-before_build:
-- cmd: >-
-    mkdir %PHP_SDK_DIR%
-
-    set PROJECT_DIR=C:\projects\%PROJECT_NAME%    
-
-    for /f %%F in ("%PHP_SRC_URL%") do set PHP_SRC_FILENAME=%%~nxF
-
-    set PHP_SRC_DIRNAME=%PHP_SRC_FILENAME:.tar.bz2=%
-
-    for /f %%F in ("%PHP_SDK_TOOLS_URL%") do set PHP_SDK_TOOLS_FILENAME=%%~nxF
-
-    set PHP_SDK_TOOLS_DIRNAME=php-sdk-binary-tools-%PHP_SDK_TOOLS_FILENAME:.zip=%
-
-    set PHP_SDK_STARTER_SCRIPT=phpsdk-%PHP_BUILD_CRT%-%PLATFORM%.bat
-
-    set PHP_BUILD_ROOT=%PHP_SDK_DIR%\phpdev\%PHP_BUILD_CRT%\%PLATFORM%\%PHP_SRC_DIRNAME%
-
-    wget %PHP_SDK_TOOLS_URL%
-
-    7z x -y  %PHP_SDK_TOOLS_FILENAME% -o%PHP_SDK_DIR%
-
-    cd %PHP_SDK_DIR%
-
-    if exist %PHP_SDK_TOOLS_DIRNAME% ( cd %PHP_SDK_TOOLS_DIRNAME% )
-
-    bin\phpsdk_buildtree.bat phpdev
-    
-    wget %PHP_SRC_URL%
-
-    7z x -so %PHP_SRC_BASENAME% | 7z x -si -ttar -o%PHP_BUILD_ROOT%\..
-
-    mkdir %PHP_BUILD_ROOT%\ext\%PROJECT_NAME%
-
-    xcopy %PROJECT_DIR% %PHP_BUILD_ROOT%\ext\%PROJECT_NAME% /s /e /y
-
-    bin\phpsdk_deps.bat -u
+#before_build:
+#- cmd: >-
+#    mkdir %PHP_SDK_DIR%
+#
+#    set PROJECT_DIR=C:\projects\%PROJECT_NAME%    
+#
+#    for /f %%F in ("%PHP_SRC_URL%") do set PHP_SRC_FILENAME=%%~nxF
+#
+#    set PHP_SRC_DIRNAME=%PHP_SRC_FILENAME:.tar.bz2=%
+#
+#    for /f %%F in ("%PHP_SDK_TOOLS_URL%") do set PHP_SDK_TOOLS_FILENAME=%%~nxF
+#
+#    set PHP_SDK_TOOLS_DIRNAME=php-sdk-binary-tools-%PHP_SDK_TOOLS_FILENAME:.zip=%
+#
+#    set PHP_SDK_STARTER_SCRIPT=phpsdk-%PHP_BUILD_CRT%-%PLATFORM%.bat
+#
+#    set PHP_BUILD_ROOT=%PHP_SDK_DIR%\phpdev\%PHP_BUILD_CRT%\%PLATFORM%\%PHP_SRC_DIRNAME%
+#
+#    wget %PHP_SDK_TOOLS_URL%
+#
+#    7z x -y  %PHP_SDK_TOOLS_FILENAME% -o%PHP_SDK_DIR%
+#
+#    cd %PHP_SDK_DIR%
+#
+#    if exist %PHP_SDK_TOOLS_DIRNAME% ( cd %PHP_SDK_TOOLS_DIRNAME% )
+#
+#    bin\phpsdk_buildtree.bat phpdev
+#    
+#    wget %PHP_SRC_URL%
+#
+#    7z x -so %PHP_SRC_BASENAME% | 7z x -si -ttar -o%PHP_BUILD_ROOT%\..
+#
+#    mkdir %PHP_BUILD_ROOT%\ext\%PROJECT_NAME%
+#
+#    xcopy %PROJECT_DIR% %PHP_BUILD_ROOT%\ext\%PROJECT_NAME% /s /e /y
+#
+#    bin\phpsdk_deps.bat -u
 
 
 build_script:
-- cmd: >-
-    cd %PHP_BUILD_ROOT%
-    
-    buildconf.bat
-
-    configure.bat --disable-all --enable-phar --enable-json --enable-hash --enable-ctype --enable-filter --enable-tokenizer --with-iconv --with-openssl --with-dom --with-libxml --enable-zip --enable-timecop=shared --enable-cli --enable-zts --with-config-file-scan-dir=%PROJECT_DIR%\bin\modules.d --with-prefix=%PROJECT_DIR%\bin --with-php-build=deps
-
-    nmake
-
-    nmake install
+  - appveyor\build.bat
+  
+#build_script:
+#- cmd: >-
+#    cd %PHP_BUILD_ROOT%
+#    
+#    buildconf.bat
+#
+#    configure.bat --disable-all --enable-phar --enable-json --enable-hash --enable-ctype --enable-filter --enable-tokenizer --with-iconv --with-openssl --with-dom --with-libxml --enable-zip --enable-timecop=shared --enable-cli --enable-zts --with-config-file-scan-dir=%PROJECT_DIR%\bin\modules.d --with-prefix=%PROJECT_DIR%\bin --with-php-build=deps
+#
+#    nmake
+#
+#    nmake install
 
 
 after_build:
