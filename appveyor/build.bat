@@ -1,9 +1,9 @@
 @echo off
 
-set SDK_RUNNER=%PHP_SDK_DIR%\phpsdk-%PHP_BUILD_CRT%-%PLATFORM%.bat
-
 for /f %%F in ("%PHP_SDK_TOOLS_URL%") do set PHP_SDK_TOOLS_FILENAME=%%~nxF
 set PHP_SDK_TOOLS_DIRNAME=php-sdk-binary-tools-%PHP_SDK_TOOLS_FILENAME:.zip=%
+
+set SDK_RUNNER=%PHP_SDK_DIR%\%PHP_SDK_TOOLS_DIRNAME%\phpsdk-%PHP_BUILD_CRT%-%PLATFORM%.bat
 
 if not exist "%PHP_SDK_DIR%" (
 	echo Creating %PHP_SDK_DIR%
