@@ -6,26 +6,11 @@ environment:
   NO_INTERACTION: 1
   PHP_SDK_DIR: 'C:\projects\php-sdk'
   matrix:
-    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
-      PHP_PACKAGE_URL: 'https://secure.php.net/distributions/php-5.4.45.tar.bz2'
-      PHP_SDK_TOOLS_URL: 'http://windows.php.net/downloads/php-sdk/php-sdk-binary-tools-20110915.zip'
-      PHP_SDK_DEPS_URL: 'http://windows.php.net/downloads/php-sdk/archives/deps-5.4-vc9-x86_2015-05.7z'
-      VCVARS32_PATH: 'C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\bin\vcvars32.bat'
-    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
-      PHP_PACKAGE_URL: 'https://secure.php.net/distributions/php-5.6.29.tar.bz2'
-      PHP_SDK_TOOLS_URL: 'http://windows.php.net/downloads/php-sdk/php-sdk-binary-tools-20110915.zip'
-      PHP_SDK_DEPS_URL: 'http://windows.php.net/downloads/php-sdk/deps-5.6-vc11-x86.7z'
-      VCVARS32_PATH: 'C:\Program Files (x86)\Microsoft Visual Studio 11.0\VC\bin\vcvars32.bat'
-    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
-      PHP_PACKAGE_URL: 'https://secure.php.net/distributions/php-7.1.7.tar.bz2'
-      PHP_SDK_TOOLS_URL: 'http://windows.php.net/downloads/php-sdk/php-sdk-binary-tools-20110915.zip'
-      PHP_SDK_DEPS_URL: 'http://windows.php.net/downloads/php-sdk/deps-7.1-vc14-x86.7z'
-      VCVARS32_PATH: 'C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\bin\vcvars32.bat'
-#    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
-#      PHP_PACKAGE_URL: 'https://downloads.php.net/~pollita/php-7.2.0beta1.tar.bz2'
-#      PHP_SDK_TOOLS_URL: 'https://github.com/OSTC/php-sdk-binary-tools/archive/php-sdk-2.0.7.zip'
-#      PHP_SDK_DEPS_URL: 'http://windows.php.net/downloads/php-sdk/deps-master-vc15-x86.7z'
-#      VCVARS32_PATH: 'C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvars32.bat'
+    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+      PHP_PACKAGE_URL: 'https://secure.php.net/distributions/php-7.2.2.tar.bz2'
+      PHP_SDK_TOOLS_URL: 'https://github.com/OSTC/php-sdk-binary-tools/archive/php-sdk-2.1.0.zip'
+      PHP_SDK_DEPS_URL: 'http://windows.php.net/downloads/php-sdk/deps-master-vc15-x86.7z'
+      VCVARS32_PATH: 'C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvars32.bat'
 
 install:
 - cmd: >-
@@ -73,17 +58,19 @@ build_script:
 
     dir
 
-    bin\phpsdk_setvars.bat
+#    bin\phpsdk_setvars.bat
 
     mkdir %PHP_SRC_DIR%\ext\%PROJECT_NAME%
 
     xcopy %PROJECT_DIR% %PHP_SRC_DIR%\ext\%PROJECT_NAME% /s /e /y
 
-    wget %PHP_SDK_DEPS_URL%
+#    wget %PHP_SDK_DEPS_URL%
 
-    7z x -y %PHP_SDK_DEPS_FILENAME% -o%PHP_SRC_DIR%
+#    7z x -y %PHP_SDK_DEPS_FILENAME% -o%PHP_SRC_DIR%
 
     cd %PHP_SRC_DIR%
+
+    %PHP_SDK_DIR%\%PHP_SDK_TOOLS_SUBDIR%\bin\phpsdk_deps.bat -u
 
     buildconf.bat
 
