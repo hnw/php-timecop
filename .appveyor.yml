@@ -30,7 +30,7 @@ before_build:
 
     for /f %%F in ("%PHP_SRC_URL%") do set PHP_SRC_FILENAME=%%~nxF
 
-    set PHP_SRC_DIRNAME=C:\projects\%PHP_SRC_FILENAME:.tar.bz2=%
+    set PHP_SRC_DIRNAME=%PHP_SRC_FILENAME:.tar.bz2=%
 
     for /f %%F in ("%PHP_SDK_TOOLS_URL%") do set PHP_SDK_TOOLS_FILENAME=%%~nxF
 
