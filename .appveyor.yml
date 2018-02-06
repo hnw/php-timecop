@@ -11,6 +11,7 @@ environment:
       PHP_SDK_TOOLS_URL: 'https://github.com/OSTC/php-sdk-binary-tools/archive/php-sdk-2.1.0.zip'
       PHP_SDK_DEPS_URL: 'http://windows.php.net/downloads/php-sdk/deps-master-vc15-x86.7z'
       VCVARS32_PATH: 'C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvars32.bat'
+      PHP_SDK_VC: 'vc15'
 
 install:
 - cmd: >-
