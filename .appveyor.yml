@@ -1,5 +1,9 @@
 version: '{branch}.{build}'
 
+platform:
+  - x64
+  - x86
+
 environment:
   PROJECT_NAME: php-timecop
   REPORT_EXIT_STATUS: 1
@@ -9,8 +13,7 @@ environment:
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
       PHP_SRC_URL: 'https://secure.php.net/distributions/php-7.2.2.tar.bz2'
       PHP_SDK_TOOLS_URL: 'https://github.com/OSTC/php-sdk-binary-tools/archive/php-sdk-2.1.0.zip'
-      COMPILER_VERSION: 'vc15'
-      ARCH: 'x86'
+      PHP_BUILD_CRT: vc15
 
 install:
 - cmd: >-
@@ -33,9 +36,9 @@ before_build:
 
     set PHP_SDK_TOOLS_DIRNAME=php-sdk-binary-tools-%PHP_SDK_TOOLS_FILENAME:.zip=%
 
-    set PHP_SDK_STARTER_SCRIPT=phpsdk-%COMPILER_VERSION%-%ARCH%.bat
+    set PHP_SDK_STARTER_SCRIPT=phpsdk-%PHP_BUILD_CRT%-%PLATFORM%.bat
 
-    set PHP_BUILD_ROOT=%PHP_SDK_DIR%\phpdev\%COMPILER_VERSION%\%ARCH%\%PHP_SRC_DIRNAME%
+    set PHP_BUILD_ROOT=%PHP_SDK_DIR%\phpdev\%PHP_BUILD_CRT%\%PLATFORM%\%PHP_SRC_DIRNAME%
 
     wget %PHP_SDK_TOOLS_URL%
 
@@ -45,8 +48,6 @@ before_build:
 
     if exist %PHP_SDK_TOOLS_DIRNAME% ( cd %PHP_SDK_TOOLS_DIRNAME% )
 
-    %PHP_SDK_STARTER_SCRIPT%
-
     bin\phpsdk_buildtree.bat phpdev
     
     wget %PHP_SRC_URL%
@@ -55,13 +56,15 @@ before_build:
 
     mkdir %PHP_BUILD_ROOT%\ext\%PROJECT_NAME%
 
-    xcopy %PROJECT_DIR%  %PHP_BUILD_ROOT%\ext\%PROJECT_NAME% /s /e /y
+    xcopy %PROJECT_DIR% %PHP_BUILD_ROOT%\ext\%PROJECT_NAME% /s /e /y
 
     bin\phpsdk_deps.bat -u
 
 
 build_script:
 - cmd: >-
+    cd %PHP_BUILD_ROOT%
+    
     buildconf.bat
 
     configure.bat --disable-all --enable-phar --enable-json --enable-hash --enable-ctype --enable-filter --enable-tokenizer --with-iconv --with-openssl --with-dom --with-libxml --enable-zip --enable-timecop=shared --enable-cli --enable-zts --with-config-file-scan-dir=%PROJECT_DIR%\bin\modules.d --with-prefix=%PROJECT_DIR%\bin --with-php-build=deps
