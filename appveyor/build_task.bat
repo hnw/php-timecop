@@ -21,7 +21,8 @@ set PHP_BUILD_ROOT=%PHP_SDK_DIR%\phpdev\%PHP_BUILD_CRT%\%PLATFORM%\%PHP_SRC_DIRN
 cd %PHP_SDK_DIR%
 if exist %PHP_SDK_TOOLS_DIRNAME% ( cd %PHP_SDK_TOOLS_DIRNAME% )
 
-phpsdk_buildtree.bat phpdev
+cmd /c phpsdk_buildtree.bat phpdev
+if %errorlevel% neq 0 exit /b 3
 
 wget %PHP_SRC_URL%
 if %errorlevel% neq 0 exit /b 3
