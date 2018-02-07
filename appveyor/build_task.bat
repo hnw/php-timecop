@@ -1,4 +1,4 @@
-@echo off
+rem @echo off
 
 if "%APPVEYOR%" equ "True" rmdir /s /q C:\cygwin >NUL 2>NUL
 if %errorlevel% neq 0 exit /b 3
