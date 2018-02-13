@@ -42,9 +42,10 @@ echo Downloading dependencies in %DEPS_DIR%
 cd %PHP_BUILD_ROOT%
 if %errorlevel% neq 0 exit /b 3
 
-dir %APPVEYOR_BUILD_FOLDER%
+mkdir %PHP_BUILD_ROOT%\ext\%PROJECT_NAME
+if %errorlevel% neq 0 exit /b 3
 
-xcopy %APPVEYOR_BUILD_FOLDER% %PHP_BUILD_ROOT%\ext\%PROJECT_NAME% /e /y
+xcopy %APPVEYOR_BUILD_FOLDER% %PHP_BUILD_ROOT%\ext\%PROJECT_NAME% /s /e /y
 if %errorlevel% neq 0 exit /b 3
 
 cmd /c phpsdk_deps -u --deps %DEPS_DIR%
