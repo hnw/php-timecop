@@ -1447,7 +1447,7 @@ static void _timecop_date_create_from_format(INTERNAL_FUNCTION_PARAMETERS, int i
 
 	ZVAL_LONG(&now_timestamp, now.sec);
 	call_php_method_with_1_params(&dt, TIMECOP_G(ce_DateTime), "settimestamp", NULL, &now_timestamp);
-	sprintf(buf, "Y-m-d H:i:s.%06ld ", now.usec);
+	sprintf(buf, "Y-m-d H:i:s.%06ld ", (long)now.usec);
 	ZVAL_STRING(&tmp, buf);
 	call_php_method_with_1_params(&dt, TIMECOP_G(ce_DateTime), "format", &fixed_time, &tmp);
 	zval_ptr_dtor(&tmp);
