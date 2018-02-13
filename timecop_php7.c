@@ -841,7 +841,7 @@ static int get_formatted_mock_time(zval *time, zval *timezone_obj, zval *retval_
 			ZVAL_NULL(retval_timezone);
 			return -1;
 		}
-		sprintf(buf, "Y-m-d H:i:s.%06ld", fixed_usec);
+		sprintf(buf, "Y-m-d H:i:s.%06ld", (long)fixed_usec);
 		ZVAL_STRING(&format_str, buf);
 		call_php_method_with_1_params(&dt, TIMECOP_G(ce_DateTime), "settimestamp", NULL, &fixed_sec);
 		call_php_method_with_0_params(&dt, TIMECOP_G(ce_DateTime), "gettimezone", retval_timezone);
