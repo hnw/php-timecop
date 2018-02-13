@@ -6,8 +6,6 @@ platform:
 
 environment:
   PROJECT_NAME: php-timecop
-  REPORT_EXIT_STATUS: 1
-  NO_INTERACTION: 1
   PHP_SDK_DIR: 'C:\php-sdk'
   matrix:
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
