@@ -27,7 +27,7 @@ if %errorlevel% neq 0 exit /b 3
 cmd /c phpsdk_buildtree.bat phpdev
 if %errorlevel% neq 0 exit /b 3
 
-wget %PHP_SRC_URL%
+wget -nv %PHP_SRC_URL%
 if %errorlevel% neq 0 exit /b 3
 
 mkdir %PHP_BUILD_ROOT%
@@ -42,7 +42,7 @@ echo Downloading dependencies in %DEPS_DIR%
 cd %PHP_BUILD_ROOT%
 if %errorlevel% neq 0 exit /b 3
 
-mkdir %PHP_BUILD_ROOT%\ext\%PROJECT_NAME
+mkdir %PHP_BUILD_ROOT%\ext\%PROJECT_NAME%
 if %errorlevel% neq 0 exit /b 3
 
 xcopy %APPVEYOR_BUILD_FOLDER% %PHP_BUILD_ROOT%\ext\%PROJECT_NAME% /s /e /y

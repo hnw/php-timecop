@@ -10,7 +10,7 @@ if not exist "%PHP_SDK_DIR%" (
 	mkdir "%PHP_SDK_DIR%"
 )
 
-wget %PHP_SDK_TOOLS_URL%
+wget -nv %PHP_SDK_TOOLS_URL%
 if %errorlevel% neq 0 exit /b 3
 
 7z x -y %PHP_SDK_TOOLS_FILENAME% -o%PHP_SDK_DIR%
