@@ -285,7 +285,7 @@ static int restore_request_time();
 
 static int fill_mktime_params(zval *fill_params, const char *date_function_name, int from);
 static int get_formatted_mock_time(zval *time, zval *timezone_obj, zval *retval_time, zval *retval_timezone);
-static long get_mock_fraction(zval *time, zval *timezone_obj);
+static zend_long get_mock_fraction(zval *time, zval *timezone_obj);
 
 static void _timecop_call_function(INTERNAL_FUNCTION_PARAMETERS, const char *function_name, int index_to_fill_timestamp);
 static void _timecop_call_mktime(INTERNAL_FUNCTION_PARAMETERS, const char *mktime_function_name, const char *date_function_name);
@@ -876,7 +876,7 @@ static int get_formatted_mock_time(zval *time, zval *timezone_obj, zval *retval_
  *     return $fixed_usec;
  * }
  */
-static long get_mock_fraction(zval *time, zval *timezone_obj TSRMLS_DC)
+static zend_long get_mock_fraction(zval *time, zval *timezone_obj TSRMLS_DC)
 {
 	zval dt1, dt2, usec1, usec2;
 	zend_long fixed_usec;
