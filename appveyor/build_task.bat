@@ -44,7 +44,7 @@ if %errorlevel% neq 0 exit /b 3
 
 dir %APPVEYOR_BUILD_FOLDER%
 
-xcopy %APPVEYOR_BUILD_FOLDER% %PHP_BUILD_ROOT%\ext\%PROJECT_NAME% /s /e /y
+xcopy %APPVEYOR_BUILD_FOLDER% %PHP_BUILD_ROOT%\ext\%PROJECT_NAME% /e /y
 if %errorlevel% neq 0 exit /b 3
 
 cmd /c phpsdk_deps -u --deps %DEPS_DIR%
