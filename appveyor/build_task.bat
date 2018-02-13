@@ -81,5 +81,17 @@ if %errorlevel% neq 0 exit /b 3
 nmake /NOLOGO
 if %errorlevel% neq 0 exit /b 3
 
+nmake install
+if %errorlevel% neq 0 exit /b 3
+
+copy php.ini-development %APPVEYOR_BUILD_FOLDER%\bin\php.ini
+if %errorlevel% neq 0 exit /b 3
+
+mkdir %APPVEYOR_BUILD_FOLDER%\bin\modules.d
+if %errorlevel% neq 0 exit /b 3
+
+echo extension=php_timecop.dll >> %APPVEYOR_BUILD_FOLDER%\bin\modules.d\php.ini
+if %errorlevel% neq 0 exit /b 3
+
 exit /b 0
 
