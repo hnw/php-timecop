@@ -72,8 +72,8 @@ cmd /c configure.bat ^
         --enable-timecop=shared ^
         --enable-cli ^
         --enable-zts ^
-        --with-config-file-scan-dir=%PROJECT_DIR%\bin\modules.d ^
-        --with-prefix=%PROJECT_DIR%\bin ^
+        --with-config-file-scan-dir=%APPVEYOR_BUILD_FOLDER%\bin\modules.d ^
+        --with-prefix=%APPVEYOR_BUILD_FOLDER%\bin ^
         --with-php-build=%DEPS_DIR% ^
 	%ADD_CONF%
 if %errorlevel% neq 0 exit /b 3
