@@ -76,29 +76,31 @@ build_script:
 #    nmake install
 
 
-after_build:
-- cmd: >-
-    copy php.ini-development %PROJECT_DIR%\bin\php.ini
-
-    mkdir %PROJECT_DIR%\bin\modules.d
-
-    echo extension=php_timecop.dll >> %PROJECT_DIR%\bin\modules.d\php.ini
+#after_build:
+#- cmd: >-
+#    copy php.ini-development %PROJECT_DIR%\bin\php.ini
+#
+#    mkdir %PROJECT_DIR%\bin\modules.d
+#
+#    echo extension=php_timecop.dll >> %PROJECT_DIR%\bin\modules.d\php.ini
 
 
 test_script:
-- cmd: >-
-    echo %PROJECT_DIR%
+  - appveyor\test.bat
 
-    echo %TEST_PHP_EXECUTABLE%
-
-    cd %PROJECT_DIR%
-
-    if exist bin dir bin
-
-    if exist bin\ext dir bin\ext
-
-    if exist bin\modules.d dir bin\modules.d
-
-    "%TEST_PHP_EXECUTABLE%" %PHP_SRC_DIR%\run-tests.php --show-diff
-
-    exit /b %errorlevel%
+#- cmd: >-
+#    echo %PROJECT_DIR%
+#
+#    echo %TEST_PHP_EXECUTABLE%
+#
+#    cd %PROJECT_DIR%
+#
+#    if exist bin dir bin
+#
+#    if exist bin\ext dir bin\ext
+#
+#    if exist bin\modules.d dir bin\modules.d
+#
+#    "%TEST_PHP_EXECUTABLE%" %PHP_SRC_DIR%\run-tests.php --show-diff
+#
+#    exit /b %errorlevel%
