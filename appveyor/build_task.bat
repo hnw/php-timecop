@@ -93,5 +93,8 @@ if %errorlevel% neq 0 exit /b 3
 echo extension=php_timecop.dll >> %APPVEYOR_BUILD_FOLDER%\bin\modules.d\php.ini
 if %errorlevel% neq 0 exit /b 3
 
+copy %PHP_BUILD_ROOT%\run-tests.php %APPVEYOR_BUILD_FOLDER%\
+if %errorlevel% neq 0 exit /b 3
+
 exit /b 0
 

@@ -10,7 +10,14 @@ if not exist "%TEST_PHP_EXECUTABLE%" (
     exit /b 3
 )
 
-"%TEST_PHP_EXECUTABLE%" %APPVEYOR_BUILD_FOLDER%\run-tests.php --show-diff
+cd %APPVEYOR_BUILD_FOLDER%
+
+if not exist run-tests.php (
+    echo run-tests.php doesn't exist
+    exit /b 3
+)
+
+"%TEST_PHP_EXECUTABLE%" run-tests.php --show-diff
 if %errorlevel% neq 0 exit /b 3
 
 exit /b %EXIT_CODE%
