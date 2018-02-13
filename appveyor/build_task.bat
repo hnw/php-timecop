@@ -68,7 +68,7 @@ cmd /c configure.bat ^
         --with-openssl ^
         --with-dom ^
         --with-libxml ^
-        --enable-zip ^
+        --disable-zip ^
         --enable-timecop=shared ^
         --enable-cli ^
         --enable-zts ^
