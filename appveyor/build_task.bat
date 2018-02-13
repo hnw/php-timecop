@@ -42,6 +42,9 @@ echo Downloading dependencies in %DEPS_DIR%
 cd %PHP_BUILD_ROOT%
 if %errorlevel% neq 0 exit /b 3
 
+xcopy %PROJECT_DIR% %PHP_BUILD_ROOT%\ext\%PROJECT_NAME% /s /e /y
+if %errorlevel% neq 0 exit /b 3
+
 cmd /c phpsdk_deps -u --deps %DEPS_DIR%
 if %errorlevel% neq 0 exit /b 3
 
