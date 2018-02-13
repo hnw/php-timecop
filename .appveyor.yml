@@ -55,7 +55,7 @@ install:
 #
 #    mkdir %PHP_BUILD_ROOT%\ext\%PROJECT_NAME%
 #
-#    xcopy %PROJECT_DIR% %PHP_BUILD_ROOT%\ext\%PROJECT_NAME% /s /e /y
+#    xcopy %PROJECT_DIR% %PHP_BUILD_ROOT%\ext\%PROJECT_NAME% /e /y
 #
 #    bin\phpsdk_deps.bat -u
 
