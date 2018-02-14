@@ -908,6 +908,9 @@ static zend_long get_mock_fraction(zval *time, zval *timezone_obj TSRMLS_DC)
 	} else {
 		fixed_usec = -1;
 	}
+	php_error_docref("https://github.com/hnw/php-timecop", E_WARNING,
+					 "fixed_usec=%ld", (long)fixed_usec);
+
 	zval_ptr_dtor(&dt1);
 	zval_ptr_dtor(&dt2);
 	zval_ptr_dtor(&u_str);
