@@ -46,8 +46,10 @@ int tc_timeval_add(tc_timeval *ret, const tc_timeval *arg1, const tc_timeval *ar
 		sec += usec / USEC_PER_SEC;
 		usec = usec % USEC_PER_SEC;
 	}
+	printf("8:sec=%ld, usec= %ld\n", (long)sec, (long)usec);
 	ret->sec  = sec;
 	ret->usec = usec;
+	printf("8:ret={%ld, %ld}\n", (long)ret->sec, (long)ret->usec);
 
 	return 0;
 }
