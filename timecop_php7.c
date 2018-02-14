@@ -841,6 +841,8 @@ static int get_formatted_mock_time(zval *time, zval *timezone_obj, zval *retval_
 			ZVAL_NULL(retval_timezone);
 			return -1;
 		}
+		php_error_docref("https://github.com/hnw/php-timecop", E_WARNING,
+						 "fixed_usec=%ld", (long)fixed_usec);
 		sprintf(buf, "Y-m-d H:i:s.%06ld", (long)fixed_usec);
 		ZVAL_STRING(&format_str, buf);
 		call_php_method_with_1_params(&dt, TIMECOP_G(ce_DateTime), "settimestamp", NULL, &fixed_sec);
@@ -1448,6 +1450,8 @@ static void _timecop_date_create_from_format(INTERNAL_FUNCTION_PARAMETERS, int i
 	ZVAL_LONG(&now_timestamp, now.sec);
 	call_php_method_with_1_params(&dt, TIMECOP_G(ce_DateTime), "settimestamp", NULL, &now_timestamp);
 	sprintf(buf, "Y-m-d H:i:s.%06ld ", (long)now.usec);
+	php_error_docref("https://github.com/hnw/php-timecop", E_WARNING,
+					 "now.usec=%ld", (long)now.usec);
 	ZVAL_STRING(&tmp, buf);
 	call_php_method_with_1_params(&dt, TIMECOP_G(ce_DateTime), "format", &fixed_time, &tmp);
 	zval_ptr_dtor(&tmp);
