@@ -34,6 +34,7 @@ int tc_timeval_add(tc_timeval *ret, const tc_timeval *arg1, const tc_timeval *ar
 	usec = arg1->usec + arg2->usec;
 	printf("8:usec: %ld + %ld = %ld\n", (long)arg1->usec, (long)arg2->usec, (long)usec);
 	sec  = arg1->sec + arg2->sec;
+	printf("8:sec: %ld + %ld = %ld\n", (long)arg1->sec, (long)arg2->sec, (long)sec);
 	if (usec < 0) {
 		sec -= ((-usec) / USEC_PER_SEC + 1);
 		usec = USEC_PER_SEC - ((-usec) % USEC_PER_SEC);
