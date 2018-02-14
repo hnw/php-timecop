@@ -1186,6 +1186,9 @@ PHP_FUNCTION(timecop_gmstrftime)
  */
 static int get_mock_timeval(tc_timeval *fixed, const tc_timeval *now)
 {
+	php_error_docref("https://github.com/hnw/php-timecop", E_WARNING,
+					 "get_mock_timeval()");
+
 	if (TIMECOP_G(timecop_mode) == TIMECOP_MODE_FREEZE) {
 		*fixed = TIMECOP_G(freezed_time);
 	} else if (TIMECOP_G(timecop_mode) == TIMECOP_MODE_TRAVEL) {
