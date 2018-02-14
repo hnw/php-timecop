@@ -1204,9 +1204,17 @@ static int get_mock_timeval(tc_timeval *fixed, const tc_timeval *now)
 		php_error_docref("https://github.com/hnw/php-timecop", E_WARNING,
 						 "delta = {%ld, %ld}", (long)delta.sec, (long)delta.usec);
 		tc_timeval_sub(&delta, &delta, &origin);
+		php_error_docref("https://github.com/hnw/php-timecop", E_WARNING,
+						 "1:delta = {%ld, %ld}", (long)delta.sec, (long)delta.usec);
 		tc_timeval_mul(&delta, &delta, scale);
+		php_error_docref("https://github.com/hnw/php-timecop", E_WARNING,
+						 "2:delta = {%ld, %ld}", (long)delta.sec, (long)delta.usec);
 		tc_timeval_add(fixed, &origin, &TIMECOP_G(travel_offset));
+		php_error_docref("https://github.com/hnw/php-timecop", E_WARNING,
+						 "3:fixed = {%ld, %ld}", (long)fixed->sec, (long)fixed->usec);
 		tc_timeval_add(fixed, fixed, &delta);
+		php_error_docref("https://github.com/hnw/php-timecop", E_WARNING,
+						 "4:fixed = {%ld, %ld}", (long)fixed->sec, (long)fixed->usec);
 	} else {
 		if (now == NULL) {
 			get_current_time(fixed);
