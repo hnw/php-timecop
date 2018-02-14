@@ -25,6 +25,8 @@ SOFTWARE.
 #ifndef TC_TIMEVAL_H
 #define TC_TIMEVAL_H
 
+#include "Zend/zend_interfaces.h"
+
 #ifndef USEC_PER_SEC
 #  define USEC_PER_SEC 1000000
 #endif
