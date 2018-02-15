@@ -1206,6 +1206,9 @@ static int get_mock_timeval(tc_timeval *fixed, const tc_timeval *now)
 			delta = *now;
 		}
 		php_error_docref("https://github.com/hnw/php-timecop", E_WARNING,
+						 "30:fixed_time(%p) = {%ld, %ld}", fixed, (long)fixed->sec, (long)fixed->usec);
+
+		php_error_docref("https://github.com/hnw/php-timecop", E_WARNING,
 						 "0:origin = {%ld, %ld}", (long)origin.sec, (long)origin.usec);
 		php_error_docref("https://github.com/hnw/php-timecop", E_WARNING,
 						 "0:delta = {%ld, %ld}", (long)delta.sec, (long)delta.usec);
