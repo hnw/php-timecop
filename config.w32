@@ -5,9 +5,10 @@ ARG_ENABLE("timecop", "enable timecop support", "no");
 
 if (PHP_TIMECOP != "no") {
    if (PHP_VERSION <= 5) {
-      EXTENSION("timecop", "timecop_php5.c tc_timeval.c");
+      EXTENSION("timecop", "timecop_php5.c");
    } else {
-      EXTENSION("timecop", "timecop_php7.c tc_timeval.c");
+      EXTENSION("timecop", "timecop_php7.c");
    }
+   ADD_SOURCE("tc_timeval.c");
 }
 
