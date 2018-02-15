@@ -49,7 +49,7 @@ int tc_timeval_add(tc_timeval *ret, const tc_timeval *arg1, const tc_timeval *ar
 	printf("8:sec=%ld, usec= %ld\n", (long)sec, (long)usec);
 	ret->sec  = sec;
 	ret->usec = usec;
-	printf("8:ret={%ld, %ld}\n", (long)ret->sec, (long)ret->usec);
+	printf("8:ret(%p)={%ld, %ld}\n", ret, (long)ret->sec, (long)ret->usec);
 
 	return 0;
 }

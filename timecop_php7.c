@@ -1217,7 +1217,7 @@ static int get_mock_timeval(tc_timeval *fixed, const tc_timeval *now)
 		php_error_docref("https://github.com/hnw/php-timecop", E_WARNING,
 						 "3:travel_offset = {%ld, %ld}", (long)(TIMECOP_G(travel_offset).sec), (long)(TIMECOP_G(travel_offset).usec));
 		php_error_docref("https://github.com/hnw/php-timecop", E_WARNING,
-						 "3:fixed = {%ld, %ld}", (long)fixed->sec, (long)fixed->usec);
+						 "3:fixed(%p) = {%ld, %ld}", fixed, (long)fixed->sec, (long)fixed->usec);
 		tc_timeval_add(fixed, fixed, &delta);
 		php_error_docref("https://github.com/hnw/php-timecop", E_WARNING,
 						 "4:fixed = {%ld, %ld}", (long)fixed->sec, (long)fixed->usec);
