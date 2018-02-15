@@ -800,6 +800,8 @@ static int get_formatted_mock_time(zval *time, zval *timezone_obj, zval *retval_
 		time = &str_now;
 	}
 
+	php_error_docref("https://github.com/hnw/php-timecop", E_WARNING,
+					 "21:get_mock_timeval()");
 	get_mock_timeval(&now, NULL);
 	php_error_docref("https://github.com/hnw/php-timecop", E_WARNING,
 					 "0:now(%p) = {%ld, %ld}", &now, (long)now.sec, (long)now.usec);
@@ -1055,6 +1057,8 @@ PHP_FUNCTION(timecop_scale)
 		RETURN_FALSE;
 	}
 	get_current_time(&now);
+	php_error_docref("https://github.com/hnw/php-timecop", E_WARNING,
+					 "22:get_mock_timeval()");
 	get_mock_timeval(&mock_time, &now);
 	TIMECOP_G(timecop_mode) = TIMECOP_MODE_TRAVEL;
 	TIMECOP_G(travel_origin) = now;
@@ -1202,9 +1206,9 @@ static int get_mock_timeval(tc_timeval *fixed, const tc_timeval *now)
 			delta = *now;
 		}
 		php_error_docref("https://github.com/hnw/php-timecop", E_WARNING,
-						 "origin = {%ld, %ld}", (long)origin.sec, (long)origin.usec);
+						 "0:origin = {%ld, %ld}", (long)origin.sec, (long)origin.usec);
 		php_error_docref("https://github.com/hnw/php-timecop", E_WARNING,
-						 "delta = {%ld, %ld}", (long)delta.sec, (long)delta.usec);
+						 "0:delta = {%ld, %ld}", (long)delta.sec, (long)delta.usec);
 		tc_timeval_sub(&delta, &delta, &origin);
 		php_error_docref("https://github.com/hnw/php-timecop", E_WARNING,
 						 "1:delta = {%ld, %ld}", (long)delta.sec, (long)delta.usec);
@@ -1243,6 +1247,8 @@ static int get_mock_timeval(tc_timeval *fixed, const tc_timeval *now)
 static zend_long mock_timestamp()
 {
 	tc_timeval tv;
+	php_error_docref("https://github.com/hnw/php-timecop", E_WARNING,
+					 "23:get_mock_timeval()");
 	get_mock_timeval(&tv, NULL);
 	return tv.sec;
 }
@@ -1300,6 +1306,8 @@ static void _timecop_gettimeofday(INTERNAL_FUNCTION_PARAMETERS, int mode)
 		RETURN_FALSE;
 	}
 
+	php_error_docref("https://github.com/hnw/php-timecop", E_WARNING,
+					 "24:get_mock_timeval()");
 	if (get_mock_timeval(&fixed, NULL)) {
 		RETURN_FALSE;
 	}
@@ -1475,6 +1483,8 @@ static void _timecop_date_create_from_format(INTERNAL_FUNCTION_PARAMETERS, int i
 		RETURN_ZVAL(&dt, 1, 1);
 	}
 
+	php_error_docref("https://github.com/hnw/php-timecop", E_WARNING,
+					 "20:get_mock_timeval()");
 	get_mock_timeval(&now, NULL);
 	php_error_docref("https://github.com/hnw/php-timecop", E_WARNING,
 					 "11:fixed(%p) = {%ld, %ld}", &now, (long)now.sec, (long)now.usec);
