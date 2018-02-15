@@ -801,7 +801,7 @@ static int get_formatted_mock_time(zval *time, zval *timezone_obj, zval *retval_
 	}
 
 	php_error_docref("https://github.com/hnw/php-timecop", E_WARNING,
-					 "21:get_mock_timeval()");
+					 "21:get_mock_timeval(), sizeof(tc_timeval) = %d", sizeof(tc_timeval));
 	get_mock_timeval(&now, NULL);
 	php_error_docref("https://github.com/hnw/php-timecop", E_WARNING,
 					 "0:now(%p) = {%ld, %ld}", &now, (long)now.sec, (long)now.usec);
