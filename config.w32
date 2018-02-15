@@ -9,6 +9,6 @@ if (PHP_TIMECOP != "no") {
    } else {
       EXTENSION("timecop", "timecop_php7.c");
    }
-   ADD_SOURCE("tc_timeval.c");
+   ADD_SOURCES("tc_timeval.c");
 }
 
