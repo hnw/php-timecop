@@ -802,7 +802,7 @@ static int get_formatted_mock_time(zval *time, zval *timezone_obj, zval *retval_
 
 	get_mock_timeval(&now, NULL);
 	php_error_docref("https://github.com/hnw/php-timecop", E_WARNING,
-					 "0:now = {%ld, %ld}", (long)now.sec, (long)now.usec);
+					 "0:now(%p) = {%ld, %ld}", &now, (long)now.sec, (long)now.usec);
 
 	if (timezone_obj && Z_TYPE_P(timezone_obj) == IS_OBJECT) {
 		zval zonename;
@@ -1476,6 +1476,8 @@ static void _timecop_date_create_from_format(INTERNAL_FUNCTION_PARAMETERS, int i
 	}
 
 	get_mock_timeval(&now, NULL);
+	php_error_docref("https://github.com/hnw/php-timecop", E_WARNING,
+					 "11:fixed(%p) = {%ld, %ld}", &now, (long)now.sec, (long)now.usec);
 
 	ZVAL_LONG(&now_timestamp, now.sec);
 	call_php_method_with_1_params(&dt, TIMECOP_G(ce_DateTime), "settimestamp", NULL, &now_timestamp);
