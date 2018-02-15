@@ -801,10 +801,8 @@ static int get_formatted_mock_time(zval *time, zval *timezone_obj, zval *retval_
 	}
 
 	get_mock_timeval(&now, NULL);
-	if (now != NULL) {
-		php_error_docref("https://github.com/hnw/php-timecop", E_WARNING,
-						 "0:now = {%ld, %ld}", (long)now.sec, (long)now.usec);
-	}
+	php_error_docref("https://github.com/hnw/php-timecop", E_WARNING,
+					 "0:now = {%ld, %ld}", (long)now.sec, (long)now.usec);
 
 	if (timezone_obj && Z_TYPE_P(timezone_obj) == IS_OBJECT) {
 		zval zonename;
