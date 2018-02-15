@@ -801,6 +801,10 @@ static int get_formatted_mock_time(zval *time, zval *timezone_obj, zval *retval_
 	}
 
 	get_mock_timeval(&now, NULL);
+	if (now != NULL) {
+		php_error_docref("https://github.com/hnw/php-timecop", E_WARNING,
+						 "0:now = {%ld, %ld}", (long)now.sec, (long)now.usec);
+	}
 
 	if (timezone_obj && Z_TYPE_P(timezone_obj) == IS_OBJECT) {
 		zval zonename;
@@ -842,7 +846,7 @@ static int get_formatted_mock_time(zval *time, zval *timezone_obj, zval *retval_
 			return -1;
 		}
 		php_error_docref("https://github.com/hnw/php-timecop", E_WARNING,
-						 "fixed_usec=%ld", (long)fixed_usec);
+						 "9:fixed_usec=%ld", (long)fixed_usec);
 		sprintf(buf, "Y-m-d H:i:s.%06ld", (long)fixed_usec);
 		ZVAL_STRING(&format_str, buf);
 		call_php_method_with_1_params(&dt, TIMECOP_G(ce_DateTime), "settimestamp", NULL, &fixed_sec);
@@ -909,7 +913,7 @@ static zend_long get_mock_fraction(zval *time, zval *timezone_obj TSRMLS_DC)
 		fixed_usec = -1;
 	}
 	php_error_docref("https://github.com/hnw/php-timecop", E_WARNING,
-					 "fixed_usec=%ld", (long)fixed_usec);
+					 "7:fixed_usec=%ld", (long)fixed_usec);
 
 	zval_ptr_dtor(&dt1);
 	zval_ptr_dtor(&dt2);
