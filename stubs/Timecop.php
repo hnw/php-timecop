@@ -19,12 +19,18 @@ function timecop_freeze($time) {}
 function timecop_travel($time) {}
 
 /**
+ * Accelerate time with specified scale
+ *
  * @param float $scale
+ *
+ * @return bool
  */
 function timecop_scale($scale) {}
 
 /**
  * Return from time travel to current time
+ *
+ * @return bool
  */
 function timecop_return() {}
 
@@ -49,12 +55,18 @@ class Timecop
     public static function travel($time) {}
 
     /**
+     * Accelerate time with specified scale
+     *
      * @param float $scale
+     *
+     * @return bool
      */
     public static function scale($scale) {}
 
     /**
      * Return from time travel to current time
+     *
+     * @return bool
      */
     public static function return() {}
 }

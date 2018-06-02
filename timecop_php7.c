@@ -1035,7 +1035,7 @@ PHP_FUNCTION(timecop_travel)
 /* }}} */
 
 /* {{{ proto int timecop_scale(long scale)
-   Time travel to specified timestamp */
+   Accelerate time with specified scale */
 PHP_FUNCTION(timecop_scale)
 {
 	zend_long scale;
