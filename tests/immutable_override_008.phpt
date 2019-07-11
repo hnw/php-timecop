@@ -35,6 +35,11 @@ var_dump($dt0->format("Y-m-d H:i:s.uP"));
 foreach ($tests_args as $args) {
     timecop_freeze($dt0);
     $dt1 = call_user_func_array(array("DateTimeImmutable","createFromFormat"), $args);
+    if (!$dt1 instanceof DateTimeImmutable) {
+        // TODO: output an appropriate message
+        echo get_class($dt1), "\n";
+    }
+
     var_dump($dt1->format("Y-m-d H:i:s.uP"));
     while (true) {
         /* test for equality between timecop_date_create_from_format() and date_create_from_format() */
