@@ -1520,6 +1520,12 @@ static void _timecop_date_create_from_format(INTERNAL_FUNCTION_PARAMETERS, int i
 
 	if (memchr(orig_format_str, '!', orig_format_len) ||
 		memchr(orig_format_str, '|', orig_format_len)) {
+
+		if (immutable) {
+			call_php_function_with_3_params(ORIG_FUNC_NAME("date_create_immutable_from_format"), &new_dt, &orig_format, &orig_time, orig_timezone);
+			RETURN_ZVAL(new_dt, 1, 1);
+		}
+
 		RETURN_ZVAL(dt, 1, 1);
 	}
 
