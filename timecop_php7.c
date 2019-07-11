@@ -1417,7 +1417,7 @@ static void _timecop_date_create_from_format(INTERNAL_FUNCTION_PARAMETERS, int i
 {
 	zval *orig_timezone = NULL;
 	zval orig_format, orig_time, fixed_format, fixed_time, new_format, new_time;
-	zval dt, now_timestamp, tmp;
+	zval dt, dti, now_timestamp, tmp;
 	char *orig_format_str, *orig_time_str;
 	size_t  orig_format_len, orig_time_len;
 	tc_timeval now;
@@ -1440,6 +1440,12 @@ static void _timecop_date_create_from_format(INTERNAL_FUNCTION_PARAMETERS, int i
 		memchr(orig_format_str, '|', orig_format_len)) {
 		zval_ptr_dtor(&orig_format);
 		zval_ptr_dtor(&orig_time);
+
+		if (immutable) {
+			call_php_method_with_1_params(NULL, TIMECOP_G(ce_DateTimeImmutable), "createfrommutable", &dti, &dt);
+			RETURN_ZVAL(&dti, 1, 1);
+		}
+
 		RETURN_ZVAL(&dt, 1, 1);
 	}
 
