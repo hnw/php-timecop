@@ -1458,7 +1458,11 @@ static void _timecop_date_create_from_format(INTERNAL_FUNCTION_PARAMETERS, int i
 	call_php_method_with_1_params(&dt, TIMECOP_G(ce_DateTime), "format", &fixed_time, &tmp);
 	zval_ptr_dtor(&tmp);
 
-	if (memchr(orig_format_str, 'g', orig_format_len) ||
+	if (
+#if PHP_VERSION_ID >= 70300
+		memchr(orig_format_str, 'u', orig_format_len) ||
+#endif
+		memchr(orig_format_str, 'g', orig_format_len) ||
 		memchr(orig_format_str, 'h', orig_format_len) ||
 		memchr(orig_format_str, 'G', orig_format_len) ||
 		memchr(orig_format_str, 'H', orig_format_len) ||
