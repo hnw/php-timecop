@@ -1433,6 +1433,8 @@ static void _timecop_date_create_from_format(INTERNAL_FUNCTION_PARAMETERS, int i
 
 	call_php_function_with_3_params(ORIG_FUNC_NAME("date_create_from_format"), &dt, &orig_format, &orig_time, orig_timezone);
 	if (Z_TYPE(dt) == IS_FALSE) {
+		zval_ptr_dtor(&orig_format);
+		zval_ptr_dtor(&orig_time);
 		RETURN_FALSE;
 	}
 
@@ -1443,6 +1445,7 @@ static void _timecop_date_create_from_format(INTERNAL_FUNCTION_PARAMETERS, int i
 
 		if (immutable) {
 			call_php_method_with_1_params(NULL, TIMECOP_G(ce_DateTimeImmutable), "createfrommutable", &dti, &dt);
+			zval_ptr_dtor(&dt);
 			RETURN_ZVAL(&dti, 1, 1);
 		}
 
@@ -1458,7 +1461,11 @@ static void _timecop_date_create_from_format(INTERNAL_FUNCTION_PARAMETERS, int i
 	call_php_method_with_1_params(&dt, TIMECOP_G(ce_DateTime), "format", &fixed_time, &tmp);
 	zval_ptr_dtor(&tmp);
 
-	if (memchr(orig_format_str, 'g', orig_format_len) ||
+	if (
+#if PHP_VERSION_ID >= 70300
+		memchr(orig_format_str, 'u', orig_format_len) ||
+#endif
+		memchr(orig_format_str, 'g', orig_format_len) ||
 		memchr(orig_format_str, 'h', orig_format_len) ||
 		memchr(orig_format_str, 'G', orig_format_len) ||
 		memchr(orig_format_str, 'H', orig_format_len) ||
@@ -1478,14 +1485,6 @@ static void _timecop_date_create_from_format(INTERNAL_FUNCTION_PARAMETERS, int i
 			   memchr(orig_format_str, 'l', orig_format_len) ||
 			   memchr(orig_format_str, 'U', orig_format_len)) {
 		ZVAL_STRING(&fixed_format, "Y-m-d H:i:s.??????");
-	} else if (memchr(orig_format_str, 'u', orig_format_len)) {
-		#if PHP_VERSION_ID >= 70300
-				ZVAL_STRING(&fixed_format, "Y-m-d ??:??:??.??????");
-		#elif PHP_VERSION_ID >= 70100
-				ZVAL_STRING(&fixed_format, "Y-m-d H:i:s.u");
-		#else
-				ZVAL_STRING(&fixed_format, "Y-m-d H:i:s.??????");
-		#endif
 	} else {
 		#if PHP_VERSION_ID >= 70100
 				ZVAL_STRING(&fixed_format, "Y-m-d H:i:s.u");
