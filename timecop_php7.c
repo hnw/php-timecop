@@ -311,12 +311,17 @@ static inline void _call_php_function_with_2_params(const char *function_name, z
 static void _call_php_function_with_3_params(const char *function_name, zval *retval_ptr, zval *arg1, zval *arg2, zval *arg3);
 static inline void _call_php_function_with_params(const char *function_name, zval *retval_ptr, uint32_t param_count, zval params[]);
 
+static const zend_module_dep timecop_module_deps[] = {
+	ZEND_MOD_REQUIRED("Date")
+    ZEND_MOD_END
+};
+
 /* {{{ timecop_module_entry
  */
 zend_module_entry timecop_module_entry = {
-#if ZEND_MODULE_API_NO >= 20010901
-	STANDARD_MODULE_HEADER,
-#endif
+    STANDARD_MODULE_HEADER_EX,
+    NULL,
+    timecop_module_deps,
 	"timecop",
 	timecop_functions,
 	PHP_MINIT(timecop),
@@ -355,25 +360,6 @@ PHP_MINIT_FUNCTION(timecop)
 	ZEND_INIT_MODULE_GLOBALS(timecop, timecop_globals_ctor, NULL);
 	REGISTER_INI_ENTRIES();
 	register_timecop_classes();
-	return SUCCESS;
-}
-/* }}} */
-
-/* {{{ PHP_MSHUTDOWN_FUNCTION
- */
-PHP_MSHUTDOWN_FUNCTION(timecop)
-{
-	UNREGISTER_INI_ENTRIES();
-	return SUCCESS;
-}
-/* }}} */
-
-/* {{{ PHP_RINIT_FUNCTION(timecop) */
-PHP_RINIT_FUNCTION(timecop)
-{
-#if defined(COMPILE_DL_TIMECOP) && defined(ZTS)
-	ZEND_TSRMLS_CACHE_UPDATE();
-#endif
 
 	if (TIMECOP_G(func_override)) {
 		if (SUCCESS != timecop_func_override() ||
@@ -386,14 +372,35 @@ PHP_RINIT_FUNCTION(timecop)
 }
 /* }}} */
 
-/* {{{ PHP_RSHUTDOWN_FUNCTION(timecop) */
-PHP_RSHUTDOWN_FUNCTION(timecop)
+/* {{{ PHP_MSHUTDOWN_FUNCTION
+ */
+PHP_MSHUTDOWN_FUNCTION(timecop)
 {
+	UNREGISTER_INI_ENTRIES();
+	
 	if (TIMECOP_G(func_override)) {
 		timecop_func_override_clear();
 		timecop_class_override_clear();
 	}
+	
+	return SUCCESS;
+}
+/* }}} */
 
+/* {{{ PHP_RINIT_FUNCTION(timecop) */
+PHP_RINIT_FUNCTION(timecop)
+{
+#if defined(COMPILE_DL_TIMECOP) && defined(ZTS)
+	ZEND_TSRMLS_CACHE_UPDATE();
+#endif
+
+	return SUCCESS;
+}
+/* }}} */
+
+/* {{{ PHP_RSHUTDOWN_FUNCTION(timecop) */
+PHP_RSHUTDOWN_FUNCTION(timecop)
+{
 	if (Z_TYPE(TIMECOP_G(orig_request_time)) == IS_NULL) {
 		restore_request_time();
 	}
@@ -496,14 +503,14 @@ static int timecop_func_override()
 
 	p = &(timecop_override_func_table[0]);
 	while (p->orig_func != NULL) {
-		zf_orig = zend_hash_str_find_ptr(EG(function_table), p->orig_func, strlen(p->orig_func));
+		zf_orig = zend_hash_str_find_ptr(CG(function_table), p->orig_func, strlen(p->orig_func));
 		if (zf_orig == NULL) {
 			/* Do nothing. Because some functions are introduced by optional extensions. */
 			p++;
 			continue;
 		}
 
-		zf_ovrd = zend_hash_str_find_ptr(EG(function_table), p->ovrd_func, strlen(p->ovrd_func));
+		zf_ovrd = zend_hash_str_find_ptr(CG(function_table), p->ovrd_func, strlen(p->ovrd_func));
 		if (zf_ovrd == NULL) {
 			php_error_docref("https://github.com/hnw/php-timecop", E_WARNING,
 							 "timecop couldn't find function %s.", p->ovrd_func);
@@ -511,7 +518,7 @@ static int timecop_func_override()
 			continue;
 		}
 
-		zf_save = zend_hash_str_find_ptr(EG(function_table), p->save_func, strlen(p->save_func));
+		zf_save = zend_hash_str_find_ptr(CG(function_table), p->save_func, strlen(p->save_func));
 		if (zf_save != NULL) {
 			php_error_docref("https://github.com/hnw/php-timecop", E_WARNING,
 							 "timecop couldn't create function %s because already exists.",
@@ -523,12 +530,12 @@ static int timecop_func_override()
 		TIMECOP_ASSERT(zf_orig->type == ZEND_INTERNAL_FUNCTION);
 		TIMECOP_ASSERT(zf_ovrd->type == ZEND_INTERNAL_FUNCTION);
 
-		zend_hash_str_add_mem(EG(function_table), p->save_func, strlen(p->save_func),
+		zend_hash_str_add_mem(CG(function_table), p->save_func, strlen(p->save_func),
 							  zf_orig, sizeof(zend_internal_function));
 		function_add_ref(zf_orig);
 
 		GUARD_FUNCTION_ARG_INFO_BEGIN(zf_orig);
-		zend_hash_str_update_mem(EG(function_table), p->orig_func, strlen(p->orig_func),
+		zend_hash_str_update_mem(CG(function_table), p->orig_func, strlen(p->orig_func),
 								 zf_ovrd, sizeof(zend_internal_function));
 		GUARD_FUNCTION_ARG_INFO_END();
 		function_add_ref(zf_ovrd);
@@ -546,7 +553,7 @@ static int timecop_class_override()
 
 	p = &(timecop_override_class_table[0]);
 	while (p->orig_class != NULL) {
-		ce_orig = zend_hash_str_find_ptr(EG(class_table), p->orig_class, strlen(p->orig_class));
+		ce_orig = zend_hash_str_find_ptr(CG(class_table), p->orig_class, strlen(p->orig_class));
 		if (ce_orig == NULL) {
 			php_error_docref("https://github.com/hnw/php-timecop", E_WARNING,
 							 "timecop couldn't find class %s.", p->orig_class);
@@ -554,7 +561,7 @@ static int timecop_class_override()
 			continue;
 		}
 
-		ce_ovrd = zend_hash_str_find_ptr(EG(class_table), p->ovrd_class, strlen(p->ovrd_class));
+		ce_ovrd = zend_hash_str_find_ptr(CG(class_table), p->ovrd_class, strlen(p->ovrd_class));
 		if (ce_ovrd == NULL) {
 			php_error_docref("https://github.com/hnw/php-timecop", E_WARNING,
 							 "timecop couldn't find class %s.", p->ovrd_class);
@@ -626,9 +633,9 @@ static int timecop_func_override_clear()
 
 	p = &(timecop_override_func_table[0]);
 	while (p->orig_func != NULL) {
-		zf_orig = zend_hash_str_find_ptr(EG(function_table),
+		zf_orig = zend_hash_str_find_ptr(CG(function_table),
 										 p->save_func, strlen(p->save_func));
-		zf_ovld = zend_hash_str_find_ptr(EG(function_table),
+		zf_ovld = zend_hash_str_find_ptr(CG(function_table),
 										 p->orig_func, strlen(p->orig_func));
 		if (zf_orig == NULL || zf_ovld == NULL) {
 			p++;
@@ -636,13 +643,13 @@ static int timecop_func_override_clear()
 		}
 
 		GUARD_FUNCTION_ARG_INFO_BEGIN(zf_ovld);
-		zend_hash_str_update_mem(EG(function_table), p->orig_func, strlen(p->orig_func),
+		zend_hash_str_update_mem(CG(function_table), p->orig_func, strlen(p->orig_func),
 								 zf_orig, sizeof(zend_internal_function));
 		GUARD_FUNCTION_ARG_INFO_END();
 		function_add_ref(zf_orig);
 
 		GUARD_FUNCTION_ARG_INFO_BEGIN(zf_orig);
-		zend_hash_str_del(EG(function_table), p->save_func, strlen(p->save_func));
+		zend_hash_str_del(CG(function_table), p->save_func, strlen(p->save_func));
 		GUARD_FUNCTION_ARG_INFO_END();
 
 		p++;
@@ -658,7 +665,7 @@ static int timecop_class_override_clear()
 
 	p = &(timecop_override_class_table[0]);
 	while (p->orig_class != NULL) {
-		ce_orig = zend_hash_str_find_ptr(EG(class_table),
+		ce_orig = zend_hash_str_find_ptr(CG(class_table),
 										 p->orig_class, strlen(p->orig_class));
 		if (ce_orig == NULL) {
 			php_error_docref("https://github.com/hnw/php-timecop", E_WARNING,
