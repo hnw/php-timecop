@@ -238,7 +238,7 @@ static zend_function_entry timecop_funcs_timecop[] = {
 
 static zend_function_entry timecop_funcs_date[] = {
 	PHP_ME(TimecopDateTime, __construct, arginfo_timecop_date_create,
-		   ZEND_ACC_CTOR | ZEND_ACC_PUBLIC)
+		   ZEND_ACC_PUBLIC)
 	PHP_ME_MAPPING(createFromFormat, timecop_date_create_from_format, arginfo_timecop_date_create_from_format,
 				   ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
 	{NULL, NULL, NULL}
@@ -246,13 +246,13 @@ static zend_function_entry timecop_funcs_date[] = {
 
 static zend_function_entry timecop_funcs_orig_date[] = {
 	PHP_ME(TimecopOrigDateTime, __construct, arginfo_timecop_date_create,
-		   ZEND_ACC_CTOR | ZEND_ACC_PUBLIC)
+		   ZEND_ACC_PUBLIC)
 	{NULL, NULL, NULL}
 };
 
 static zend_function_entry timecop_funcs_immutable[] = {
 	PHP_ME(TimecopDateTimeImmutable, __construct, arginfo_timecop_date_create,
-		   ZEND_ACC_CTOR | ZEND_ACC_PUBLIC)
+		   ZEND_ACC_PUBLIC)
 	PHP_ME_MAPPING(createFromFormat, timecop_date_create_immutable_from_format, arginfo_timecop_date_create_from_format,
 				   ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
 	{NULL, NULL, NULL}
@@ -260,7 +260,7 @@ static zend_function_entry timecop_funcs_immutable[] = {
 
 static zend_function_entry timecop_funcs_orig_immutable[] = {
 	PHP_ME(TimecopOrigDateTimeImmutable, __construct, arginfo_timecop_date_create,
-		   ZEND_ACC_CTOR | ZEND_ACC_PUBLIC)
+		   ZEND_ACC_PUBLIC)
 	{NULL, NULL, NULL}
 };
 
